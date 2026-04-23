@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!--  VUE FORMULAIRE — Produit principal                                  -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_product_form" model="ir.ui.view">
+        <field name="name">gica.product.form</field>
+        <field name="model">gica.product</field>
+        <field name="arch" type="xml">
+            <form string="Produit GICA">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object"
+                                class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button"
+                                   options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="type_ciment"/>
+                        </group>
+                        <group>
+                            <field name="variant_count" string="Nb conditionnements"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Tableau des conditionnements avec prix intégrés -->
+                    <notebook>
+                        <page string="Conditionnements et prix" name="variantes">
+                            <field name="variant_ids">
+                                <list editable="bottom" decoration-muted="not active">
+                                    <field name="code"/>
+                                    <field name="packaging_type"/>
+                                    <field name="current_price" widget="monetary" string="Prix actuel HT"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="active" invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!--  VUE LISTE — Produits principaux                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_product_list" model="ir.ui.view">
+        <field name="name">gica.product.list</field>
+        <field name="model">gica.product</field>
+        <field name="arch" type="xml">
+            <list string="Produits GICA" decoration-muted="not active">
+                <field name="name"/>
+                <field name="type_ciment"/>
+                <field name="variant_count" string="Conditionnements"/>
+                <field name="active" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!--  VUE RECHERCHE — Produits                                            -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_product_search" model="ir.ui.view">
+        <field name="name">gica.product.search</field>
+        <field name="model">gica.product</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un produit">
+                <field name="name"/>
+                <field name="type_ciment"/>
+                <separator/>
+                <filter string="Archivés" name="archived" domain="[('active','=',False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Famille" name="group_type" context="{'group_by': 'type_ciment'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!--  VUE FORMULAIRE — Variante (conditionnement)                         -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_variant_form" model="ir.ui.view">
+        <field name="name">gica.product.variant.form</field>
+        <field name="model">gica.product.variant</field>
+        <field name="arch" type="xml">
+            <form string="Conditionnement">
+                <sheet>
+                    <group>
+                        <group string="Identification">
+                            <field name="product_id"/>
+                            <field name="code"/>
+                            <field name="packaging_type"/>
+                        </group>
+                        <group string="Tarification">
+                            <field name="current_price" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Grille de prix" name="prix">
+                            <field name="price_line_ids">
+                                <list editable="bottom">
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
+                                    <field name="price_base"         widget="monetary"/>
+                                    <field name="remise_sodismac"/>
+                                    <field name="remise_other_client"/>
+                                    <field name="remise_export"/>
+                                    <field name="price_sodismac"     widget="monetary" optional="show"/>
+                                    <field name="price_other_client" widget="monetary" optional="show"/>
+                                    <field name="price_export"       widget="monetary" optional="show"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!--  ACTIONS                                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_product" model="ir.actions.act_window">
+        <field name="name">Produits</field>
+        <field name="res_model">gica.product</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer votre premier produit GICA
+            </p>
+            <p>Chaque produit regroupe ses conditionnements (SAC, VRAC, BIG-BAG) avec leur grille de prix.</p>
+        </field>
+    </record>
+
+
+</odoo>

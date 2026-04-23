@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gica_client,gica.client,model_gica_client,,1,1,1,1
+access_gica_client_contract,gica.client.contract,model_gica_client_contract,,1,1,1,1
+access_gica_contract_line,gica.contract.line,model_gica_client_contract_line,base.group_user,1,1,1,1
+access_gica_client_agrement,gica.client.agrement,model_gica_client_agrement,,1,1,1,1
+access_gica_project,gica.project,model_gica_project,,1,1,1,1
+access_gica_project_line,gica.project.line,model_gica_project_line,,1,1,1,1
+
+access_gica_client_document,gica.client.document,model_gica_client_document,,1,1,1,1
+access_gica_document_template,gica.document.template,model_gica_document_template,,1,1,1,1
+
+access_gica_product_user,gica.product.user,model_gica_product,base.group_user,1,0,0,0
+access_gica_product_manager,gica.product.manager,model_gica_product,base.group_system,1,1,1,1
+access_gica_product_price_user,gica.product.price.user,model_gica_product_price,base.group_user,1,0,0,0
+access_gica_product_price_manager,gica.product.price.manager,model_gica_product_price,base.group_system,1,1,1,1
+

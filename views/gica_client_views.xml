@@ -1,0 +1,298 @@
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         LISTE — gica.client
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_list" model="ir.ui.view">
+        <field name="name">gica.client.list</field>
+        <field name="model">gica.client</field>
+        <field name="arch" type="xml">
+            <list string="Clients GICA">
+                <field name="name"/>
+                <field name="client_type"/>
+                <field name="sale_type"/>
+                <field name="commercial_id"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="agrement_numero"   string="N° Agrément"  optional="show"/>
+                <field name="agrement_statut"   string="Statut agrém." optional="show"
+                       widget="badge"
+                       decoration-success="agrement_statut == 'actif'"
+                       decoration-danger="agrement_statut in ('expire','retire')"
+                       decoration-warning="agrement_statut == 'suspendu'"/>
+                <field name="doc_fournis"    string="Docs fournis"/>
+                <field name="doc_total"      string="Docs total"/>
+                <field name="dossier_valide" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         FORMULAIRE — gica.client
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_form" model="ir.ui.view">
+        <field name="name">gica.client.form</field>
+        <field name="model">gica.client</field>
+        <field name="arch" type="xml">
+            <form string="Client GICA">
+                <sheet>
+
+                    <!-- ══════════════════════════════════════════════════════
+                         SMART BUTTONS
+                    ══════════════════════════════════════════════════════════ -->
+                    <div class="oe_button_box" name="button_box">
+
+                        <!-- Smart button Documents -->
+                        <button class="oe_stat_button" icon="fa-folder-open"
+                                type="object" name="action_valider_dossier"
+                                invisible="dossier_valide == True">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="doc_fournis"/>/<field name="doc_total"/>
+                                </span>
+                                <span class="o_stat_text">Documents</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-check-circle"
+                                type="object" name="action_reinitialiser_dossier"
+                                invisible="dossier_valide == False">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="doc_fournis"/>/<field name="doc_total"/>
+                                </span>
+                                <span class="o_stat_text">Dossier validé</span>
+                            </div>
+                        </button>
+
+                        <!-- Smart button Agrément — visible seulement pour les 3 types -->
+                        <button class="oe_stat_button" icon="fa-certificate"
+                                type="object" name="action_voir_agrements"
+                                invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="agrement_count"/>
+                                </span>
+                                <span class="o_stat_text">Agrément(s)</span>
+                            </div>
+                        </button>
+
+                    </div>
+
+                    <!-- ══════════════════════════════════════════════════════
+                         BANDEAU ALERTE — agrément manquant
+                         Affiché quand le type nécessite un agrément
+                         mais qu'il n'en existe pas encore d'actif
+                    ══════════════════════════════════════════════════════════ -->
+                    <div class="alert alert-warning o_form_warning"
+                         invisible="not need_agrement">
+                        <span>
+                            Ce client nécessite un agrément (Distributeur / Conditionneur / Revendeur agréé)
+                            mais aucun agrément actif n'est enregistré.
+                        </span>
+                        <button name="action_creer_agrement"
+                                type="object"
+                                string="  Créer l'agrément"
+                                class="btn btn-warning btn-sm ms-3"
+                                icon="fa-plus"/>
+                    </div>
+                    <!-- Champs invisibles nécessaires pour les conditions -->
+                    <field name="need_agrement"   invisible="1"/>
+                    <field name="agrement_statut" invisible="1"/>
+
+                    <!-- ── Nom ────────────────────────────────────────────── -->
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Nom du client"/></h1>
+                    </div>
+
+                    <!-- ── Infos principales ──────────────────────────────── -->
+                    <group>
+                        <group string="Informations client">
+                            <field name="client_type"/>
+                            <field name="sale_type"/>
+                            <field name="commercial_id"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="email"/>
+                            <field name="street"/>
+                            <field name="city"/>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Bloc Agrément (visible seulement pour les 3 types) ── -->
+                    <group string="Agrément en cours"
+                           invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
+                        <group>
+                            <field name="agrement_numero"    readonly="1"/>
+                            <field name="agrement_expiration" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="agrement_statut" readonly="1" widget="badge"
+                                   decoration-success="agrement_statut == 'actif'"
+                                   decoration-danger="agrement_statut in ('expire','retire')"
+                                   decoration-warning="agrement_statut == 'suspendu'"/>
+                            <button name="action_creer_agrement"
+                                    type="object"
+                                    string="Créer / Renouveler l'agrément"
+                                    class="btn-secondary btn-sm"
+                                    icon="fa-plus"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Scoring ────────────────────────────────────────── -->
+                    
+
+                    <notebook>
+
+                        <!-- ── Onglet Documents ──────────────────────────── -->
+                        <page string="Documents du dossier" name="page_documents">
+
+                            <group col="8">
+                                <field name="doc_total"     readonly="1" string="Total"/>
+                                <field name="doc_fournis"   readonly="1" string="Fournis"/>
+                                <field name="doc_manquants" readonly="1" string="Manquants"/>
+                                <button name="action_generer_documents"
+                                        type="object"
+                                        string="Régénérer"
+                                        class="btn-secondary"
+                                        invisible="doc_total != 0"/>
+                                <button name="action_valider_dossier"
+                                        type="object"
+                                        string="Valider le dossier"
+                                        class="btn-success"
+                                        invisible="dossier_valide == True"/>
+                                <button name="action_reinitialiser_dossier"
+                                        type="object"
+                                        string="Réinitialiser validation"
+                                        class="btn-secondary"
+                                        invisible="dossier_valide == False"/>
+                                <field name="dossier_valide" invisible="1"/>
+                            </group>
+
+                            <separator string="Dossier administratif"/>
+                            <field name="document_admin_ids"
+                                   context="{'default_section': 'admin'}"
+                                   nolabel="1">
+                                <list create="0" delete="0"
+                                      decoration-success="state == 'fourni'"
+                                      decoration-danger="state == 'manquant'">
+                                    <field name="name"        string="Document requis" readonly="1"/>
+                                    <field name="fichier"     filename="fichier_nom" widget="binary" string="Charger le fichier"/>
+                                    <field name="fichier_nom" string="Fichier joint" readonly="1"/>
+                                    <button name="action_supprimer_fichier"
+                                            type="object" string="Supprimer"
+                                            class="btn-sm btn-outline-danger"
+                                            invisible="state != 'fourni'"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'fourni'"
+                                           decoration-danger="state == 'manquant'"/>
+                                    <field name="section" column_invisible="1"/>
+                                </list>
+                            </field>
+
+                            <separator string="Dossier technique"/>
+                            <field name="document_tech_ids"
+                                   context="{'default_section': 'tech'}"
+                                   nolabel="1">
+                                <list create="0" delete="0"
+                                      decoration-success="state == 'fourni'"
+                                      decoration-danger="state == 'manquant'">
+                                    <field name="name"        string="Document requis" readonly="1"/>
+                                    <field name="fichier"     filename="fichier_nom" widget="binary" string="Charger le fichier"/>
+                                    <field name="fichier_nom" string="Fichier joint" readonly="1"/>
+                                    <button name="action_supprimer_fichier"
+                                            type="object" string="Supprimer"
+                                            class="btn-sm btn-outline-danger"
+                                            invisible="state != 'fourni'"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'fourni'"
+                                           decoration-danger="state == 'manquant'"/>
+                                    <field name="section" column_invisible="1"/>
+                                </list>
+                            </field>
+
+                        </page>
+
+                        <!-- ── Onglet Projets (réalisation uniquement) ────── -->
+                        <page string="Projets" name="page_projets"
+                              invisible="client_type != 'realisation'">
+                            <field name="project_id" nolabel="1">
+                                <list>
+                                    <field name="name" string="Nom du projet"/>
+                                </list>
+                                <form>
+                                    <sheet>
+                                        <div class="oe_title">
+                                            <label for="name"/>
+                                            <h1><field name="name" placeholder="Nom du projet"/></h1>
+                                        </div>
+                                        <separator string="Produits du projet"/>
+                                        <field name="line_ids" nolabel="1">
+                                            <list editable="bottom">
+                                                <field name="product_id"   string="Produit"/>
+                                                <field name="quantity"     string="Quantité"/>
+                                                <field name="unite_mesure" string="Unité"/>
+                                            </list>
+                                        </field>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECHERCHE — gica.client
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_search" model="ir.ui.view">
+        <field name="name">gica.client.search</field>
+        <field name="model">gica.client</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un client">
+                <field name="name"          string="Nom"/>
+                <field name="commercial_id" string="Commercial"/>
+                <field name="client_type"   string="Type client"/>
+                <separator/>
+                <filter name="need_agrement"      string="Agrément manquant"
+                        domain="[('need_agrement','=',True)]"/>
+                <separator/>
+                <filter name="dossier_valide"     string="Dossier validé"
+                        domain="[('dossier_valide','=',True)]"/>
+                <filter name="dossier_non_valide" string="Dossier non validé"
+                        domain="[('dossier_valide','=',False)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_type"       string="Type client"
+                            context="{'group_by':'client_type'}"/>
+                    <filter name="group_commercial" string="Commercial"
+                            context="{'group_by':'commercial_id'}"/>
+                    <filter name="group_category"   string="Catégorie"
+                            context="{'group_by':'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ACTION — gica.client
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_client" model="ir.actions.act_window">
+        <field name="name">Clients GICA</field>
+        <field name="res_model">gica.client</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gica_client_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer votre premier client GICA
+            </p>
+        </field>
+    </record>
+
+</odoo>

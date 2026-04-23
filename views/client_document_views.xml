@@ -1,0 +1,112 @@
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         LISTE — gica.client.document  (vue autonome, menu Documents)
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_document_list" model="ir.ui.view">
+        <field name="name">gica.client.document.list</field>
+        <field name="model">gica.client.document</field>
+        <field name="arch" type="xml">
+            <list string="Documents"
+                  decoration-success="state == 'fourni'"
+                  decoration-danger="state == 'manquant'">
+                <field name="client_id" optional="show"/>
+                <field name="section"/>
+                <field name="marche"/>
+                <field name="name"/>
+                <field name="fichier_nom"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'fourni'"
+                       decoration-danger="state == 'manquant'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         FORMULAIRE — gica.client.document
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_document_form" model="ir.ui.view">
+        <field name="name">gica.client.document.form</field>
+        <field name="model">gica.client.document</field>
+        <field name="arch" type="xml">
+            <form string="Document requis">
+                <sheet>
+                    <group string="Identification">
+                        <group>
+                            <field name="client_id"/>
+                            <field name="marche"/>
+                            <field name="section"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'fourni'"
+                                   decoration-danger="state == 'manquant'"/>
+                        </group>
+                    </group>
+                    <group string="Pièce jointe">
+                        <field name="fichier"
+                               filename="fichier_nom"
+                               widget="binary"
+                               string="Joindre le fichier"/>
+                        <field name="fichier_nom" string="Nom du fichier"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECHERCHE — gica.client.document
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_document_search" model="ir.ui.view">
+        <field name="name">gica.client.document.search</field>
+        <field name="model">gica.client.document</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un document">
+                <field name="name"      string="Intitulé"/>
+                <field name="client_id" string="Client"/>
+                <separator/>
+                <filter name="manquant" string="Manquants"
+                        domain="[('state','=','manquant')]"/>
+                <filter name="fourni"   string="Fournis"
+                        domain="[('state','=','fourni')]"/>
+                <separator/>
+                <filter name="local"  string="Marché local"
+                        domain="[('marche','=','local')]"/>
+                <filter name="export" string="Exportation"
+                        domain="[('marche','=','export')]"/>
+                <separator/>
+                <filter name="admin" string="Dossier administratif"
+                        domain="[('section','=','admin')]"/>
+                <filter name="tech"  string="Dossier technique"
+                        domain="[('section','=','tech')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_client"  string="Client"
+                            context="{'group_by':'client_id'}"/>
+                    <filter name="group_state"   string="État"
+                            context="{'group_by':'state'}"/>
+                    <filter name="group_section" string="Section"
+                            context="{'group_by':'section'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ACTION — gica.client.document
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_client_document" model="ir.actions.act_window">
+        <field name="name">Documents</field>
+        <field name="res_model">gica.client.document</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gica_client_document_search"/>
+        <field name="context">{'search_default_manquant': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun document — choisissez un type client sur la fiche client.
+            </p>
+        </field>
+    </record>
+
+</odoo>

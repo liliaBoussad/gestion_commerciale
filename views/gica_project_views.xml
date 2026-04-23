@@ -1,0 +1,81 @@
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         FORMULAIRE — gica.project
+         Affiché en popup depuis la fiche client et dans la liste des projets
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_project_form" model="ir.ui.view">
+        <field name="name">gica.project.form</field>
+        <field name="model">gica.project</field>
+        <field name="arch" type="xml">
+            <form string="Projet">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Nom du projet"/></h1>
+                    </div>
+                    <group>
+                        <field name="client_id" readonly="1"/>
+                    </group>
+
+                    <separator string="Produits du projet"/>
+                    <field name="line_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="product_id"  string="Produit"/>
+                            <field name="quantity"    string="Quantité"/>
+                            <field name="unite_mesure" string="Unité"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         LISTE — gica.project
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_project_list" model="ir.ui.view">
+        <field name="name">gica.project.list</field>
+        <field name="model">gica.project</field>
+        <field name="arch" type="xml">
+            <list string="Projets">
+                <field name="name"      string="Nom du projet"/>
+                <field name="client_id" string="Client"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECHERCHE — gica.project
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_project_search" model="ir.ui.view">
+        <field name="name">gica.project.search</field>
+        <field name="model">gica.project</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un projet">
+                <field name="name"      string="Nom du projet"/>
+                <field name="client_id" string="Client"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_client" string="Client"
+                            context="{'group_by':'client_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ACTION — gica.project
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_project" model="ir.actions.act_window">
+        <field name="name">Projets</field>
+        <field name="res_model">gica.project</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gica_project_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun projet — créez-en un depuis la fiche client.
+            </p>
+        </field>
+    </record>
+
+</odoo>

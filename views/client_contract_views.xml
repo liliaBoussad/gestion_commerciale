@@ -1,0 +1,208 @@
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         LISTE
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_client_contract_list" model="ir.ui.view">
+        <field name="name">gica.client.contract.list</field>
+        <field name="model">gica.client.contract</field>
+        <field name="arch" type="xml">
+            <list string="Contrats"
+                  decoration-success="state == 'en_cours'"
+                  decoration-info="state == 'actif'"
+                  decoration-warning="state == 'suspendu'"
+                  decoration-muted="state in ('expire','resilie')"
+                  decoration-primary="state == 'draft'">
+                <field name="name"/>
+                <field name="client_id"/>
+                <!-- plus de product_type/quantity/prix directs → remplacés par totaux -->
+                <field name="quantity_total_tonne"/>
+                <field name="montant_total"/>
+                <field name="mode_paiement"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'en_cours'"
+                       decoration-info="state == 'actif'"
+                       decoration-warning="state == 'suspendu'"
+                       decoration-danger="state == 'resilie'"
+                       decoration-muted="state == 'expire'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         FORMULAIRE
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_client_contract_form" model="ir.ui.view">
+        <field name="name">gica.client.contract.form</field>
+        <field name="model">gica.client.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contrat Client GICA">
+
+                <header>
+                    <button name="action_activer"
+                            string="Activer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_demarrer"
+                            string="Démarrer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'actif'"/>
+                    <button name="action_suspendre"
+                            string="Suspendre"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state not in ('actif','en_cours')"/>
+                    <button name="action_resilier"
+                            string="Résilier"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('resilie','expire','draft')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,actif,en_cours,expire"/>
+                </header>
+
+                <sheet>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+
+                    <!-- Bloc 1 : Client -->
+                    <group string="Client">
+                        <field name="client_id"/>
+                    </group>
+
+                    <!-- Bloc 2 : Prix & Paiement -->
+                    <group string="Prix et paiement">
+                        <group>
+                            <field name="montant_total" readonly="1"/>
+                            <field name="quantity_total_tonne" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="mode_paiement"/>
+                            <field name="modalite_paiement"/>
+                            <field name="delai_paiement"
+                                   invisible="mode_paiement == 'comptant'"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloc 3 : Livraison -->
+                    <group string="Livraison">
+                        <group>
+                            <field name="delai_livraison"/>
+                            <field name="lieu_livraison"/>
+                        </group>
+                        <group>
+                            <field name="adresse_livraison"
+                                   invisible="lieu_livraison == 'depart_usine'"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloc 4 : Dates -->
+                    <group string="Période du contrat">
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+
+                    <!-- Motif suspension / résiliation -->
+                    <group string="Motif"
+                           invisible="state not in ('suspendu','resilie')">
+                        <field name="motif_suspension" nolabel="1"/>
+                    </group>
+
+                    <!-- Onglets -->
+                    <notebook>
+
+                        <!-- ── Onglet Lignes produits ── -->
+                        <page string="Produits commandés">
+                            <field name="line_ids"
+                                   readonly="state in ('expire','resilie')">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_type"/>
+                                    <field name="conditionnement"/>
+                                    <field name="quantity"/>
+                                    <field name="uom"/>
+                                    <field name="quantity_tonne" readonly="1"/>
+                                    <field name="prix_unitaire"/>
+                                    <field name="montant_total" readonly="1"/>
+                                    <field name="quantity_livree" readonly="1"/>
+                                    <field name="quantity_restante" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ── Onglet Observations ── -->
+                        <page string="Observations">
+                            <field name="observations"
+                                   placeholder="Notes, clauses particulières..."/>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         RECHERCHE
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_client_contract_search" model="ir.ui.view">
+        <field name="name">gica.client.contract.search</field>
+        <field name="model">gica.client.contract</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un contrat">
+                <field name="name" string="N° Contrat"/>
+                <field name="client_id" string="Client"/>
+                <!-- recherche dans les lignes produits -->
+                <field name="line_ids" string="Produit"/>
+                <separator/>
+                <filter name="actif"    string="Actifs"    domain="[('state','=','actif')]"/>
+                <filter name="en_cours" string="En cours"  domain="[('state','=','en_cours')]"/>
+                <filter name="suspendu" string="Suspendus" domain="[('state','=','suspendu')]"/>
+                <filter name="expire"   string="Expirés"   domain="[('state','=','expire')]"/>
+                <filter name="resilie"  string="Résiliés"  domain="[('state','=','resilie')]"/>
+                <separator/>
+                <!-- filtres produit passent par les lignes -->
+                <filter name="beton"   string="GICA BÉTON"
+                        domain="[('line_ids.product_type','in',['cem2_al_425n','cem2_al_425r'])]"/>
+                <filter name="moudhad" string="GICA MOUDHAD"
+                        domain="[('line_ids.product_type','in',['cem1_425n_sr5','cem1_525n_sr5'])]"/>
+                <filter name="petrole" string="GICA PÉTROLE"
+                        domain="[('line_ids.product_type','=','well_cement_g')]"/>
+                <filter name="clinker" string="Clinker"
+                        domain="[('line_ids.product_type','=','clinker')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_client" string="Client" context="{'group_by':'client_id'}"/>
+                    <filter name="group_state"  string="Statut" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         ACTION
+    ══════════════════════════════════════════════════ -->
+    <record id="action_gica_client_contract" model="ir.actions.act_window">
+        <field name="name">Contrats</field>
+        <field name="res_model">gica.client.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gica_client_contract_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau contrat
+            </p>
+            <p>Gérez ici les contrats commerciaux avec vos clients GICA.</p>
+        </field>
+    </record>
+
+</odoo>
