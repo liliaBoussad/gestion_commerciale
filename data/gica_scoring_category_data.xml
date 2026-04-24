@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- PLATINUM -->
+    <record id="scoring_category_platinum" model="gica.scoring.category">
+        <field name="name">Platinum</field>
+        <field name="niveau">platinum</field>
+        <field name="score_minimum">90</field>
+        <field name="delai_paiement">30</field>
+        <field name="paiement_anticipe">False</field>
+        <field name="mode_cheque_certifie">True</field>
+        <field name="mode_cheque_ordinaire">True</field>
+        <field name="mode_virement">True</field>
+        <field name="mode_lettre_change">True</field>
+        <field name="mode_versement">True</field>
+        <field name="mode_cib">True</field>
+        <field name="remise_volume">True</field>
+        <field name="description">
+Score ≥ 90 pts. Vente à terme 30 jours.
+Tous les modes de paiement autorisés.
+Remise sur volume selon objectifs trimestriels.
+        </field>
+    </record>
+
+    <!-- GOLD -->
+    <record id="scoring_category_gold" model="gica.scoring.category">
+        <field name="name">Gold</field>
+        <field name="niveau">gold</field>
+        <field name="score_minimum">75</field>
+        <field name="delai_paiement">15</field>
+        <field name="paiement_anticipe">False</field>
+        <field name="mode_cheque_certifie">True</field>
+        <field name="mode_cheque_ordinaire">True</field>
+        <field name="mode_virement">True</field>
+        <field name="mode_lettre_change">False</field>
+        <field name="mode_versement">True</field>
+        <field name="mode_cib">True</field>
+        <field name="remise_volume">True</field>
+        <field name="description">
+Score ≥ 75 pts. Vente à terme 15 jours.
+Chèque certifié, ordinaire, virement, versement, CIB.
+Remise sur volume selon objectifs trimestriels.
+        </field>
+    </record>
+
+    <!-- SILVER -->
+    <record id="scoring_category_silver" model="gica.scoring.category">
+        <field name="name">Silver</field>
+        <field name="niveau">silver</field>
+        <field name="score_minimum">50</field>
+        <field name="delai_paiement">0</field>
+        <field name="paiement_anticipe">True</field>
+        <field name="mode_cheque_certifie">True</field>
+        <field name="mode_cheque_ordinaire">False</field>
+        <field name="mode_virement">True</field>
+        <field name="mode_lettre_change">False</field>
+        <field name="mode_versement">True</field>
+        <field name="mode_cib">True</field>
+        <field name="remise_volume">True</field>
+        <field name="description">
+Score ≥ 50 pts. Paiement anticipé requis.
+Chèque certifié, virement, versement, CIB.
+Remise sur volume selon objectifs trimestriels.
+        </field>
+    </record>
+
+    <!-- BRONZE -->
+    <record id="scoring_category_bronze" model="gica.scoring.category">
+        <field name="name">Bronze</field>
+        <field name="niveau">bronze</field>
+        <field name="score_minimum">0</field>
+        <field name="delai_paiement">0</field>
+        <field name="paiement_anticipe">True</field>
+        <field name="mode_cheque_certifie">True</field>
+        <field name="mode_cheque_ordinaire">False</field>
+        <field name="mode_virement">True</field>
+        <field name="mode_lettre_change">False</field>
+        <field name="mode_versement">True</field>
+        <field name="mode_cib">True</field>
+        <field name="remise_volume">True</field>
+        <field name="description">
+Score &lt; 50 pts. Paiement anticipé requis.
+Chèque certifié, virement, versement, CIB.
+Remise sur volume selon objectifs trimestriels.
+        </field>
+    </record>
+
+</odoo>

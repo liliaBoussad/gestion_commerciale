@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         gica.classification.config — Formulaire
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_classification_config_form" model="ir.ui.view">
+        <field name="name">gica.classification.config.form</field>
+        <field name="model">gica.classification.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuration Classification">
+                <sheet>
+                    <widget name="web_ribbon" title="Inactive"
+                            bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Paramètres de scoring">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="seuil_ca_par_point"       widget="monetary"/>
+                            <field name="seuil_paiement_par_point" widget="monetary"/>
+                        </group>
+                        <group string="Seuils de niveau">
+                            <field name="seuil_platinum"/>
+                            <field name="seuil_gold"/>
+                            <field name="seuil_silver"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="active"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_gica_classification_config_list" model="ir.ui.view">
+        <field name="name">gica.classification.config.list</field>
+        <field name="model">gica.classification.config</field>
+        <field name="arch" type="xml">
+            <list string="Configurations">
+                <field name="name"/>
+                <field name="seuil_ca_par_point"       widget="monetary"/>
+                <field name="seuil_paiement_par_point" widget="monetary"/>
+                <field name="seuil_platinum"/>
+                <field name="seuil_gold"/>
+                <field name="seuil_silver"/>
+                <field name="active"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_gica_classification_config" model="ir.actions.act_window">
+        <field name="name">Configuration Classification</field>
+        <field name="res_model">gica.classification.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         gica.client.classification — Formulaire
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_classification_form" model="ir.ui.view">
+        <field name="name">gica.client.classification.form</field>
+        <field name="model">gica.client.classification</field>
+        <field name="arch" type="xml">
+            <form string="Classification Client">
+                <header>
+                    <button name="action_recalculer"
+                            string="Recalculer (6 derniers mois)"
+                            type="object"
+                            class="btn-primary"/>
+                    <field name="classification" widget="statusbar"
+                           statusbar_visible="bronze,silver,gold,platinum"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="client_id"/>
+                        <h1>
+                            <!-- Éditable à la création, readonly si déjà sauvegardé -->
+                            <field name="client_id" readonly="id != False"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_classification"/>
+                            <field name="period_start"/>
+                            <field name="period_end"/>
+                            <field name="nb_mois"/>
+                        </group>
+                        <group>
+                            <field name="score_total" widget="progressbar"
+                                   options="{'max_value': 100, 'editable': false}"/>
+                            <field name="classification" invisible="1"/>
+                            <field name="currency_id"   invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Détail des Scores">
+                            <group>
+                                <group string="CA — 40 pts max">
+                                    <field name="config_x" widget="monetary" string="X utilisé"/>
+                                    <field name="ca_total"         widget="monetary"/>
+                                    <field name="ca_mensuel_moyen" widget="monetary"/>
+                                    <field name="score_ca"/>
+                                </group>
+                                <group string="Paiement — 30 pts max">
+                                    <field name="config_y" widget="monetary" string="Y utilisé"/>
+                                    <field name="montant_facture"        widget="monetary"/>
+                                    <field name="montant_paye_a_temps"   widget="monetary"/>
+                                    <field name="paiement_mensuel_moyen" widget="monetary"/>
+                                    <field name="taux_paiement" widget="float" digits="[6,2]"
+                                           string="Taux Paiement (%)"/>
+                                    <field name="score_paiement"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Enlèvement — 20 pts max">
+                                    <field name="total_bc"/>
+                                    <field name="bc_enleves_a_temps"/>
+                                    <field name="taux_enlevement" widget="float" digits="[6,2]"
+                                           string="Taux Enlèvement (%)"/>
+                                    <field name="score_enlevement"/>
+                                </group>
+                                <group string="Exclusivité — 10 pts max">
+                                    <field name="exclusivite_gica"/>
+                                    <field name="score_exclusivite"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- gica.client.classification — Liste -->
+    <record id="view_gica_client_classification_list" model="ir.ui.view">
+        <field name="name">gica.client.classification.list</field>
+        <field name="model">gica.client.classification</field>
+        <field name="arch" type="xml">
+            <list string="Classifications Clients"
+                  decoration-success="classification == 'platinum'"
+                  decoration-info="classification == 'gold'"
+                  decoration-warning="classification == 'silver'"
+                  decoration-muted="classification == 'bronze'">
+                <field name="client_id"/>
+                <field name="date_classification"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+                <field name="ca_mensuel_moyen"       widget="monetary" optional="show"/>
+                <field name="paiement_mensuel_moyen" widget="monetary" optional="show"/>
+                <field name="score_ca"/>
+                <field name="score_paiement"/>
+                <field name="score_enlevement"/>
+                <field name="score_exclusivite"/>
+                <field name="score_total" widget="progressbar"
+                       options="{'max_value': 100, 'editable': false}"/>
+                <field name="classification" widget="badge"
+                       decoration-success="classification == 'platinum'"
+                       decoration-info="classification == 'gold'"
+                       decoration-warning="classification == 'silver'"
+                       decoration-danger="classification == 'bronze'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Recherche -->
+    <record id="view_gica_client_classification_search" model="ir.ui.view">
+        <field name="name">gica.client.classification.search</field>
+        <field name="model">gica.client.classification</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="client_id"/>
+                <field name="classification"/>
+                <filter string="PLATINUM" name="platinum"
+                        domain="[('classification', '=', 'platinum')]"/>
+                <filter string="GOLD" name="gold"
+                        domain="[('classification', '=', 'gold')]"/>
+                <filter string="SILVER" name="silver"
+                        domain="[('classification', '=', 'silver')]"/>
+                <filter string="BRONZE" name="bronze"
+                        domain="[('classification', '=', 'bronze')]"/>
+                <separator/>
+                <filter string="6 derniers mois" name="last_6_months"
+                        domain="[('date_classification', '&gt;=',
+                                  (context_today() - datetime.timedelta(days=183)).strftime('%Y-%m-%d')
+                                )]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Classification" name="group_classification"
+                            context="{'group_by': 'classification'}"/>
+                    <filter string="Client" name="group_client"
+                            context="{'group_by': 'client_id'}"/>
+                    <filter string="Mois" name="group_date"
+                            context="{'group_by': 'date_classification:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action principale -->
+    <record id="action_gica_client_classification" model="ir.actions.act_window">
+        <field name="name">Classifications Clients</field>
+        <field name="res_model">gica.client.classification</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_last_6_months': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune classification trouvée</p>
+            <p>Ouvrez une fiche client et cliquez sur "Calculer la classification".</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Bouton "Calculer la classification" dans gica.client
+         Injecté dans le button_box existant (pas de header dans cette vue)
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_form_classification_button" model="ir.ui.view">
+        <field name="name">gica.client.form.classification.button</field>
+        <field name="model">gica.client</field>
+        <field name="inherit_id" ref="gestion_commerciale.view_gica_client_form"/>
+        <field name="arch" type="xml">
+            <!-- On injecte le smart button à la fin du button_box existant -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" icon="fa-bar-chart"
+                        type="object" name="action_calculer_classification">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="classification_actuelle_display"/>
+                        </span>
+                        <span class="o_stat_text">Classification</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Héritage res.partner — onglet Classification GICA
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_partner_form_gica_classification" model="ir.ui.view">
+        <field name="name">res.partner.form.gica.classification</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales_purchases']" position="after">
+                <page string="Classification GICA" invisible="not is_company">
+                    <group>
+                        <group>
+                            <field name="exclusivite_gica"/>
+                            <field name="classification_actuelle" readonly="1"/>
+                            <field name="score_actuel"            readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date_derniere_classification" readonly="1"/>
+                            <field name="delai_paiement"               readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Historique">
+                        <field name="classification_ids" nolabel="1">
+                            <list>
+                                <field name="date_classification"/>
+                                <field name="period_start"/>
+                                <field name="period_end"/>
+                                <field name="score_total"/>
+                                <field name="classification" widget="badge"
+                                       decoration-success="classification == 'platinum'"
+                                       decoration-info="classification == 'gold'"
+                                       decoration-warning="classification == 'silver'"
+                                       decoration-danger="classification == 'bronze'"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

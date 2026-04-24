@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Formulaire — gica.scoring.category
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_scoring_category_form" model="ir.ui.view">
+        <field name="name">gica.scoring.category.form</field>
+        <field name="model">gica.scoring.category</field>
+        <field name="arch" type="xml">
+            <form string="Catégorie de Scoring">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Identification">
+                            <field name="niveau" widget="badge"
+                                   decoration-success="niveau == 'platinum'"
+                                   decoration-info="niveau == 'gold'"
+                                   decoration-warning="niveau == 'silver'"
+                                   decoration-danger="niveau == 'bronze'"/>
+                            <field name="score_minimum"/>
+                        </group>
+                        <group string="Remise">
+                            <field name="remise_volume" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <!-- Délai de paiement -->
+                    <separator string="Conditions de paiement"/>
+                    <group>
+                        <group>
+                            <field name="delai_paiement"/>
+                            <field name="paiement_anticipe" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="modes_paiement_display" readonly="1"
+                                   string="Récapitulatif modes autorisés"/>
+                        </group>
+                    </group>
+
+                    <!-- Modes de paiement -->
+                    <separator string="Modes de règlement autorisés"/>
+                    <group>
+                        <group>
+                            <field name="mode_cheque_certifie"  widget="boolean_toggle"/>
+                            <field name="mode_cheque_ordinaire" widget="boolean_toggle"/>
+                            <field name="mode_virement"         widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="mode_lettre_change"    widget="boolean_toggle"/>
+                            <field name="mode_versement"        widget="boolean_toggle"/>
+                            <field name="mode_cib"              widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <separator string="Notes"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Liste — gica.scoring.category
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_scoring_category_list" model="ir.ui.view">
+        <field name="name">gica.scoring.category.list</field>
+        <field name="model">gica.scoring.category</field>
+        <field name="arch" type="xml">
+            <list string="Catégories de Scoring"
+                  decoration-success="niveau == 'platinum'"
+                  decoration-info="niveau == 'gold'"
+                  decoration-warning="niveau == 'silver'"
+                  decoration-muted="niveau == 'bronze'">
+                <field name="name"/>
+                <field name="score_minimum"/>
+                <field name="delai_paiement"        string="Délai paiement (j)"/>
+                <field name="paiement_anticipe"     widget="boolean_toggle"/>
+                <field name="modes_paiement_display" string="Modes de règlement autorisés"/>
+                <field name="remise_volume"         widget="boolean_toggle"/>
+                <field name="niveau" widget="badge"
+                       decoration-success="niveau == 'platinum'"
+                       decoration-info="niveau == 'gold'"
+                       decoration-warning="niveau == 'silver'"
+                       decoration-danger="niveau == 'bronze'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gica_scoring_category" model="ir.actions.act_window">
+        <field name="name">Catégories de Scoring</field>
+        <field name="res_model">gica.scoring.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune catégorie définie
+            </p>
+            <p>
+                Créez les 4 catégories PLATINUM, GOLD, SILVER, BRONZE
+                selon la Section 4.04 du document GICA.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Configuration par défaut -->
+    <record id="gica_classification_config_default" model="gica.classification.config">
+        <field name="name">Configuration par défaut</field>
+        <field name="seuil_ca_par_point">1000000</field>
+        <field name="seuil_paiement_par_point">1000000</field>
+        <field name="seuil_platinum">90</field>
+        <field name="seuil_gold">75</field>
+        <field name="seuil_silver">50</field>
+        <field name="active">True</field>
+        <field name="note">
+X = 1 MDA : 1 point de CA pour chaque million de DA de CA mensuel moyen (max 40 pts).
+Y = 1 MDA : 1 point de paiement pour chaque million de DA payé à temps par mois (max 30 pts).
+        </field>
+    </record>
+
+    <!-- Cron hebdomadaire -->
+    <record id="cron_classify_clients" model="ir.cron">
+        <field name="name">GICA : Classification Clients Semestrielle</field>
+        <field name="model_id" search="[('model', '=', 'gica.client.classification')]" model="ir.model"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_classify_all_clients()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active">True</field>
+        <field name="nextcall" eval="(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d 01:00:00')"/>
+    </record>
+
+</odoo>

@@ -1,63 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
 
-        <record id="action_gica_client" model="ir.actions.act_window">
-            <field name="name">Clients</field>
-            <field name="res_model">gica.client</field>
-            <field name="view_mode">list,form</field>
-        </record>
-
+        <!-- ══════════════════════════════════════════════════
+             Menu racine GICA
+             ══════════════════════════════════════════════════ -->
         <menuitem id="menu_gica_root"
                   name="GICA"
                   sequence="10"/>
 
+        <!-- ── Clients ── -->
         <menuitem id="menu_gica_client"
                   name="Clients"
                   parent="menu_gica_root"
                   action="action_gica_client"
                   sequence="1"/>
 
-
-
-      <menuitem id="menu_gica_client_contract"
-          name="Contrats"
-          parent="menu_gica_root"
-          action="action_gica_client_contract"  
-          sequence="2"/>
-
-        <menuitem id="menu_gica_client_agrement"
-          name="Agréments"
-          parent="menu_gica_root"
-          action="action_gica_client_agrement"
-          sequence="3"/>
-
-        <menuitem id="menu_gica_documents"
-          name="Documents"
-          parent="menu_gica_root"
-          action="action_gica_client_document"
-          sequence="4"/> 
-
-        <menuitem id="menu_gica_project"
-          name="Projets"
-          parent="menu_gica_root"
-          action="action_gica_project"
-          sequence="5"/>  
-
-        <!-- Menu -->
-        <menuitem id="menu_gica_product"
-                  name="Produits"
+        <!-- ── Contrats ── -->
+        <menuitem id="menu_gica_client_contract"
+                  name="Contrats"
                   parent="menu_gica_root"
-                  action="action_gica_product"
-                  sequence="6"/>
-        
-        <menuitem id="menu_gica_root"
-              name="GICA"
-              sequence="10"/>
+                  action="action_gica_client_contract"
+                  sequence="2"/>
 
+        <!-- ── Agréments ── -->
+        <menuitem id="menu_gica_client_agrement"
+                  name="Agréments"
+                  parent="menu_gica_root"
+                  action="action_gica_client_agrement"
+                  sequence="3"/>
+
+        <!-- ── Documents ── -->
+        <menuitem id="menu_gica_documents"
+                  name="Documents"
+                  parent="menu_gica_root"
+                  action="action_gica_client_document"
+                  sequence="4"/>
+
+        <!-- ── Projets ── -->
+        <menuitem id="menu_gica_project"
+                  name="Projets"
+                  parent="menu_gica_root"
+                  action="action_gica_project"
+                  sequence="5"/>
+
+        <!-- ── Catalogue (sous-menu) ── -->
         <menuitem id="menu_gica_catalogue"
                   name="Catalogue"
                   parent="menu_gica_root"
-                  sequence="10"/>
+                  sequence="6"/>
 
         <menuitem id="menu_gica_product"
                   name="Produits"
@@ -65,7 +56,29 @@
                   action="action_gica_product"
                   sequence="10"/>
 
-       
+        <!-- ── Classifications (sous-menu) ── -->
+        <menuitem id="menu_gica_classifications"
+                  name="Classifications"
+                  parent="menu_gica_root"
+                  sequence="7"/>
+
+        <menuitem id="menu_gica_client_classification"
+                  name="Classifications Clients"
+                  parent="menu_gica_classifications"
+                  action="action_gica_client_classification"
+                  sequence="10"/>
+
+        <menuitem id="menu_gica_classification_config"
+                  name="Configuration Scoring"
+                  parent="menu_gica_classifications"
+                  action="action_gica_classification_config"
+                  sequence="20"/>
+
+        <menuitem id="menu_gica_scoring_category"
+                  name="Catégories de Scoring"
+                  parent="menu_gica_classifications"
+                  action="action_gica_scoring_category"
+                  sequence="30"/>
 
     </data>
 </odoo>

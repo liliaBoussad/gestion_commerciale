@@ -97,6 +97,59 @@ class GicaClient(models.Model):
 
    
 
+
+
+
+# ── À ajouter dans la classe GicaClient de gica_client.py ────────────────
+# Colle ces deux blocs juste avant la ligne :
+#   class GicaClientAgrementMixin(models.Model):
+
+    # Champ affichage classification dans le smart button
+    classification_actuelle_display = fields.Char(
+        string='Classification',
+        compute='_compute_classification_display',
+    )
+
+    @api.depends('partner_id.classification_actuelle')
+    def _compute_classification_display(self):
+        LABELS = {
+            'platinum': 'PLATINUM',
+            'gold':     'GOLD',
+            'silver':   'SILVER',
+            'bronze':   'BRONZE',
+            False:      'N/A',
+        }
+        for rec in self:
+            rec.classification_actuelle_display = LABELS.get(
+                rec.partner_id.classification_actuelle, 'N/A'
+            )
+
+    def action_calculer_classification(self):
+        """
+        Bouton dans la fiche gica.client :
+        Calcule la classification pour les 6 derniers mois
+        et ouvre l'enregistrement créé.
+        """
+        from dateutil.relativedelta import relativedelta
+        self.ensure_one()
+        today        = fields.Date.today()
+        period_end   = today
+        period_start = today - relativedelta(months=6)
+
+        record = self.env['gica.client.classification'].calculate_client_classification(
+            self.id, period_start, period_end
+        )
+
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Classification',
+            'res_model': 'gica.client.classification',
+            'view_mode': 'form',
+            'res_id':    record.id,
+        }
+
+   
+
    # ─────────────────────────────────────────────────────────────────────────────
 # À AJOUTER à la fin de gica_client.py
 # Héritage gica.client — lien avec les agréments

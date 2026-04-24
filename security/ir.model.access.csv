@@ -14,3 +14,11 @@ access_gica_product_manager,gica.product.manager,model_gica_product,base.group_s
 access_gica_product_price_user,gica.product.price.user,model_gica_product_price,base.group_user,1,0,0,0
 access_gica_product_price_manager,gica.product.price.manager,model_gica_product_price,base.group_system,1,1,1,1
 
+access_gica_classification_config_manager,gica.classification.config manager,model_gica_classification_config,base.group_system,1,1,1,1
+access_gica_classification_config_user,gica.classification.config user,model_gica_classification_config,,1,0,0,0
+access_gica_client_classification_manager,gica.client.classification manager,model_gica_client_classification,base.group_system,1,1,1,1
+access_gica_client_classification_user,gica.client.classification user,model_gica_client_classification,,1,0,0,0
+
+
+access_gica_scoring_category_manager,gica.scoring.category manager,model_gica_scoring_category,base.group_system,1,1,1,1
+access_gica_scoring_category_user,gica.scoring.category user,model_gica_scoring_category,base.group_user,1,0,0,0

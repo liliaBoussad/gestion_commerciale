@@ -8,12 +8,19 @@
     'data': [
         'security/ir.model.access.csv',
         'data/products_data.xml',
+        'data/gica_scoring_category_data.xml',  
+        'data/gica_classification_data.xml',
+
+
         'views/gica_client_views.xml',  
         'views/client_contract_views.xml', 
         'views/client_agrement_views.xml',  
         'views/client_document_views.xml',  
         'views/gica_project_views.xml',
         'views/product_views.xml',
+        'views/gica_classification_views.xml',
+        'views/gica_scoring_category_views.xml', 
+
         'views/menu.xml',                    
   
     ],
