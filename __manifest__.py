@@ -10,7 +10,7 @@
         'data/products_data.xml',
         'data/gica_scoring_category_data.xml',  
         'data/gica_classification_data.xml',
-
+        'data/gica_commandes_data.xml',        
 
         'views/gica_client_views.xml',  
         'views/client_contract_views.xml', 
@@ -20,6 +20,8 @@
         'views/product_views.xml',
         'views/gica_classification_views.xml',
         'views/gica_scoring_category_views.xml', 
+        'views/gica_commande_globale_views.xml',
+        'views/gica_bon_commande_views.xml',  
 
         'views/menu.xml',                    
   

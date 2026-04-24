@@ -22,3 +22,12 @@ access_gica_client_classification_user,gica.client.classification user,model_gic
 
 access_gica_scoring_category_manager,gica.scoring.category manager,model_gica_scoring_category,base.group_system,1,1,1,1
 access_gica_scoring_category_user,gica.scoring.category user,model_gica_scoring_category,base.group_user,1,0,0,0
+
+access_gica_commande_globale_manager,gica.commande.globale manager,model_gica_commande_globale,base.group_system,1,1,1,1
+access_gica_commande_globale_user,gica.commande.globale user,model_gica_commande_globale,base.group_user,1,1,1,0
+access_gica_commande_globale_line_manager,gica.commande.globale.line manager,model_gica_commande_globale_line,base.group_system,1,1,1,1
+access_gica_commande_globale_line_user,gica.commande.globale.line user,model_gica_commande_globale_line,base.group_user,1,1,1,0
+access_gica_bon_commande_manager,gica.bon.commande manager,model_gica_bon_commande,base.group_system,1,1,1,1
+access_gica_bon_commande_user,gica.bon.commande user,model_gica_bon_commande,base.group_user,1,1,1,0
+access_gica_bon_commande_line_manager,gica.bon.commande.line manager,model_gica_bon_commande_line,base.group_system,1,1,1,1
+access_gica_bon_commande_line_user,gica.bon.commande.line user,model_gica_bon_commande_line,base.group_user,1,1,1,0
