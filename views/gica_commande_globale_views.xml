@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Formulaire — gica.commande.globale
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_commande_globale_form" model="ir.ui.view">
+        <field name="name">gica.commande.globale.form</field>
+        <field name="model">gica.commande.globale</field>
+        <field name="arch" type="xml">
+            <form string="Commande Globale">
+                <header>
+                    <button name="action_demarrer"
+                            string="Démarrer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'nouveau'"/>
+                    <button name="action_annuler"
+                            string="Annuler"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('cloturee', 'annulee')"/>
+                    <button name="action_remettre_nouveau"
+                            string="Remettre en Nouveau"
+                            type="object"
+                            invisible="state != 'annulee'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="nouveau,en_cours,cloturee"/>
+                </header>
+                <sheet>
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-shopping-cart"
+                                type="object" name="action_voir_bons_commande"
+                                invisible="bon_commande_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="bon_commande_count"/>
+                                </span>
+                                <span class="o_stat_text">Bons de Commande</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations">
+                            <field name="client_id"/>
+                            <field name="contrat_id"/>
+                            <field name="date_commande"/>
+                            <field name="date_expiration"/>
+                        </group>
+                        <group string="Paiement">
+                            <field name="mode_paiement"/>
+                            <field name="modalite_paiement"/>
+                            <field name="devise"/>
+                        </group>
+                    </group>
+
+                    <!-- Barre de progression -->
+                    <group string="Avancement">
+                        <group>
+                            <field name="quantity_total_tonne" string="Qté totale (T)"/>
+                            <field name="quantity_enlevee"     string="Qté enlevée (T)"/>
+                            <field name="quantity_restante"    string="Qté restante (T)"/>
+                        </group>
+                        <group>
+                            <field name="taux_realisation" widget="progressbar"
+                                   options="{'max_value': 100, 'editable': false}"
+                                   string="Taux de réalisation"/>
+                            <field name="montant_total" string="Montant total (DA)"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Produits">
+                            <field name="line_ids"
+                                   readonly="state in ('cloturee', 'annulee')">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_type"/>
+                                    <field name="conditionnement"/>
+                                    <field name="quantity_tonne"  string="Qté totale (T)"/>
+                                    <field name="quantity_enlevee" string="Enlevée (T)"/>
+                                    <field name="quantity_restante" string="Restante (T)"/>
+                                    <field name="prix_unitaire"   string="Prix unit. (DA)"/>
+                                    <field name="montant_total"   string="Montant (DA)"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Bons de Commande">
+                            <field name="bon_commande_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date_prevue_enlevement"/>
+                                    <field name="quantity_total_tonne" string="Qté (T)"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'enleve'"
+                                           decoration-info="state == 'valide'"
+                                           decoration-warning="state == 'en_attente'"
+                                           decoration-danger="state == 'annule'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observations">
+                            <field name="observations"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         Liste — gica.commande.globale
+         ══════════════════════════════════════════════════════ -->
+    <record id="view_gica_commande_globale_list" model="ir.ui.view">
+        <field name="name">gica.commande.globale.list</field>
+        <field name="model">gica.commande.globale</field>
+        <field name="arch" type="xml">
+            <list string="Commandes Globales"
+                  decoration-success="state == 'cloturee'"
+                  decoration-info="state == 'en_cours'"
+                  decoration-muted="state == 'annulee'">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="contrat_id"/>
+                <field name="date_commande"/>
+                <field name="date_expiration"/>
+                <field name="quantity_total_tonne" string="Qté totale (T)"/>
+                <field name="quantity_enlevee"     string="Enlevée (T)"/>
+                <field name="quantity_restante"    string="Restante (T)"/>
+                <field name="taux_realisation" widget="progressbar"
+                       options="{'max_value': 100, 'editable': false}"/>
+                <field name="montant_total" string="Montant (DA)"/>
+                <field name="bon_commande_count" string="BC"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'cloturee'"
+                       decoration-info="state == 'en_cours'"
+                       decoration-warning="state == 'nouveau'"
+                       decoration-danger="state == 'annulee'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Recherche -->
+    <record id="view_gica_commande_globale_search" model="ir.ui.view">
+        <field name="name">gica.commande.globale.search</field>
+        <field name="model">gica.commande.globale</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="contrat_id"/>
+                <filter string="Nouveau"    name="nouveau"   domain="[('state','=','nouveau')]"/>
+                <filter string="En cours"   name="en_cours"  domain="[('state','=','en_cours')]"/>
+                <filter string="Clôturée"   name="cloturee"  domain="[('state','=','cloturee')]"/>
+                <filter string="Annulée"    name="annulee"   domain="[('state','=','annulee')]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Client"  name="group_client"
+                            context="{'group_by': 'client_id'}"/>
+                    <filter string="Statut"  name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Mois"    name="group_date"
+                            context="{'group_by': 'date_commande:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gica_commande_globale" model="ir.actions.act_window">
+        <field name="name">Commandes Globales</field>
+        <field name="res_model">gica.commande.globale</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune commande globale
+            </p>
+            <p>
+                Créez une commande globale depuis un contrat client actif.
+            </p>
+        </field>
+    </record>
+
+</odoo>

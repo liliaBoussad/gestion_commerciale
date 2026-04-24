@@ -80,5 +80,21 @@
                   action="action_gica_scoring_category"
                   sequence="30"/>
 
+        <menuitem id="menu_gica_commandes"
+                  name="Commandes"
+                  parent="menu_gica_root"
+                  sequence="3"/>
+ 
+        <menuitem id="menu_gica_commande_globale"
+                  name="Commandes Globales"
+                  parent="menu_gica_commandes"
+                  action="action_gica_commande_globale"
+                  sequence="10"/>
+ 
+        <menuitem id="menu_gica_bon_commande"
+                  name="Bons de Commande"
+                  parent="menu_gica_commandes"
+                  action="action_gica_bon_commande"
+                  sequence="20"/>        
     </data>
 </odoo>
