@@ -12,8 +12,9 @@ class GicaClientAgrement(models.Model):
     # ── Identification ────────────────────────────────────────────────────────
     name = fields.Char(
         string="Numéro d'agrément",
-        required=True,
+        readonly=True,
         copy=False,
+        default='Nouveau',
         tracking=True,
     )
 
@@ -120,6 +121,19 @@ class GicaClientAgrement(models.Model):
             )
 
     # ── Contraintes ───────────────────────────────────────────────────────────
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'Nouveau') == 'Nouveau':
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'gica.client.agrement'
+                ) or 'Nouveau'
+        return super().create(vals_list)
+
+
+
+
+
     @api.constrains('date_debut', 'date_expiration')
     def _check_dates(self):
         for rec in self:

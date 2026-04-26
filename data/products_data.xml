@@ -1,236 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
+<odoo noupdate="1">
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CEM I 42.5 N-LH/SR5                                            -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════
+         Produits GICA — product.template
+         Chaque produit = 1 type de ciment + 1 conditionnement
+         ══════════════════════════════════════════════════════ -->
 
-        <record id="product_cem_i_425_sac_50kg_fardelise" model="gica.product">
-            <field name="name">CEM I 42.5 N-LH/SR5 SAC 50KG FARDELISÉ</field>
-            <field name="code">CEM_I_425_SAC_50_F</field>
-            <field name="type_ciment">cem_i_425_crs</field>
-            <field name="packaging_type">sac_50kg_fardelise</field>
-        </record>
-        <record id="price_cem_i_425_sac_50kg_fardelise_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_425_sac_50kg_fardelise"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">9460.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">2.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé -->
+    <record id="product_cem_i_425_sac_50kg_fardelise" model="product.template">
+        <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_425_crs</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">9460.00</field>
+        <field name="default_code">CEM_I_425_SAC_50_F</field>
+    </record>
 
-        <record id="product_cem_i_425_sac_50kg" model="gica.product">
-            <field name="name">CEM I 42.5 N-LH/SR5 SAC 50KG</field>
-            <field name="code">CEM_I_425_SAC_50</field>
-            <field name="type_ciment">cem_i_425_crs</field>
-            <field name="packaging_type">sac_50kg</field>
-        </record>
-        <record id="price_cem_i_425_sac_50kg_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_425_sac_50kg"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">9300.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">4.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM I 42.5 N-LH/SR5 — Sac 50 kg -->
+    <record id="product_cem_i_425_sac_50kg" model="product.template">
+        <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_425_crs</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">9300.00</field>
+        <field name="default_code">CEM_I_425_SAC_50</field>
+    </record>
 
-        <record id="product_cem_i_425_vrac" model="gica.product">
-            <field name="name">CEM I 42.5 N-LH/SR5 VRAC</field>
-            <field name="code">CEM_I_425_VRAC</field>
-            <field name="type_ciment">cem_i_425_crs</field>
-            <field name="packaging_type">vrac</field>
-        </record>
-        <record id="price_cem_i_425_vrac_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_425_vrac"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">8600.00</field>
-            <field name="remise_sodismac">10.0</field>
-            <field name="remise_other_client">5.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM I 42.5 N-LH/SR5 — Vrac -->
+    <record id="product_cem_i_425_vrac" model="product.template">
+        <field name="name">CEM I 42.5 N-LH/SR5 — Vrac</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_425_crs</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">8600.00</field>
+        <field name="default_code">CEM_I_425_VRAC</field>
+    </record>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CEM I 52.5 N-SR5                                               -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CEM I 52.5 N-SR5 — Sac 50 kg Fardelisé -->
+    <record id="product_cem_i_525_sac_50kg_fardelise" model="product.template">
+        <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg Fardelisé</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_525</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">7250.00</field>
+        <field name="default_code">CEM_I_525_SAC_50_F</field>
+    </record>
 
-        <record id="product_cem_i_525_sac_50kg_fardelise" model="gica.product">
-            <field name="name">CEM I 52.5 N-SR5 SAC 50KG FARDELISÉ</field>
-            <field name="code">CEM_I_525_SAC_50_F</field>
-            <field name="type_ciment">cem_i_525</field>
-            <field name="packaging_type">sac_50kg_fardelise</field>
-        </record>
-        <record id="price_cem_i_525_sac_50kg_fardelise_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_525_sac_50kg_fardelise"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">7250.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">2.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM I 52.5 N-SR5 — Sac 50 kg -->
+    <record id="product_cem_i_525_sac_50kg" model="product.template">
+        <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_525</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">7100.00</field>
+        <field name="default_code">CEM_I_525_SAC_50</field>
+    </record>
 
-        <record id="product_cem_i_525_sac_50kg" model="gica.product">
-            <field name="name">CEM I 52.5 N-SR5 SAC 50KG</field>
-            <field name="code">CEM_I_525_SAC_50</field>
-            <field name="type_ciment">cem_i_525</field>
-            <field name="packaging_type">sac_50kg</field>
-        </record>
-        <record id="price_cem_i_525_sac_50kg_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_525_sac_50kg"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">7100.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">4.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM I 52.5 N-SR5 — Vrac -->
+    <record id="product_cem_i_525_vrac" model="product.template">
+        <field name="name">CEM I 52.5 N-SR5 — Vrac</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_i_525</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">6300.00</field>
+        <field name="default_code">CEM_I_525_VRAC</field>
+    </record>
 
-        <record id="product_cem_i_525_vrac" model="gica.product">
-            <field name="name">CEM I 52.5 N-SR5 VRAC</field>
-            <field name="code">CEM_I_525_VRAC</field>
-            <field name="type_ciment">cem_i_525</field>
-            <field name="packaging_type">vrac</field>
-        </record>
-        <record id="price_cem_i_525_vrac_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_i_525_vrac"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">6300.00</field>
-            <field name="remise_sodismac">10.0</field>
-            <field name="remise_other_client">5.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM II/A-L 32.5 N — Sac 25 kg -->
+    <record id="product_cem_ii_325_sac_25kg" model="product.template">
+        <field name="name">CEM II/A-L 32.5 N — Sac 25 kg</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_325</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">5750.00</field>
+        <field name="default_code">CEM_II_325_SAC_25</field>
+    </record>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CEM II/A-L 32.5 N                                              -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CEM II/A-L 32.5 N — Sac 25 kg Fardelisé -->
+    <record id="product_cem_ii_325_sac_25kg_fardelise" model="product.template">
+        <field name="name">CEM II/A-L 32.5 N — Sac 25 kg Fardelisé</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_325</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">6000.00</field>
+        <field name="default_code">CEM_II_325_SAC_25_F</field>
+    </record>
 
-        <record id="product_cem_ii_325_sac_25kg" model="gica.product">
-            <field name="name">CEM II/A-L 32.5 N SAC 25KG</field>
-            <field name="code">CEM_II_325_SAC_25</field>
-            <field name="type_ciment">cem_ii_325</field>
-            <field name="packaging_type">sac_25kg</field>
-        </record>
-        <record id="price_cem_ii_325_sac_25kg_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_ii_325_sac_25kg"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">5750.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">4.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM II/A-L 42.5 N — Sac 25 kg -->
+    <record id="product_cem_ii_425n_sac_25kg" model="product.template">
+        <field name="name">CEM II/A-L 42.5 N — Sac 25 kg</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_425_n</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">6600.00</field>
+        <field name="default_code">CEM_II_425N_SAC_25</field>
+    </record>
 
-        <record id="product_cem_ii_325_sac_25kg_fardelise" model="gica.product">
-            <field name="name">CEM II/A-L 32.5 N SAC 25KG FARDELISÉ</field>
-            <field name="code">CEM_II_325_SAC_25_F</field>
-            <field name="type_ciment">cem_ii_325</field>
-            <field name="packaging_type">sac_25kg_fardelise</field>
-        </record>
-        <record id="price_cem_ii_325_sac_25kg_fardelise_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_ii_325_sac_25kg_fardelise"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">6000.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">2.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- CEM II/A-L 42.5 N — Sac 50 kg Fardelisé -->
+    <record id="product_cem_ii_425n_sac_50kg_fardelise" model="product.template">
+        <field name="name">CEM II/A-L 42.5 N — Sac 50 kg Fardelisé</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_425_n</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">6495.00</field>
+        <field name="default_code">CEM_II_425N_SAC_50_F</field>
+    </record>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CEM II/A-L 42.5 N                                              -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CEM II/A-L 42.5 N — Vrac -->
+    <record id="product_cem_ii_425n_vrac" model="product.template">
+        <field name="name">CEM II/A-L 42.5 N — Vrac</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_425_n</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">5648.72</field>
+        <field name="default_code">CEM_II_425N_VRAC</field>
+    </record>
 
-        <record id="product_cem_ii_425n_sac_25kg" model="gica.product">
-            <field name="name">CEM II/A-L 42.5 N SAC 25KG</field>
-            <field name="code">CEM_II_425N_SAC_25</field>
-            <field name="type_ciment">cem_ii_425_n</field>
-            <field name="packaging_type">sac_25kg</field>
-        </record>
-        <record id="price_cem_ii_425n_sac_25kg_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_ii_425n_sac_25kg"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">6600.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">4.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- Well Cement Class G HSR — Big-Bag Sortie Usine -->
+    <record id="product_well_cement_big_bag_usine" model="product.template">
+        <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Sortie Usine</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">well_cement_g</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">9500.00</field>
+        <field name="default_code">WELL_G_BB_USINE</field>
+    </record>
 
-        <record id="product_cem_ii_425n_sac_50kg_fardelise" model="gica.product">
-            <field name="name">CEM II/A-L 42.5 N SAC 50KG FARDELISÉ</field>
-            <field name="code">CEM_II_425N_SAC_50_F</field>
-            <field name="type_ciment">cem_ii_425_n</field>
-            <field name="packaging_type">sac_50kg_fardelise</field>
-        </record>
-        <record id="price_cem_ii_425n_sac_50kg_fardelise_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_ii_425n_sac_50kg_fardelise"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">6495.00</field>
-            <field name="remise_sodismac">7.0</field>
-            <field name="remise_other_client">2.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- Well Cement Class G HSR — Big-Bag Rendu Site -->
+    <record id="product_well_cement_big_bag_site" model="product.template">
+        <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Rendu Site</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">well_cement_g</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">12500.00</field>
+        <field name="default_code">WELL_G_BB_SITE</field>
+    </record>
 
-        <record id="product_cem_ii_425n_vrac" model="gica.product">
-            <field name="name">CEM II/A-L 42.5 N VRAC</field>
-            <field name="code">CEM_II_425N_VRAC</field>
-            <field name="type_ciment">cem_ii_425_n</field>
-            <field name="packaging_type">vrac</field>
-        </record>
-        <record id="price_cem_ii_425n_vrac_2025" model="gica.product.price">
-            <field name="product_id" ref="product_cem_ii_425n_vrac"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">5648.72</field>
-            <field name="remise_sodismac">10.0</field>
-            <field name="remise_other_client">5.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
+    <!-- Well Cement Class G HSR — Vrac -->
+    <record id="product_well_cement_vrac" model="product.template">
+        <field name="name">Well Cement Class G HSR — Vrac</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">well_cement_g</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">8600.00</field>
+        <field name="default_code">WELL_G_VRAC</field>
+    </record>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  Well Cement Class G HSR                                         -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Clinker — Vrac -->
+    <record id="product_clinker_vrac" model="product.template">
+        <field name="name">Clinker — Vrac</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">clinker</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="list_price">0.00</field>
+        <field name="default_code">CLINKER_VRAC</field>
+    </record>
 
-        <record id="product_well_cement_big_bag_usine" model="gica.product">
-            <field name="name">Well Cement Class G HSR BIG-BAG 1.5T SORTIE USINE</field>
-            <field name="code">WELL_G_BB_USINE</field>
-            <field name="type_ciment">well_cement_g</field>
-            <field name="packaging_type">big_bag_scaek</field>
-        </record>
-        <record id="price_well_cement_big_bag_usine_2025" model="gica.product.price">
-            <field name="product_id" ref="product_well_cement_big_bag_usine"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">9500.00</field>
-            <field name="remise_sodismac">0.0</field>
-            <field name="remise_other_client">0.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
-
-        <record id="product_well_cement_big_bag_site" model="gica.product">
-            <field name="name">Well Cement Class G HSR BIG-BAG 1.5T RENDU SUR SITE</field>
-            <field name="code">WELL_G_BB_SITE</field>
-            <field name="type_ciment">well_cement_g</field>
-            <field name="packaging_type">big_bag_scaek</field>
-        </record>
-        <record id="price_well_cement_big_bag_site_2025" model="gica.product.price">
-            <field name="product_id" ref="product_well_cement_big_bag_site"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">12500.00</field>
-            <field name="remise_sodismac">0.0</field>
-            <field name="remise_other_client">0.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
-
-        <record id="product_well_cement_vrac" model="gica.product">
-            <field name="name">Well Cement Class G HSR VRAC</field>
-            <field name="code">WELL_G_VRAC</field>
-            <field name="type_ciment">well_cement_g</field>
-            <field name="packaging_type">vrac</field>
-        </record>
-        <record id="price_well_cement_vrac_2025" model="gica.product.price">
-            <field name="product_id" ref="product_well_cement_vrac"/>
-            <field name="date_start">2025-01-01</field>
-            <field name="price_base">8600.00</field>
-            <field name="remise_sodismac">0.0</field>
-            <field name="remise_other_client">0.0</field>
-            <field name="remise_export">10.0</field>
-        </record>
-
-    </data>
 </odoo>

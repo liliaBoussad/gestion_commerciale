@@ -1,34 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════
-         Formulaire — gica.commande.globale
-         ══════════════════════════════════════════════════════ -->
+    <!-- Formulaire — gica.commande.globale -->
     <record id="view_gica_commande_globale_form" model="ir.ui.view">
         <field name="name">gica.commande.globale.form</field>
         <field name="model">gica.commande.globale</field>
         <field name="arch" type="xml">
             <form string="Commande Globale">
                 <header>
-                    <button name="action_demarrer"
-                            string="Démarrer"
-                            type="object"
-                            class="btn-primary"
-                            invisible="state != 'nouveau'"/>
-                    <button name="action_annuler"
-                            string="Annuler"
-                            type="object"
-                            class="btn-danger"
-                            invisible="state in ('cloturee', 'annulee')"/>
-                    <button name="action_remettre_nouveau"
-                            string="Remettre en Nouveau"
-                            type="object"
-                            invisible="state != 'annulee'"/>
+                    <button name="action_demarrer" string="Démarrer" type="object"
+                            class="btn-primary" invisible="state != 'nouveau'"/>
+                    <button name="action_annuler" string="Annuler" type="object"
+                            class="btn-danger" invisible="state in ('cloturee', 'annulee')"/>
+                    <button name="action_remettre_nouveau" string="Remettre en Nouveau"
+                            type="object" invisible="state != 'annulee'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="nouveau,en_cours,cloturee"/>
                 </header>
                 <sheet>
-                    <!-- Smart buttons -->
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" icon="fa-shopping-cart"
                                 type="object" name="action_voir_bons_commande"
@@ -60,7 +49,6 @@
                         </group>
                     </group>
 
-                    <!-- Barre de progression -->
                     <group string="Avancement">
                         <group>
                             <field name="quantity_total_tonne" string="Qté totale (T)"/>
@@ -77,17 +65,19 @@
 
                     <notebook>
                         <page string="Produits">
-                            <field name="line_ids"
-                                   readonly="state in ('cloturee', 'annulee')">
+                            <field name="line_ids" readonly="state in ('cloturee', 'annulee')">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="product_type"/>
-                                    <field name="conditionnement"/>
-                                    <field name="quantity_tonne"  string="Qté totale (T)"/>
-                                    <field name="quantity_enlevee" string="Enlevée (T)"/>
-                                    <field name="quantity_restante" string="Restante (T)"/>
-                                    <field name="prix_unitaire"   string="Prix unit. (DA)"/>
-                                    <field name="montant_total"   string="Montant (DA)"/>
+                                    <field name="sequence"         widget="handle"/>
+                                    <!-- ✅ product_id remplace product_type + conditionnement -->
+                                    <field name="product_id"
+                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
+                                    <field name="product_name"     readonly="1"/>
+                                    <field name="conditionnement"  readonly="1"/>
+                                    <field name="quantity_tonne"   string="Qté totale (T)"/>
+                                    <field name="quantity_enlevee" string="Enlevée (T)" readonly="1"/>
+                                    <field name="quantity_restante" string="Restante (T)" readonly="1"/>
+                                    <field name="prix_unitaire"    string="Prix unit. (DA)"/>
+                                    <field name="montant_total"    string="Montant (DA)" readonly="1"/>
                                 </list>
                             </field>
                         </page>
@@ -115,9 +105,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════
-         Liste — gica.commande.globale
-         ══════════════════════════════════════════════════════ -->
+    <!-- Liste -->
     <record id="view_gica_commande_globale_list" model="ir.ui.view">
         <field name="name">gica.commande.globale.list</field>
         <field name="model">gica.commande.globale</field>
@@ -156,17 +144,14 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="contrat_id"/>
-                <filter string="Nouveau"    name="nouveau"   domain="[('state','=','nouveau')]"/>
-                <filter string="En cours"   name="en_cours"  domain="[('state','=','en_cours')]"/>
-                <filter string="Clôturée"   name="cloturee"  domain="[('state','=','cloturee')]"/>
-                <filter string="Annulée"    name="annulee"   domain="[('state','=','annulee')]"/>
+                <filter string="Nouveau"  name="nouveau"  domain="[('state','=','nouveau')]"/>
+                <filter string="En cours" name="en_cours" domain="[('state','=','en_cours')]"/>
+                <filter string="Clôturée" name="cloturee" domain="[('state','=','cloturee')]"/>
+                <filter string="Annulée"  name="annulee"  domain="[('state','=','annulee')]"/>
                 <group expand="0" string="Grouper par">
-                    <filter string="Client"  name="group_client"
-                            context="{'group_by': 'client_id'}"/>
-                    <filter string="Statut"  name="group_state"
-                            context="{'group_by': 'state'}"/>
-                    <filter string="Mois"    name="group_date"
-                            context="{'group_by': 'date_commande:month'}"/>
+                    <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Statut" name="group_state"  context="{'group_by': 'state'}"/>
+                    <filter string="Mois"   name="group_date"   context="{'group_by': 'date_commande:month'}"/>
                 </group>
             </search>
         </field>
@@ -178,12 +163,8 @@
         <field name="res_model">gica.commande.globale</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Aucune commande globale
-            </p>
-            <p>
-                Créez une commande globale depuis un contrat client actif.
-            </p>
+            <p class="o_view_nocontent_smiling_face">Aucune commande globale</p>
+            <p>Créez une commande globale depuis un contrat client actif.</p>
         </field>
     </record>
 
