@@ -1,38 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════
-         Formulaire — gica.bon.commande
-         ══════════════════════════════════════════════════════ -->
+    <!-- Formulaire — gica.bon.commande -->
     <record id="view_gica_bon_commande_form" model="ir.ui.view">
         <field name="name">gica.bon.commande.form</field>
         <field name="model">gica.bon.commande</field>
         <field name="arch" type="xml">
             <form string="Bon de Commande">
                 <header>
-                    <button name="action_soumettre"
-                            string="Soumettre à validation"
-                            type="object"
-                            class="btn-primary"
-                            invisible="state != 'brouillon'"/>
-                    <button name="action_valider"
-                            string="Valider"
-                            type="object"
-                            class="btn-success"
-                            invisible="state != 'en_attente'"/>
-                    <button name="action_marquer_enleve"
-                            string="Marquer Enlevé"
-                            type="object"
-                            class="btn-primary"
-                            invisible="state != 'valide'"/>
-                    <button name="action_remettre_brouillon"
-                            string="Remettre en Brouillon"
-                            type="object"
-                            invisible="state not in ('en_attente', 'annule')"/>
-                    <button name="action_annuler"
-                            string="Annuler"
-                            type="object"
-                            class="btn-danger"
+                    <button name="action_soumettre" string="Soumettre à validation"
+                            type="object" class="btn-primary" invisible="state != 'brouillon'"/>
+                    <button name="action_valider" string="Valider"
+                            type="object" class="btn-success" invisible="state != 'en_attente'"/>
+                    <button name="action_marquer_enleve" string="Marquer Enlevé"
+                            type="object" class="btn-primary" invisible="state != 'valide'"/>
+                    <button name="action_remettre_brouillon" string="Remettre en Brouillon"
+                            type="object" invisible="state not in ('en_attente', 'annule')"/>
+                    <button name="action_annuler" string="Annuler"
+                            type="object" class="btn-danger"
                             invisible="state in ('enleve', 'annule')"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="brouillon,en_attente,valide,enleve"/>
@@ -45,7 +30,7 @@
                     <group>
                         <group string="Informations">
                             <field name="commande_globale_id"/>
-                            <field name="client_id" readonly="1"/>
+                            <field name="client_id"  readonly="1"/>
                             <field name="contrat_id" readonly="1"/>
                         </group>
                         <group string="Dates">
@@ -69,8 +54,10 @@
                                    readonly="state in ('valide', 'enleve', 'annule')">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_type"/>
-                                    <field name="conditionnement"/>
+                                    <!-- ✅ product_id remplace product_type + conditionnement -->
+                                    <field name="product_id"
+                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
+                                    <field name="conditionnement"    readonly="1"/>
                                     <field name="quantity_tonne"     string="Qté demandée (T)"/>
                                     <field name="quantity_disponible" string="Disponible BCG (T)"
                                            readonly="1"/>
@@ -91,9 +78,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════
-         Liste — gica.bon.commande
-         ══════════════════════════════════════════════════════ -->
+    <!-- Liste -->
     <record id="view_gica_bon_commande_list" model="ir.ui.view">
         <field name="name">gica.bon.commande.list</field>
         <field name="model">gica.bon.commande</field>
@@ -129,25 +114,19 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="commande_globale_id"/>
-                <filter string="Brouillon"       name="brouillon"
-                        domain="[('state','=','brouillon')]"/>
-                <filter string="En attente"      name="en_attente"
-                        domain="[('state','=','en_attente')]"/>
-                <filter string="Validé"          name="valide"
-                        domain="[('state','=','valide')]"/>
-                <filter string="Enlevé"          name="enleve"
-                        domain="[('state','=','enleve')]"/>
-                <filter string="Annulé"          name="annule"
-                        domain="[('state','=','annule')]"/>
+                <filter string="Brouillon"  name="brouillon"  domain="[('state','=','brouillon')]"/>
+                <filter string="En attente" name="en_attente" domain="[('state','=','en_attente')]"/>
+                <filter string="Validé"     name="valide"     domain="[('state','=','valide')]"/>
+                <filter string="Enlevé"     name="enleve"     domain="[('state','=','enleve')]"/>
+                <filter string="Annulé"     name="annule"     domain="[('state','=','annule')]"/>
                 <separator/>
-                <filter string="À valider"       name="a_valider"
-                        domain="[('state','=','en_attente')]"/>
+                <filter string="À valider"  name="a_valider"  domain="[('state','=','en_attente')]"/>
                 <group expand="0" string="Grouper par">
-                    <filter string="Client"      name="group_client"
+                    <filter string="Client" name="group_client"
                             context="{'group_by': 'client_id'}"/>
-                    <filter string="Statut"      name="group_state"
+                    <filter string="Statut" name="group_state"
                             context="{'group_by': 'state'}"/>
-                    <filter string="Mois"        name="group_date"
+                    <filter string="Mois"   name="group_date"
                             context="{'group_by': 'date_prevue_enlevement:month'}"/>
                 </group>
             </search>
@@ -161,12 +140,8 @@
         <field name="view_mode">list,form</field>
         <field name="context">{'search_default_a_valider': 0}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Aucun bon de commande
-            </p>
-            <p>
-                Les bons de commande sont créés depuis une commande globale.
-            </p>
+            <p class="o_view_nocontent_smiling_face">Aucun bon de commande</p>
+            <p>Les bons de commande sont créés depuis une commande globale.</p>
         </field>
     </record>
 

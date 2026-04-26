@@ -4,7 +4,7 @@
     'summary': 'Gestion des clients GICA',
     'author': 'GICA Project',
     'category': 'Sales',
-    'depends': ['base', 'mail','product'],
+    'depends': ['base', 'mail','sale','product','sale_management'],
     'data': [
         'security/ir.model.access.csv',
         'data/products_data.xml',

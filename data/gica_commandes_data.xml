@@ -21,4 +21,24 @@
         <field name="company_id" eval="False"/>
     </record>
 
+
+    <!-- Séquence Contrat : CT/YYYY/XXXX -->
+    <record id="seq_gica_client_contract" model="ir.sequence">
+        <field name="name">Contrat Client GICA</field>
+        <field name="code">gica.client.contract</field>
+        <field name="prefix">CT/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Séquence Agrément : AGR/YYYY/XXXX -->
+    <record id="seq_gica_client_agrement" model="ir.sequence">
+        <field name="name">Agrément Client GICA</field>
+        <field name="code">gica.client.agrement</field>
+        <field name="prefix">AGR/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>
