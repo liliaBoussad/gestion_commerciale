@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_gica_client_nature_form" model="ir.ui.view">
+        <field name="name">gica.client.nature.form</field>
+        <field name="model">gica.client.nature</field>
+        <field name="arch" type="xml">
+            <form string="Nature des clients">
+                <sheet>
+                    <group>
+                        <group string="Identification">
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="type_nature"/>
+                        </group>
+                        <group string="Documents à fournir">
+                            <field name="document_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <group string="Champs Requis">
+                        <group>
+                            <field name="nis_obligatoire"/>
+                            <field name="nif_obligatoire"/>
+                            <field name="ai_obligatoire"/>
+                            <field name="rc_obligatoire"/>
+                        </group>
+                        <group>
+                            <field name="nin_obligatoire"/>
+                            <field name="rib_obligatoire"/>
+                            <field name="swift_obligatoire"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="est_filiale_gica"/>
+                        <field name="est_don_charite"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_gica_client_nature_list" model="ir.ui.view">
+        <field name="name">gica.client.nature.list</field>
+        <field name="model">gica.client.nature</field>
+        <field name="arch" type="xml">
+            <list string="Natures des clients">
+                <field name="complete_name"/>
+                <field name="document_ids" widget="many2many_tags"/>
+                <field name="type_nature" widget="badge"/>
+                <field name="est_filiale_gica"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_gica_client_nature" model="ir.actions.act_window">
+        <field name="name">Nature des clients</field>
+        <field name="res_model">gica.client.nature</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

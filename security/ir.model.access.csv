@@ -21,3 +21,4 @@ access_gica_bon_commande_manager,gica.bon.commande manager,model_gica_bon_comman
 access_gica_bon_commande_user,gica.bon.commande user,model_gica_bon_commande,base.group_user,1,1,1,0
 access_gica_bon_commande_line_manager,gica.bon.commande.line manager,model_gica_bon_commande_line,base.group_system,1,1,1,1
 access_gica_bon_commande_line_user,gica.bon.commande.line user,model_gica_bon_commande_line,base.group_user,1,1,1,0
+access_gica_client_nature,access_gica_client_nature,model_gica_client_nature,base.group_user,1,1,1,1

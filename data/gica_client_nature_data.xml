@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="nature_personne_morale" model="gica.client.nature">
+            <field name="name">Personne Morale</field>
+            <field name="type_nature">utilise</field>
+            <field name="nis_obligatoire">True</field>
+            <field name="nif_obligatoire">True</field>
+            <field name="rc_obligatoire">True</field>
+            <field name="rib_obligatoire">True</field>
+        </record>
+        <record id="nature_personne_physique" model="gica.client.nature">
+            <field name="name">Personne Physique</field>
+            <field name="type_nature">utilise</field>
+            <field name="nin_obligatoire">True</field>
+        </record>
+        <record id="nature_autres_clients" model="gica.client.nature">
+            <field name="name">Autres Clients</field>
+            <field name="type_nature">vue</field>
+        </record>
+        <record id="nature_association" model="gica.client.nature">
+            <field name="name">Association</field>
+            <field name="parent_id" ref="nature_autres_clients"/>
+            <field name="type_nature">utilise</field>
+        </record>
+        <record id="nature_association_religieuse" model="gica.client.nature">
+            <field name="name">Associations religieuses</field>
+            <field name="parent_id" ref="nature_autres_clients"/>
+            <field name="type_nature">utilise</field>
+        </record>
+        <record id="nature_collectivite_locale" model="gica.client.nature">
+            <field name="name">Collectivité locale</field>
+            <field name="parent_id" ref="nature_autres_clients"/>
+            <field name="type_nature">utilise</field>
+        </record>
+        <record id="nature_institution_etat" model="gica.client.nature">
+            <field name="name">Institution d'État</field>
+            <field name="parent_id" ref="nature_autres_clients"/>
+            <field name="type_nature">utilise</field>
+        </record>
+        <record id="nature_cas_particuliers" model="gica.client.nature">
+            <field name="name">Cas Particuliers</field>
+            <field name="type_nature">vue</field>
+        </record>
+        <record id="nature_auto_constructeur" model="gica.client.nature">
+            <field name="name">Auto-constructeurs</field>
+            <field name="parent_id" ref="nature_cas_particuliers"/>
+            <field name="type_nature">utilise</field>
+            <field name="nin_obligatoire">True</field>
+        </record>
+        <record id="nature_filiale_gica" model="gica.client.nature">
+            <field name="name">Filiales du Groupe GICA</field>
+            <field name="parent_id" ref="nature_cas_particuliers"/>
+            <field name="type_nature">utilise</field>
+            <field name="est_filiale_gica">True</field>
+            <field name="nis_obligatoire">True</field>
+            <field name="nif_obligatoire">True</field>
+            <field name="rc_obligatoire">True</field>
+        </record>
+    </data>
+</odoo>

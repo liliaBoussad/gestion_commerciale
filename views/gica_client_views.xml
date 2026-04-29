@@ -3,13 +3,18 @@
     <!-- ══════════════════════════════════════════════════════════════════════
          LISTE — gica.client
     ══════════════════════════════════════════════════════════════════════════ -->
-    <record id="view_gica_client_list" model="ir.ui.view">
-        <field name="name">gica.client.list</field>
-        <field name="model">gica.client</field>
-        <field name="arch" type="xml">
-            <list string="Clients GICA">
+  <record id="view_gica_client_list" model="ir.ui.view">
+    <field name="name">gica.client.list</field>
+    <field name="model">gica.client</field>
+    <field name="arch" type="xml">
+
+        <list string="Clients GICA">
                 <field name="name"/>
                 <field name="client_type"/>
+            
+                <field name="nature_id"/>
+            
+            
                 <field name="sale_type"/>
                 <field name="commercial_id"/>
                 <field name="phone"/>
@@ -24,8 +29,9 @@
                 <field name="doc_total"      string="Docs total"/>
                 <field name="dossier_valide" widget="boolean_toggle"/>
             </list>
-        </field>
-    </record>
+
+    </field>
+</record>
 
     <!-- ══════════════════════════════════════════════════════════════════════
          FORMULAIRE — gica.client
@@ -65,6 +71,7 @@
                         </button>
 
                         <!-- Smart button Agrément — visible seulement pour les 3 types -->
+                        
                         <button class="oe_stat_button" icon="fa-certificate"
                                 type="object" name="action_voir_agrements"
                                 invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
@@ -75,8 +82,10 @@
                                 <span class="o_stat_text">Agrément(s)</span>
                             </div>
                         </button>
+                        
 
                     </div>
+                    
 
                     <!-- ══════════════════════════════════════════════════════
                          BANDEAU ALERTE — agrément manquant
@@ -107,11 +116,19 @@
 
                     <!-- ── Infos principales ──────────────────────────────── -->
                     <group>
-                        <group string="Informations client">
-                            <field name="client_type"/>
-                            <field name="sale_type"/>
-                            <field name="commercial_id"/>
-                        </group>
+                       <group string="Informations client">
+                             <field name="client_type"/>
+    
+                             <!-- Nature du client avec filtrage automatique -->
+                              <field name="nature_id" 
+                                string="Nature du client"
+                                      domain="[('type_nature', '=', 'utilise')]"
+                                       options="{'no_create': True, 'no_open': True}"/>
+
+                              <field name="sale_type"/>
+                              <field name="commercial_id"/>
+                      </group> 
+                        
                         <group string="Coordonnées">
                             <field name="phone"/>
                             <field name="mobile"/>

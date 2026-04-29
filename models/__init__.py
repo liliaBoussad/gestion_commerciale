@@ -10,4 +10,5 @@ from . import gica_client_classification
 from . import res_partner
 from . import gica_commande_globale
 from . import gica_bon_commande 
+from . import gica_client_nature
 

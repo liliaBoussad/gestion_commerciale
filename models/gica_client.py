@@ -1,4 +1,3 @@
-# models/gica_client.py
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
@@ -147,6 +146,51 @@ class GicaClient(models.Model):
             'view_mode': 'form',
             'res_id':    record.id,
         }
+##########
+
+ # ── Nature du client ──────────────────────────────────────────────────────
+        # ── Nature du client ──────────────────────────────────────────────────────
+    nature_id = fields.Many2one(
+        'gica.client.nature',
+        string="Nature du client",
+        tracking=True,
+    )
+
+    # Filtrage dynamique selon le type de client
+    @api.onchange('client_type')
+    def _onchange_client_type_nature(self):
+        """Filtre automatiquement les natures compatibles selon le type client"""
+        if not self.client_type:
+            domain = [('type_nature', '=', 'utilise')]
+        elif self.client_type in ('realisation', 'investisseur', 'promoteur', 'transformateur',
+                                  'broyage', 'revendeur', 'rev_agree', 'distributeur',
+                                  'conditionneur', 'exportateur'):
+            # Standard : Personne Morale + Personne Physique
+            domain = [
+                ('type_nature', '=', 'utilise'),
+                ('parent_id', '=', False)
+            ]
+        elif self.client_type == 'auto_const':
+            # Seulement Auto-constructeurs
+            domain = [
+                ('type_nature', '=', 'utilise'),
+                ('parent_id.name', '=', 'Cas Particuliers'),
+                ('name', '=', 'Auto-constructeurs')
+            ]
+        elif self.client_type == 'autres':
+            # Sous "Autres Clients"
+            domain = [
+                ('type_nature', '=', 'utilise'),
+                ('parent_id.name', '=', 'Autres Clients')
+            ]
+        else:
+            domain = [('type_nature', '=', 'utilise')]
+
+        # Réinitialise la nature si elle n'est plus valide
+        if self.nature_id and not self.env['gica.client.nature'].search_count(
+            [('id', '=', self.nature_id.id)] + domain
+        ):
+            self.nature_id = False
 
    
 

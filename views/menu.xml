@@ -95,6 +95,11 @@
                   name="Bons de Commande"
                   parent="menu_gica_commandes"
                   action="action_gica_bon_commande"
-                  sequence="20"/>        
+                  sequence="20"/>   
+        <menuitem id="menu_gica_client_nature"
+          name="Nature des clients"
+          parent="menu_gica_root"
+          action="action_gica_client_nature"
+          sequence="8"/>    
     </data>
 </odoo>
