@@ -3,24 +3,20 @@
     <!-- ══════════════════════════════════════════════════════════════════════
          LISTE — gica.client
     ══════════════════════════════════════════════════════════════════════════ -->
-  <record id="view_gica_client_list" model="ir.ui.view">
-    <field name="name">gica.client.list</field>
-    <field name="model">gica.client</field>
-    <field name="arch" type="xml">
-
-        <list string="Clients GICA">
+    <record id="view_gica_client_list" model="ir.ui.view">
+        <field name="name">gica.client.list</field>
+        <field name="model">gica.client</field>
+        <field name="arch" type="xml">
+            <list string="Clients GICA">
                 <field name="name"/>
                 <field name="client_type"/>
-            
                 <field name="nature_id"/>
-            
-            
                 <field name="sale_type"/>
                 <field name="commercial_id"/>
                 <field name="phone"/>
                 <field name="email"/>
-                <field name="agrement_numero"   string="N° Agrément"  optional="show"/>
-                <field name="agrement_statut"   string="Statut agrém." optional="show"
+                <field name="agrement_numero"  string="N° Agrément" optional="show"/>
+                <field name="agrement_statut"  string="Statut agrém." optional="show"
                        widget="badge"
                        decoration-success="agrement_statut == 'actif'"
                        decoration-danger="agrement_statut in ('expire','retire')"
@@ -29,9 +25,8 @@
                 <field name="doc_total"      string="Docs total"/>
                 <field name="dossier_valide" widget="boolean_toggle"/>
             </list>
-
-    </field>
-</record>
+        </field>
+    </record>
 
     <!-- ══════════════════════════════════════════════════════════════════════
          FORMULAIRE — gica.client
@@ -43,12 +38,8 @@
             <form string="Client GICA">
                 <sheet>
 
-                    <!-- ══════════════════════════════════════════════════════
-                         SMART BUTTONS
-                    ══════════════════════════════════════════════════════════ -->
+                    <!-- SMART BUTTONS -->
                     <div class="oe_button_box" name="button_box">
-
-                        <!-- Smart button Documents -->
                         <button class="oe_stat_button" icon="fa-folder-open"
                                 type="object" name="action_valider_dossier"
                                 invisible="dossier_valide == True">
@@ -69,9 +60,6 @@
                                 <span class="o_stat_text">Dossier validé</span>
                             </div>
                         </button>
-
-                        <!-- Smart button Agrément — visible seulement pour les 3 types -->
-                        
                         <button class="oe_stat_button" icon="fa-certificate"
                                 type="object" name="action_voir_agrements"
                                 invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
@@ -82,16 +70,9 @@
                                 <span class="o_stat_text">Agrément(s)</span>
                             </div>
                         </button>
-                        
-
                     </div>
-                    
 
-                    <!-- ══════════════════════════════════════════════════════
-                         BANDEAU ALERTE — agrément manquant
-                         Affiché quand le type nécessite un agrément
-                         mais qu'il n'en existe pas encore d'actif
-                    ══════════════════════════════════════════════════════════ -->
+                    <!-- BANDEAU ALERTE agrément manquant -->
                     <div class="alert alert-warning o_form_warning"
                          invisible="not need_agrement">
                         <span>
@@ -104,31 +85,28 @@
                                 class="btn btn-warning btn-sm ms-3"
                                 icon="fa-plus"/>
                     </div>
-                    <!-- Champs invisibles nécessaires pour les conditions -->
+
                     <field name="need_agrement"   invisible="1"/>
                     <field name="agrement_statut" invisible="1"/>
 
-                    <!-- ── Nom ────────────────────────────────────────────── -->
+                    <!-- Nom -->
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name" placeholder="Nom du client"/></h1>
                     </div>
 
-                    <!-- ── Infos principales ──────────────────────────────── -->
+                    <!-- Infos principales -->
                     <group>
-                       <group string="Informations client">
-                             <field name="client_type"/>
-    
-                             <!-- Nature du client avec filtrage automatique -->
-                              <field name="nature_id" 
-                                string="Nature du client"
-                                      domain="[('type_nature', '=', 'utilise')]"
-                                       options="{'no_create': True, 'no_open': True}"/>
-
-                              <field name="sale_type"/>
-                              <field name="commercial_id"/>
-                      </group> 
-                        
+                        <group string="Informations client">
+                            <field name="client_type"/>
+                            <field name="nature_domain" invisible="1"/>
+                            <field name="nature_id"
+                                   string="Nature du client"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   domain="nature_domain"/>
+                            <field name="sale_type"/>
+                            <field name="commercial_id"/>
+                        </group>
                         <group string="Coordonnées">
                             <field name="phone"/>
                             <field name="mobile"/>
@@ -139,11 +117,11 @@
                         </group>
                     </group>
 
-                    <!-- ── Bloc Agrément (visible seulement pour les 3 types) ── -->
+                    <!-- Bloc Agrément -->
                     <group string="Agrément en cours"
                            invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
                         <group>
-                            <field name="agrement_numero"    readonly="1"/>
+                            <field name="agrement_numero"     readonly="1"/>
                             <field name="agrement_expiration" readonly="1"/>
                         </group>
                         <group>
@@ -159,14 +137,10 @@
                         </group>
                     </group>
 
-                    <!-- ── Scoring ────────────────────────────────────────── -->
-                    
-
                     <notebook>
 
-                        <!-- ── Onglet Documents ──────────────────────────── -->
-                        <page string="Documents du dossier" name="page_documents">
-
+                        <!-- Onglet Documents client -->
+                        <page string="Documents client" name="page_documents">
                             <group col="8">
                                 <field name="doc_total"     readonly="1" string="Total"/>
                                 <field name="doc_fournis"   readonly="1" string="Fournis"/>
@@ -189,13 +163,11 @@
                                 <field name="dossier_valide" invisible="1"/>
                             </group>
 
-                            <separator string="Dossier administratif"/>
-                            <field name="document_admin_ids"
-                                   context="{'default_section': 'admin'}"
-                                   nolabel="1">
+                            <field name="document_ids" nolabel="1">
                                 <list create="0" delete="0"
                                       decoration-success="state == 'fourni'"
                                       decoration-danger="state == 'manquant'">
+                                    
                                     <field name="name"        string="Document requis" readonly="1"/>
                                     <field name="fichier"     filename="fichier_nom" widget="binary" string="Charger le fichier"/>
                                     <field name="fichier_nom" string="Fichier joint" readonly="1"/>
@@ -206,34 +178,11 @@
                                     <field name="state" widget="badge"
                                            decoration-success="state == 'fourni'"
                                            decoration-danger="state == 'manquant'"/>
-                                    <field name="section" column_invisible="1"/>
                                 </list>
                             </field>
-
-                            <separator string="Dossier technique"/>
-                            <field name="document_tech_ids"
-                                   context="{'default_section': 'tech'}"
-                                   nolabel="1">
-                                <list create="0" delete="0"
-                                      decoration-success="state == 'fourni'"
-                                      decoration-danger="state == 'manquant'">
-                                    <field name="name"        string="Document requis" readonly="1"/>
-                                    <field name="fichier"     filename="fichier_nom" widget="binary" string="Charger le fichier"/>
-                                    <field name="fichier_nom" string="Fichier joint" readonly="1"/>
-                                    <button name="action_supprimer_fichier"
-                                            type="object" string="Supprimer"
-                                            class="btn-sm btn-outline-danger"
-                                            invisible="state != 'fourni'"/>
-                                    <field name="state" widget="badge"
-                                           decoration-success="state == 'fourni'"
-                                           decoration-danger="state == 'manquant'"/>
-                                    <field name="section" column_invisible="1"/>
-                                </list>
-                            </field>
-
                         </page>
 
-                        <!-- ── Onglet Projets (réalisation uniquement) ────── -->
+                        <!-- Onglet Projets -->
                         <page string="Projets" name="page_projets"
                               invisible="client_type != 'realisation'">
                             <field name="project_id" nolabel="1">
