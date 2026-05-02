@@ -101,5 +101,75 @@
           parent="menu_gica_root"
           action="action_gica_client_nature"
           sequence="8"/>    
-    </data>
+<!-- ══════════════════════════════════════════════════
+     Intégration Ventes — tout sous "Clients"
+     ══════════════════════════════════════════════════ -->
+
+         <menuitem id="menu_ventes_clients_root"
+          name="Clients"
+          parent="sale.sale_menu_root"
+          sequence="20"/>
+
+         <menuitem id="menu_ventes_gica_client"
+          name="Clients GICA"
+          parent="menu_ventes_clients_root"
+          action="action_gica_client"
+          sequence="1"/>
+
+         <menuitem id="menu_ventes_gica_agrement"
+          name="Agréments"
+          parent="menu_ventes_clients_root"
+          action="action_gica_client_agrement"
+          sequence="2"/>
+
+         <menuitem id="menu_ventes_gica_contrat"
+          name="Contrats"
+          parent="menu_ventes_clients_root"
+          action="action_gica_client_contract"
+          sequence="3"/>
+
+          <menuitem id="menu_ventes_gica_documents"
+          name="Documents"
+          parent="menu_ventes_clients_root"
+          action="action_gica_client_document"
+          sequence="4"/>
+
+          <menuitem id="menu_ventes_gica_projets"
+          name="Projets"
+          parent="menu_ventes_clients_root"
+          action="action_gica_project"
+          sequence="5"/>
+
+         <menuitem id="menu_ventes_gica_classifications_root"
+          name="Classifications"
+          parent="menu_ventes_clients_root"
+          sequence="6"/>
+
+         <menuitem id="menu_ventes_gica_classification"
+          name="Classifications Clients"
+          parent="menu_ventes_gica_classifications_root"
+          action="action_gica_client_classification"
+          sequence="1"/>
+
+         <menuitem id="menu_ventes_gica_classification_config"
+          name="Configuration Scoring"
+          parent="menu_ventes_gica_classifications_root"
+          action="action_gica_classification_config"
+          sequence="2"/>
+
+         <menuitem id="menu_ventes_gica_scoring_category"
+          name="Catégories de Scoring"
+          parent="menu_ventes_gica_classifications_root"
+          action="action_gica_scoring_category"
+          sequence="3"/>
+
+         <menuitem id="menu_ventes_ciment_nature"
+          name="Nature des clients"
+          parent="menu_ventes_clients_root"
+          action="action_gica_client_nature"
+          sequence="7"/>
+
+
+          
+     </data>
 </odoo>
