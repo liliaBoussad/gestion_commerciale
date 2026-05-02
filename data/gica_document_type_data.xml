@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Administratif -->
+        <record id="doc_type_statuts" model="gica.document.type">
+            <field name="name">Copie des statuts</field>
+            <field name="section">admin</field>
+            <field name="sequence">1</field>
+        </record>
+
+        <record id="doc_type_registre" model="gica.document.type">
+            <field name="name">Copie du Registre de commerce</field>
+            <field name="section">admin</field>
+            <field name="sequence">2</field>
+        </record>
+
+        <record id="doc_type_rib" model="gica.document.type">
+            <field name="name">Relevé d'Identité Bancaire (RIB)</field>
+            <field name="section">admin</field>
+            <field name="sequence">3</field>
+        </record>
+
+        <record id="doc_type_identite" model="gica.document.type">
+            <field name="name">Copie de la Pièce d'identité</field>
+            <field name="section">admin</field>
+            <field name="sequence">4</field>
+        </record>
+
+        <record id="doc_type_agrement" model="gica.document.type">
+            <field name="name">Agrément</field>
+            <field name="section">admin</field>
+            <field name="sequence">5</field>
+        </record>
+
+        <record id="doc_type_statuts_asso" model="gica.document.type">
+            <field name="name">Status de l'association</field>
+            <field name="section">admin</field>
+            <field name="sequence">6</field>
+        </record>
+
+        <record id="doc_type_nif" model="gica.document.type">
+            <field name="name">Carte d'Identification Fiscale (NIF)</field>
+            <field name="section">admin</field>
+            <field name="sequence">7</field>
+        </record>
+
+        <record id="doc_type_nis" model="gica.document.type">
+            <field name="name">Carte Statistique (NIS)</field>
+            <field name="section">admin</field>
+            <field name="sequence">8</field>
+        </record>
+
+        <!-- Technique -->
+        <record id="doc_type_permis" model="gica.document.type">
+            <field name="name">Copie du permis de construire</field>
+            <field name="section">tech</field>
+            <field name="sequence">1</field>
+        </record>
+
+        <record id="doc_type_cahier" model="gica.document.type">
+            <field name="name">Cahier des charges</field>
+            <field name="section">tech</field>
+            <field name="sequence">2</field>
+        </record>
+
+        <record id="doc_type_bon_commande" model="gica.document.type">
+            <field name="name">Bon de commande</field>
+            <field name="section">tech</field>
+            <field name="sequence">3</field>
+        </record>
+
+        <record id="doc_type_contrat" model="gica.document.type">
+            <field name="name">Contrat de vente</field>
+            <field name="section">tech</field>
+            <field name="sequence">4</field>
+        </record>
+
+    </data>
+</odoo>

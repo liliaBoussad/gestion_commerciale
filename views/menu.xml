@@ -96,5 +96,13 @@
                   parent="menu_gica_commandes"
                   action="action_gica_bon_commande"
                   sequence="20"/>        
+    
+        <menuitem id="menu_gica_document_type"
+                  name="Documents à fournir"
+                  parent="menu_gica_root"
+                  action="action_gica_document_type"
+                  sequence="50"/>
+    
     </data>
+
 </odoo>
