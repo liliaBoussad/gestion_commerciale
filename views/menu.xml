@@ -102,6 +102,13 @@
                   parent="menu_gica_root"
                   action="action_gica_document_type"
                   sequence="50"/>
+
+
+        <menuitem id="menu_gica_client_category"
+                   name="Catégorie des clients"
+                   parent="menu_gica_root"  
+                   action="action_gica_client_category"
+                   sequence="10"/>         
     
     </data>
 

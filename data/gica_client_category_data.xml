@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ── Entreprise de réalisation ─────────────────────────────────── -->
+        <record id="cat_realisation" model="gica.client.category">
+            <field name="name">Entreprise de réalisation</field>
+            <field name="client_type">realisation</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">1</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_statuts')),
+                (4, ref('gestion_commerciale.doc_type_registre')),
+                (4, ref('gestion_commerciale.doc_type_nif')),
+                (4, ref('gestion_commerciale.doc_type_nis')),
+                (4, ref('gestion_commerciale.doc_type_identite')),
+            ]"/>
+        </record>
+
+        <!-- ── Investisseur ──────────────────────────────────────────────── -->
+        <record id="cat_investisseur" model="gica.client.category">
+            <field name="name">Investisseur</field>
+            <field name="client_type">investisseur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">2</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_permis')),
+                (4, ref('gestion_commerciale.doc_type_bon_commande')),
+            ]"/>
+        </record>
+
+        <!-- ── Promoteur immobilier ──────────────────────────────────────── -->
+        <record id="cat_promoteur" model="gica.client.category">
+            <field name="name">Promoteur immobilier</field>
+            <field name="client_type">promoteur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">3</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_permis')),
+                (4, ref('gestion_commerciale.doc_type_bon_commande')),
+            ]"/>
+        </record>
+
+        <!-- ── Transformateur de ciment ──────────────────────────────────── -->
+        <record id="cat_transformateur" model="gica.client.category">
+            <field name="name">Transformateur de ciment</field>
+            <field name="client_type">transformateur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">4</field>
+        </record>
+
+        <!-- ── Centre de broyage ─────────────────────────────────────────── -->
+        <record id="cat_broyage" model="gica.client.category">
+            <field name="name">Centre de broyage</field>
+            <field name="client_type">broyage</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">5</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_cahier')),
+            ]"/>
+        </record>
+
+        <!-- ── Revendeur ─────────────────────────────────────────────────── -->
+        <record id="cat_revendeur" model="gica.client.category">
+            <field name="name">Revendeur</field>
+            <field name="client_type">revendeur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">6</field>
+        </record>
+
+        <!-- ── Revendeur agréé ───────────────────────────────────────────── -->
+        <record id="cat_rev_agree" model="gica.client.category">
+            <field name="name">Revendeur agréé</field>
+            <field name="client_type">rev_agree</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">True</field>
+            <field name="sequence">7</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_cahier')),
+                (4, ref('gestion_commerciale.doc_type_bon_commande')),
+            ]"/>
+        </record>
+
+        <!-- ── Distributeur officiel ─────────────────────────────────────── -->
+        <record id="cat_distributeur" model="gica.client.category">
+            <field name="name">Distributeur officiel</field>
+            <field name="client_type">distributeur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">True</field>
+            <field name="sequence">8</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_cahier')),
+                (4, ref('gestion_commerciale.doc_type_bon_commande')),
+            ]"/>
+        </record>
+
+        <!-- ── Conditionneur ─────────────────────────────────────────────── -->
+        <record id="cat_conditionneur" model="gica.client.category">
+            <field name="name">Conditionneur</field>
+            <field name="client_type">conditionneur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">True</field>
+            <field name="sequence">9</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_cahier')),
+                (4, ref('gestion_commerciale.doc_type_bon_commande')),
+            ]"/>
+        </record>
+
+        <!-- ── Exportateur ───────────────────────────────────────────────── -->
+        <record id="cat_exportateur" model="gica.client.category">
+            <field name="name">Exportateur</field>
+            <field name="client_type">exportateur</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- ── Auto-constructeur ─────────────────────────────────────────── -->
+        <record id="cat_auto_const" model="gica.client.category">
+            <field name="name">Auto-constructeur</field>
+            <field name="client_type">auto_const</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">11</field>
+            <field name="document_ids" eval="[
+                (4, ref('gestion_commerciale.doc_type_permis')),
+            ]"/>
+        </record>
+
+        <!-- ── Autres clients ────────────────────────────────────────────── -->
+        <record id="cat_autres" model="gica.client.category">
+            <field name="name">Autres clients</field>
+            <field name="client_type">autres</field>
+            <field name="marche">local</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">12</field>
+        </record>
+
+        <!-- ── Fabricants de ciment étrangers ───────────────────────────── -->
+        <record id="cat_fab_etr" model="gica.client.category">
+            <field name="name">Fabricants de ciment étrangers</field>
+            <field name="client_type">fab_etr</field>
+            <field name="marche">international</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">13</field>
+        </record>
+
+        <!-- ── Traders internationaux ────────────────────────────────────── -->
+        <record id="cat_trader" model="gica.client.category">
+            <field name="name">Traders internationaux</field>
+            <field name="client_type">trader</field>
+            <field name="marche">international</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">14</field>
+        </record>
+
+        <!-- ── Entreprises étrangères ────────────────────────────────────── -->
+        <record id="cat_ent_etr" model="gica.client.category">
+            <field name="name">Entreprises étrangères</field>
+            <field name="client_type">ent_etr</field>
+            <field name="marche">international</field>
+            <field name="need_agrement">False</field>
+            <field name="sequence">15</field>
+        </record>
+
+    </data>
+</odoo>

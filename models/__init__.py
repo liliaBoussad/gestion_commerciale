@@ -5,6 +5,7 @@ from . import client_agrement
 from . import gica_project
 from . import gica_client_document
 from . import gica_document_type
+from . import gica_client_category
 
 from . import product
 from . import gica_scoring_category 

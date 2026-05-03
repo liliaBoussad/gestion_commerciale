@@ -21,7 +21,7 @@ NATURE_PAR_TYPE = {
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
-    
+
     # ── Identification GICA ───────────────────────────────────────────────
     client_type = fields.Selection([
         ('realisation',    'Entreprise de réalisation'),
@@ -51,12 +51,13 @@ class ResPartner(models.Model):
         ('comptant', 'Comptant'),
         ('terme',    'Vente à terme'),
     ], string='Type de vente', default='comptant', tracking=True)
-    
+
     is_gica_client = fields.Boolean(
         string='Client GICA',
         compute='_compute_is_gica_client',
         store=True,
     )
+
     # ── Agrément ──────────────────────────────────────────────────────────
     AGREMENT_TYPES = ['distributeur', 'conditionneur', 'rev_agree']
 
@@ -173,25 +174,35 @@ class ResPartner(models.Model):
                 partner.classification_actuelle or '', 0
             )
 
-    # ── Onchange ──────────────────────────────────────────────────────────
+    # ── Computed ──────────────────────────────────────────────────────────
     @api.depends('client_type')
     def _compute_is_gica_client(self):
         for rec in self:
             rec.is_gica_client = bool(rec.client_type)
 
-            
+    # ── Onchange ──────────────────────────────────────────────────────────
     @api.onchange('client_type')
     def _onchange_client_type(self):
-        """Réinitialise nature. Auto-sélection si une seule nature possible."""
+        """Réinitialise nature et documents. Auto-sélection si une seule nature possible."""
         self.nature_client = False
+        self.document_ids = [(5, 0, 0)]
         if self.client_type:
             natures = NATURE_PAR_TYPE.get(self.client_type, [])
             if len(natures) == 1:
                 self.nature_client = natures[0]
+                # Une seule nature → générer directement sans attendre onchange nature
+                self._generer_documents_templates()
 
     @api.onchange('nature_client')
     def _onchange_nature_client(self):
-        """Génère les documents dès que nature est choisie."""
+        """Génère les documents dès que nature est choisie manuellement."""
+        if not self.client_type or not self.nature_client:
+            return
+        self._generer_documents_templates()
+
+    # ── Génération documents ──────────────────────────────────────────────
+    def _generer_documents_templates(self):
+        """Génère les documents (onchange) depuis gica.document.template."""
         if not self.client_type or not self.nature_client:
             return
         Tmpl = self.env['gica.document.template']
@@ -211,8 +222,8 @@ class ResPartner(models.Model):
             }))
         self.document_ids = new_lines
 
-    # ── Génération documents ──────────────────────────────────────────────
     def _generate_documents(self):
+        """Génère et sauvegarde les documents en base (appelé au create)."""
         self.ensure_one()
         Tmpl = self.env['gica.document.template']
         Tmpl._load_default_templates()
@@ -296,7 +307,3 @@ class ResPartner(models.Model):
             'view_mode': 'form',
             'res_id':    record.id,
         }
-
-   
-
-    
