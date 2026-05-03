@@ -4,51 +4,96 @@
 
         <!-- ══════════════════════════════════════════════════
              Menu racine GICA
-             ══════════════════════════════════════════════════ -->
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_gica_root"
                   name="GICA"
                   sequence="10"/>
 
-        <!-- ── Clients ── -->
-        <menuitem id="menu_gica_client"
+        <!-- ══════════════════════════════════════════════════
+             1. Clients (sous-menu déroulant)
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_gica_clients_root"
                   name="Clients"
                   parent="menu_gica_root"
-                  action="action_gica_client"
-                  sequence="1"/>
+                  sequence="10"/>
 
-        <!-- ── Contrats ── -->
+        <menuitem id="menu_gica_client"
+                  name="Liste des clients"
+                  parent="menu_gica_clients_root"
+                  action="action_gica_client"
+                  sequence="10"/>
+
         <menuitem id="menu_gica_client_contract"
                   name="Contrats"
-                  parent="menu_gica_root"
+                  parent="menu_gica_clients_root"
                   action="action_gica_client_contract"
-                  sequence="2"/>
+                  sequence="20"/>
 
-        <!-- ── Agréments ── -->
         <menuitem id="menu_gica_client_agrement"
                   name="Agréments"
-                  parent="menu_gica_root"
+                  parent="menu_gica_clients_root"
                   action="action_gica_client_agrement"
-                  sequence="3"/>
+                  sequence="30"/>
 
-        <!-- ── Documents ── -->
-        <menuitem id="menu_gica_documents"
-                  name="Documents"
-                  parent="menu_gica_root"
-                  action="action_gica_client_document"
-                  sequence="4"/>
-
-        <!-- ── Projets ── -->
         <menuitem id="menu_gica_project"
                   name="Projets"
-                  parent="menu_gica_root"
+                  parent="menu_gica_clients_root"
                   action="action_gica_project"
-                  sequence="5"/>
+                  sequence="40"/>
 
-        <!-- ── Catalogue (sous-menu) ── -->
+        <menuitem id="menu_gica_client_classification"
+                  name="Classifications"
+                  parent="menu_gica_clients_root"
+                  action="action_gica_client_classification"
+                  sequence="50"/>
+
+        <!-- ══════════════════════════════════════════════════
+             2. Commandes (sous-menu déroulant)
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_gica_commandes"
+                  name="Commandes"
+                  parent="menu_gica_root"
+                  sequence="20"/>
+
+        <menuitem id="menu_gica_commande_globale"
+                  name="Commandes Globales"
+                  parent="menu_gica_commandes"
+                  action="action_gica_commande_globale"
+                  sequence="10"/>
+
+        <menuitem id="menu_gica_bon_commande"
+                  name="Bons de Commande"
+                  parent="menu_gica_commandes"
+                  action="action_gica_bon_commande"
+                  sequence="20"/>
+
+        <!-- ══════════════════════════════════════════════════
+             3. Documents (sous-menu déroulant)
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_gica_documents_root"
+                  name="Documents"
+                  parent="menu_gica_root"
+                  sequence="30"/>
+
+        <menuitem id="menu_gica_documents"
+                  name="Dossiers clients"
+                  parent="menu_gica_documents_root"
+                  action="action_gica_client_document"
+                  sequence="10"/>
+
+        <menuitem id="menu_gica_document_type"
+                  name="Documents à fournir"
+                  parent="menu_gica_documents_root"
+                  action="action_gica_document_type"
+                  sequence="20"/>
+
+        <!-- ══════════════════════════════════════════════════
+             4. Catalogue (sous-menu déroulant)
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_gica_catalogue"
                   name="Catalogue"
                   parent="menu_gica_root"
-                  sequence="6"/>
+                  sequence="40"/>
 
         <menuitem id="menu_gica_product"
                   name="Produits"
@@ -56,60 +101,37 @@
                   action="action_gica_product"
                   sequence="10"/>
 
-        <!-- ── Classifications (sous-menu) ── -->
-        <menuitem id="menu_gica_classifications"
-                  name="Classifications"
+        <!-- ══════════════════════════════════════════════════
+             5. Configuration (sous-menu déroulant)
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_gica_configuration"
+                  name="Configuration"
                   parent="menu_gica_root"
-                  sequence="7"/>
+                  sequence="90"/>
 
-        <menuitem id="menu_gica_client_classification"
-                  name="Classifications Clients"
-                  parent="menu_gica_classifications"
-                  action="action_gica_client_classification"
+        <menuitem id="menu_gica_client_nature"
+                  name="Natures des clients"
+                  parent="menu_gica_configuration"
+                  action="action_gica_client_nature"
                   sequence="10"/>
+
+        <menuitem id="menu_gica_client_category"
+                  name="Catégories clients"
+                  parent="menu_gica_configuration"
+                  action="action_gica_client_category"
+                  sequence="20"/>
 
         <menuitem id="menu_gica_classification_config"
                   name="Configuration Scoring"
-                  parent="menu_gica_classifications"
+                  parent="menu_gica_configuration"
                   action="action_gica_classification_config"
-                  sequence="20"/>
+                  sequence="30"/>
 
         <menuitem id="menu_gica_scoring_category"
                   name="Catégories de Scoring"
-                  parent="menu_gica_classifications"
+                  parent="menu_gica_configuration"
                   action="action_gica_scoring_category"
-                  sequence="30"/>
+                  sequence="40"/>
 
-        <menuitem id="menu_gica_commandes"
-                  name="Commandes"
-                  parent="menu_gica_root"
-                  sequence="3"/>
- 
-        <menuitem id="menu_gica_commande_globale"
-                  name="Commandes Globales"
-                  parent="menu_gica_commandes"
-                  action="action_gica_commande_globale"
-                  sequence="10"/>
- 
-        <menuitem id="menu_gica_bon_commande"
-                  name="Bons de Commande"
-                  parent="menu_gica_commandes"
-                  action="action_gica_bon_commande"
-                  sequence="20"/>        
-    
-        <menuitem id="menu_gica_document_type"
-                  name="Documents à fournir"
-                  parent="menu_gica_root"
-                  action="action_gica_document_type"
-                  sequence="50"/>
-
-
-        <menuitem id="menu_gica_client_category"
-                   name="Catégorie des clients"
-                   parent="menu_gica_root"  
-                   action="action_gica_client_category"
-                   sequence="10"/>         
-    
     </data>
-
 </odoo>

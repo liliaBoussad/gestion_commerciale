@@ -1,4 +1,5 @@
 from . import res_partner
+from . import gica_client_nature
 from . import gica_client
 from . import client_contract
 from . import client_agrement 

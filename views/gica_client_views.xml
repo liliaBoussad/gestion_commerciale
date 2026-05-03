@@ -26,7 +26,7 @@
     ══════════════════════════════════════════════════════════════════════════ -->
     <record id="view_gica_client_form" model="ir.ui.view">
         <field name="name">gica.client.form</field>
-        <field name="model">gica.client</field>
+        <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <form string="Client GICA">
                 <sheet>
@@ -53,35 +53,7 @@
                         </group>
                     </group>
 
-                    <notebook>
-
-                        <!-- Onglet Projets -->
-                        <page string="Projets" name="page_projets"
-                              invisible="client_type != 'realisation'">
-                            <field name="project_id" nolabel="1">
-                                <list>
-                                    <field name="name" string="Nom du projet"/>
-                                </list>
-                                <form>
-                                    <sheet>
-                                        <div class="oe_title">
-                                            <label for="name"/>
-                                            <h1><field name="name" placeholder="Nom du projet"/></h1>
-                                        </div>
-                                        <separator string="Produits du projet"/>
-                                        <field name="line_ids" nolabel="1">
-                                            <list editable="bottom">
-                                                <field name="product_id"   string="Produit"/>
-                                                <field name="quantity"     string="Quantité"/>
-                                                <field name="unite_mesure" string="Unité"/>
-                                            </list>
-                                        </field>
-                                    </sheet>
-                                </form>
-                            </field>
-                        </page>
-
-                    </notebook>
+                   
                 </sheet>
                 <chatter/>
             </form>
@@ -129,7 +101,9 @@
         <field name="name">Clients GICA</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_gica_client_list"/>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'view_mode':'list','view_id':ref('view_gica_client_list')}),
+            (0,0,{'view_mode':'form','view_id':ref('base.view_partner_form')})]"/>
         <field name="search_view_id" ref="view_gica_client_search"/>
         <field name="domain">[('is_gica_client', '=', True)]</field>
         <field name="context">{'default_is_gica_client': True}</field>
@@ -137,7 +111,6 @@
             <p class="o_view_nocontent_smiling_face">
                 Aucun client GICA enregistré
             </p>
-            <p>Créez un contact et renseignez son type client pour l'identifier comme client GICA.</p>
         </field>
     </record>
 
