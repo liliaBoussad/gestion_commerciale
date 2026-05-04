@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         LISTE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_document_type_list" model="ir.ui.view">
+        <field name="name">gica.document.type.list</field>
+        <field name="model">gica.document.type</field>
+        <field name="arch" type="xml">
+            <list string="Documents à fournir">
+                <field name="sequence"  widget="handle"/>
+                <field name="name"      string="Nom du document"/>
+                <field name="section"   string="Type de document"
+                       widget="badge"
+                       decoration-info="section == 'admin'"
+                       decoration-warning="section == 'tech'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         FORMULAIRE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_document_type_form" model="ir.ui.view">
+        <field name="name">gica.document.type.form</field>
+        <field name="model">gica.document.type</field>
+        <field name="arch" type="xml">
+            <form string="Document à fournir">
+                <sheet>
+                    <group>
+                        <field name="section"
+                               string="Type de document"
+                               widget="radio"
+                               required="1"/>
+                        <field name="name"
+                               string="Nom du document"
+                               placeholder="Ex: Copie des status..."/>
+                        <field name="active" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECHERCHE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_document_type_search" model="ir.ui.view">
+        <field name="name">gica.document.type.search</field>
+        <field name="model">gica.document.type</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="name" string="Document"/>
+                <separator/>
+                <filter name="filter_admin" string="Administratif"
+                        domain="[('section', '=', 'admin')]"/>
+                <filter name="filter_tech"  string="Technique"
+                        domain="[('section', '=', 'tech')]"/>
+                <separator/>
+                <filter name="filter_archive" string="Archivés"
+                        domain="[('active', '=', False)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_section" string="Type de document"
+                            context="{'group_by': 'section'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ACTION
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_document_type" model="ir.actions.act_window">
+        <field name="name">Documents à fournir</field>
+        <field name="res_model">gica.document.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id"        ref="view_gica_document_type_list"/>
+        <field name="search_view_id" ref="view_gica_document_type_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun document configuré
+            </p>
+            <p>Ajoutez les documents requis avec leur type (administratif ou technique).</p>
+        </field>
+    </record>
+
+</odoo>

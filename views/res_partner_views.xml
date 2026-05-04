@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_gica_form" model="ir.ui.view">
+        <field name="name">res.partner.gica.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart Buttons -->
+            <div name="button_box" position="inside">
+
+                <button class="oe_stat_button" icon="fa-folder-open"
+                        type="object" name="action_valider_dossier"
+                        invisible="dossier_valide or not client_type">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="doc_fournis"/>/<field name="doc_total"/>
+                        </span>
+                        <span class="o_stat_text">Documents</span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" icon="fa-check-circle"
+                        type="object" name="action_reinitialiser_dossier"
+                        invisible="not dossier_valide">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="doc_fournis"/>/<field name="doc_total"/>
+                        </span>
+                        <span class="o_stat_text">Dossier validé</span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" icon="fa-certificate"
+                        type="object" name="action_voir_agrements"
+                        invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="agrement_count"/>
+                        </span>
+                        <span class="o_stat_text">Agrément(s)</span>
+                    </div>
+                </button>
+
+            </div>
+
+            <!-- Champs GICA après le nom — toujours visibles -->
+            <xpath expr="//div[hasclass('oe_title')]" position="after">
+
+
+                <group string="Informations GICA">
+                    <group string="Identification">
+                        <field name="client_type"/>
+                        <field name="nature_client" invisible="not client_type"/>
+                    </group>
+                    <group string="Commercial">
+                        <field name="commercial_id"/>
+                        <field name="sale_type"/>
+                    </group>
+                </group>
+
+                <div class="alert alert-warning" role="alert"
+                    invisible="not need_agrement">
+                    <span>Ce client nécessite un agrément mais aucun agrément actif n'est enregistré.</span>
+                    <button name="action_creer_agrement" type="object"
+                            string="Créer l'agrément"
+                            class="btn btn-warning btn-sm ms-3" icon="fa-plus"/>
+                </div>
+
+                <field name="need_agrement"   invisible="1"/>
+                <field name="agrement_statut" invisible="1"/>
+                <field name="dossier_valide"  invisible="1"/>
+            </xpath>
+
+            <!-- Onglet Documents GICA -->
+            <page name="sales_purchases" position="after">
+                <page string="Documents GICA" name="page_documents_gica"
+                      invisible="not client_type">
+
+                    <group col="6">
+                        <field name="doc_total"     readonly="1" string="Total"/>
+                        <field name="doc_fournis"   readonly="1" string="Fournis"/>
+                        <field name="doc_manquants" readonly="1" string="Manquants"/>
+                        <button name="action_generer_documents" type="object"
+                                string="Régénérer" class="btn-secondary btn-sm"
+                                invisible="doc_total != 0"/>
+                        <button name="action_valider_dossier" type="object"
+                                string="Valider le dossier" class="btn-success btn-sm"
+                                invisible="dossier_valide"/>
+                        <button name="action_reinitialiser_dossier" type="object"
+                                string="Réinitialiser" class="btn-secondary btn-sm"
+                                invisible="not dossier_valide"/>
+                    </group>
+
+                    <p invisible="nature_client" class="text-muted fst-italic">
+                        Choisissez un type client et une nature pour générer les documents.
+                    </p>
+
+                    <div invisible="not nature_client">
+                        <separator string="Dossier administratif"/>
+                        <field name="document_admin_ids" nolabel="1"
+                               context="{'default_section': 'admin'}">
+                            <list create="0" delete="0"
+                                  decoration-success="state == 'fourni'"
+                                  decoration-danger="state == 'manquant'">
+                                <field name="name"        string="Document requis" readonly="1"/>
+                                <field name="fichier"     widget="binary"
+                                       filename="fichier_nom" string="Charger"/>
+                                <field name="fichier_nom" string="Fichier" readonly="1"/>
+                                <button name="action_supprimer_fichier" type="object"
+                                        string="Supprimer" class="btn-sm btn-outline-danger"
+                                        invisible="state != 'fourni'"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'fourni'"
+                                       decoration-danger="state == 'manquant'"/>
+                                <field name="section" column_invisible="1"/>
+                            </list>
+                        </field>
+
+                        <separator string="Dossier technique"/>
+                        <field name="document_tech_ids" nolabel="1"
+                               context="{'default_section': 'tech'}">
+                            <list create="0" delete="0"
+                                  decoration-success="state == 'fourni'"
+                                  decoration-danger="state == 'manquant'">
+                                <field name="name"        string="Document requis" readonly="1"/>
+                                <field name="fichier"     widget="binary"
+                                       filename="fichier_nom" string="Charger"/>
+                                <field name="fichier_nom" string="Fichier" readonly="1"/>
+                                <button name="action_supprimer_fichier" type="object"
+                                        string="Supprimer" class="btn-sm btn-outline-danger"
+                                        invisible="state != 'fourni'"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'fourni'"
+                                       decoration-danger="state == 'manquant'"/>
+                                <field name="section" column_invisible="1"/>
+                            </list>
+                        </field>
+                    </div>
+
+                </page>
+            </page>
+
+            <!-- Onglet Agrément -->
+            <page name="page_documents_gica" position="after">
+                <page string="Agréments" name="page_agrements"
+                      invisible="client_type not in ('distributeur','conditionneur','rev_agree')">
+                    <group>
+                        <field name="agrement_numero"     readonly="1"/>
+                        <field name="agrement_expiration" readonly="1"/>
+                        <field name="agrement_statut"     readonly="1" widget="badge"
+                               decoration-success="agrement_statut == 'actif'"
+                               decoration-danger="agrement_statut in ('expire','retire')"
+                               decoration-warning="agrement_statut == 'suspendu'"/>
+                    </group>
+                    <button name="action_creer_agrement" type="object"
+                            string="Créer / Renouveler l'agrément"
+                            class="btn-secondary btn-sm" icon="fa-plus"/>
+                    <button name="action_voir_agrements" type="object"
+                            string="Voir tous les agréments"
+                            class="btn-secondary btn-sm" icon="fa-list"/>
+                </page>
+            </page>
+
+        </field>
+    </record>
+
+</odoo>

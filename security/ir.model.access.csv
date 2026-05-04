@@ -1,5 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gica_client_nature,gica.client.nature,model_gica_client_nature,,1,1,1,1
 access_gica_client,gica.client,model_gica_client,,1,1,1,1
+
 access_gica_client_contract,gica.client.contract,model_gica_client_contract,,1,1,1,1
 access_gica_contract_line,gica.contract.line,model_gica_client_contract_line,base.group_user,1,1,1,1
 access_gica_client_agrement,gica.client.agrement,model_gica_client_agrement,,1,1,1,1
@@ -7,6 +9,7 @@ access_gica_project,gica.project,model_gica_project,,1,1,1,1
 access_gica_project_line,gica.project.line,model_gica_project_line,,1,1,1,1
 access_gica_client_document,gica.client.document,model_gica_client_document,,1,1,1,1
 access_gica_document_template,gica.document.template,model_gica_document_template,,1,1,1,1
+access_gica_document_type,gica.document.type,model_gica_document_type,base.group_user,1,1,1,1
 access_gica_classification_config_manager,gica.classification.config manager,model_gica_classification_config,base.group_system,1,1,1,1
 access_gica_classification_config_user,gica.classification.config user,model_gica_classification_config,,1,0,0,0
 access_gica_client_classification_manager,gica.client.classification manager,model_gica_client_classification,base.group_system,1,1,1,1
@@ -21,3 +24,4 @@ access_gica_bon_commande_manager,gica.bon.commande manager,model_gica_bon_comman
 access_gica_bon_commande_user,gica.bon.commande user,model_gica_bon_commande,base.group_user,1,1,1,0
 access_gica_bon_commande_line_manager,gica.bon.commande.line manager,model_gica_bon_commande_line,base.group_system,1,1,1,1
 access_gica_bon_commande_line_user,gica.bon.commande.line user,model_gica_bon_commande_line,base.group_user,1,1,1,0
+access_gica_client_category,gica.client.category,model_gica_client_category,,1,1,1,1

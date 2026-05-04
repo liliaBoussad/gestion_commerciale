@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         LISTE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_category_list" model="ir.ui.view">
+        <field name="name">gica.client.category.list</field>
+        <field name="model">gica.client.category</field>
+        <field name="arch" type="xml">
+            <list string="Catégorie des clients">
+                <field name="sequence" widget="handle"/>
+                <field name="name"          string="Nom du catégorie"/>
+                <field name="marche"        string="Type de marché"
+                       widget="badge"
+                       decoration-info="marche == 'local'"
+                       decoration-warning="marche == 'international'"/>
+                <field name="document_ids"  string="Documents à fournir"
+                       widget="many2many_tags"/>
+
+                <field name="need_agrement" string="Agrément ?"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         FORMULAIRE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_category_form" model="ir.ui.view">
+        <field name="name">gica.client.category.form</field>
+        <field name="model">gica.client.category</field>
+        <field name="arch" type="xml">
+            <form string="Catégorie client">
+                <sheet>
+                    <group>
+                        <group string="Informations générales">
+                            <field name="name"          string="Nom du catégorie"/>
+                            <field name="client_type"   string="Type client lié"/>
+                            <field name="marche"        string="Type de marché"/>
+                            <field name="need_agrement" string="Agrément requis"/>
+                            <field name="active"        string="Actif"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Documents à fournir">
+                            <field name="document_ids"
+                                   widget="many2many_tags"
+                                   string="Documents à fournir"
+                                   domain="[]"
+                                   options="{'no_create': True}"/>
+                        </page>
+
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECHERCHE
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_gica_client_category_search" model="ir.ui.view">
+        <field name="name">gica.client.category.search</field>
+        <field name="model">gica.client.category</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="name" string="Catégorie"/>
+                <separator/>
+                <filter name="filter_local"         string="Local"
+                        domain="[('marche', '=', 'local')]"/>
+                <filter name="filter_international" string="International"
+                        domain="[('marche', '=', 'international')]"/>
+                <separator/>
+                <filter name="filter_agrement" string="Avec agrément"
+                        domain="[('need_agrement', '=', True)]"/>
+                <filter name="filter_archive"  string="Archivés"
+                        domain="[('active', '=', False)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_marche" string="Type de marché"
+                            context="{'group_by': 'marche'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ACTION
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_client_category" model="ir.actions.act_window">
+        <field name="name">Catégorie des clients</field>
+        <field name="res_model">gica.client.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_gica_client_category_list"/>
+        <field name="search_view_id" ref="view_gica_client_category_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune catégorie configurée
+            </p>
+            <p>Créez les catégories de clients avec leurs documents et natures associés.</p>
+        </field>
+    </record>
+
+</odoo>

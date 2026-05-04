@@ -3,98 +3,123 @@
     <data>
 
         <!-- ══════════════════════════════════════════════════
-             Menu racine GICA
-             ══════════════════════════════════════════════════ -->
-        <menuitem id="menu_gica_root"
-                  name="GICA"
-                  sequence="10"/>
+             Tout sous le menu racine Ventes d'Odoo
+             sale.sale_menu_root est le menu racine de Ventes
+        ══════════════════════════════════════════════════ -->
 
-        <!-- ── Clients ── -->
-        <menuitem id="menu_gica_client"
-                  name="Clients"
-                  parent="menu_gica_root"
-                  action="action_gica_client"
-                  sequence="1"/>
-
-        <!-- ── Contrats ── -->
-        <menuitem id="menu_gica_client_contract"
-                  name="Contrats"
-                  parent="menu_gica_root"
-                  action="action_gica_client_contract"
-                  sequence="2"/>
-
-        <!-- ── Agréments ── -->
-        <menuitem id="menu_gica_client_agrement"
-                  name="Agréments"
-                  parent="menu_gica_root"
-                  action="action_gica_client_agrement"
-                  sequence="3"/>
-
-        <!-- ── Documents ── -->
-        <menuitem id="menu_gica_documents"
-                  name="Documents"
-                  parent="menu_gica_root"
-                  action="action_gica_client_document"
-                  sequence="4"/>
-
-        <!-- ── Projets ── -->
-        <menuitem id="menu_gica_project"
-                  name="Projets"
-                  parent="menu_gica_root"
-                  action="action_gica_project"
+        <!-- ── Clients GICA (sous Ventes) ── -->
+        <menuitem id="menu_ventes_gica_clients_root"
+                  name="Clients GICA"
+                  parent="sale.sale_menu_root"
                   sequence="5"/>
 
-        <!-- ── Catalogue (sous-menu) ── -->
-        <menuitem id="menu_gica_catalogue"
-                  name="Catalogue"
-                  parent="menu_gica_root"
+        <menuitem id="menu_ventes_gica_client"
+                  name="Liste des clients"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client"
+                  sequence="10"/>
+
+        <menuitem id="menu_ventes_gica_contrat"
+                  name="Contrats"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_contract"
+                  sequence="20"/>
+
+        <menuitem id="menu_ventes_gica_agrement"
+                  name="Agréments"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_agrement"
+                  sequence="30"/>
+
+        <menuitem id="menu_ventes_gica_projets"
+                  name="Projets"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_project"
+                  sequence="40"/>
+
+        <menuitem id="menu_ventes_gica_classification"
+                  name="Classifications"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_classification"
+                  sequence="50"/>
+
+        <!-- ── Commandes GICA (sous Ventes) ── -->
+        <menuitem id="menu_ventes_gica_commandes_root"
+                  name="Commandes GICA"
+                  parent="sale.sale_menu_root"
                   sequence="6"/>
 
-        <menuitem id="menu_gica_product"
+        <menuitem id="menu_ventes_gica_commande_globale"
+                  name="Commandes Globales"
+                  parent="menu_ventes_gica_commandes_root"
+                  action="action_gica_commande_globale"
+                  sequence="10"/>
+
+        <menuitem id="menu_ventes_gica_bon_commande"
+                  name="Bons de Commande"
+                  parent="menu_ventes_gica_commandes_root"
+                  action="action_gica_bon_commande"
+                  sequence="20"/>
+
+        <!-- ── Documents GICA (sous Ventes) ── -->
+        <menuitem id="menu_ventes_gica_documents_root"
+                  name="Documents GICA"
+                  parent="sale.sale_menu_root"
+                  sequence="7"/>
+
+        <menuitem id="menu_ventes_gica_documents"
+                  name="Dossiers clients"
+                  parent="menu_ventes_gica_documents_root"
+                  action="action_gica_client_document"
+                  sequence="10"/>
+
+        <menuitem id="menu_ventes_gica_document_type"
+                  name="Documents à fournir"
+                  parent="menu_ventes_gica_documents_root"
+                  action="action_gica_document_type"
+                  sequence="20"/>
+
+        <!-- ── Catalogue (sous Ventes) ── -->
+        <menuitem id="menu_ventes_gica_catalogue_root"
+                  name="Catalogue GICA"
+                  parent="sale.sale_menu_root"
+                  sequence="8"/>
+
+        <menuitem id="menu_ventes_gica_product"
                   name="Produits"
-                  parent="menu_gica_catalogue"
+                  parent="menu_ventes_gica_catalogue_root"
                   action="action_gica_product"
                   sequence="10"/>
 
-        <!-- ── Classifications (sous-menu) ── -->
-        <menuitem id="menu_gica_classifications"
-                  name="Classifications"
-                  parent="menu_gica_root"
-                  sequence="7"/>
+        <!-- ── Configuration GICA (sous Ventes → Configuration) ── -->
+        <menuitem id="menu_ventes_gica_config_root"
+                  name="Configuration GICA"
+                  parent="sale.sale_menu_root"
+                  sequence="99"/>
 
-        <menuitem id="menu_gica_client_classification"
-                  name="Classifications Clients"
-                  parent="menu_gica_classifications"
-                  action="action_gica_client_classification"
+        <menuitem id="menu_ventes_gica_client_nature"
+                  name="Natures des clients"
+                  parent="menu_ventes_gica_config_root"
+                  action="action_gica_client_nature"
                   sequence="10"/>
 
-        <menuitem id="menu_gica_classification_config"
-                  name="Configuration Scoring"
-                  parent="menu_gica_classifications"
-                  action="action_gica_classification_config"
+        <menuitem id="menu_ventes_gica_client_category"
+                  name="Catégories clients"
+                  parent="menu_ventes_gica_config_root"
+                  action="action_gica_client_category"
                   sequence="20"/>
 
-        <menuitem id="menu_gica_scoring_category"
-                  name="Catégories de Scoring"
-                  parent="menu_gica_classifications"
-                  action="action_gica_scoring_category"
+        <menuitem id="menu_ventes_gica_classification_config"
+                  name="Configuration Scoring"
+                  parent="menu_ventes_gica_config_root"
+                  action="action_gica_classification_config"
                   sequence="30"/>
 
-        <menuitem id="menu_gica_commandes"
-                  name="Commandes"
-                  parent="menu_gica_root"
-                  sequence="3"/>
- 
-        <menuitem id="menu_gica_commande_globale"
-                  name="Commandes Globales"
-                  parent="menu_gica_commandes"
-                  action="action_gica_commande_globale"
-                  sequence="10"/>
- 
-        <menuitem id="menu_gica_bon_commande"
-                  name="Bons de Commande"
-                  parent="menu_gica_commandes"
-                  action="action_gica_bon_commande"
-                  sequence="20"/>        
+        <menuitem id="menu_ventes_gica_scoring_category"
+                  name="Catégories de Scoring"
+                  parent="menu_ventes_gica_config_root"
+                  action="action_gica_scoring_category"
+                  sequence="40"/>
+
     </data>
 </odoo>

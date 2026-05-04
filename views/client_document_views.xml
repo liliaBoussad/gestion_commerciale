@@ -10,7 +10,7 @@
             <list string="Documents"
                   decoration-success="state == 'fourni'"
                   decoration-danger="state == 'manquant'">
-                <field name="client_id" optional="show"/>
+                <field name="partner_id" optional="show"/>
                 <field name="section"/>
                 <field name="marche"/>
                 <field name="name"/>
@@ -33,7 +33,7 @@
                 <sheet>
                     <group string="Identification">
                         <group>
-                            <field name="client_id"/>
+                            <field name="partner_id"/>
                             <field name="marche"/>
                             <field name="section"/>
                             <field name="name"/>
@@ -65,7 +65,7 @@
         <field name="arch" type="xml">
             <search string="Rechercher un document">
                 <field name="name"      string="Intitulé"/>
-                <field name="client_id" string="Client"/>
+                <field name="partner_id" string="Client"/>
                 <separator/>
                 <filter name="manquant" string="Manquants"
                         domain="[('state','=','manquant')]"/>
@@ -83,7 +83,7 @@
                         domain="[('section','=','tech')]"/>
                 <group expand="0" string="Regrouper par">
                     <filter name="group_client"  string="Client"
-                            context="{'group_by':'client_id'}"/>
+                            context="{'group_by':'partner_id'}"/>
                     <filter name="group_state"   string="État"
                             context="{'group_by':'state'}"/>
                     <filter name="group_section" string="Section"

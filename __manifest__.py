@@ -7,22 +7,33 @@
     'depends': ['base', 'mail','sale','product','sale_management'],
     'data': [
         'security/ir.model.access.csv',
+        'data/gica_client_nature_data.xml',
+
         'data/products_data.xml',
         'data/gica_scoring_category_data.xml',  
         'data/gica_classification_data.xml',
-        'data/gica_commandes_data.xml',        
+        'data/gica_commandes_data.xml',
+        'data/gica_document_type_data.xml', 
+        'data/gica_client_category_data.xml',       
+       
 
-        'views/gica_client_views.xml',  
+        'views/res_partner_views.xml',                    
+        'views/gica_client_views.xml',
+  
         'views/client_contract_views.xml', 
         'views/client_agrement_views.xml',  
         'views/client_document_views.xml',  
+        'views/gica_document_type_views.xml',
+        'views/gica_client_category_views.xml',  
+
         'views/gica_project_views.xml',
         'views/product_views.xml',
         'views/gica_classification_views.xml',
         'views/gica_scoring_category_views.xml', 
         'views/gica_commande_globale_views.xml',
-        'views/gica_bon_commande_views.xml',  
-
+        'views/gica_bon_commande_views.xml', 
+        'views/gica_client_nature_views.xml',
+ 
         'views/menu.xml',                    
   
     ],

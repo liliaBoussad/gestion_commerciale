@@ -13,7 +13,7 @@
                   decoration-muted="state in ('expire','retire')"
                   decoration-danger="state == 'suspendu'">
                 <field name="name"/>
-                <field name="client_id"/>
+                <field name="partner_id"/>
                 <field name="client_type"/>
                 <field name="date_debut"/>
                 <field name="date_expiration"/>
@@ -74,7 +74,7 @@
                     <!-- Bloc 1 : Client -->
                     <group string="Client">
                         <group>
-                            <field name="client_id"/>
+                            <field name="partner_id"/>
                             <field name="client_type" readonly="1"/>
                         </group>
                     </group>
@@ -116,7 +116,7 @@
         <field name="arch" type="xml">
             <search string="Rechercher un agrément">
                 <field name="name" string="N° Agrément"/>
-                <field name="client_id" string="Client"/>
+                <field name="partner_id" string="Client"/>
                 <separator/>
                 <filter name="actif"    string="Actifs"    domain="[('state','=','actif')]"/>
                 <filter name="suspendu" string="Suspendus" domain="[('state','=','suspendu')]"/>
@@ -133,7 +133,7 @@
                         domain="[('client_type','=','rev_agree')]"/>
                 <group expand="0" string="Regrouper par">
                     <filter name="group_client" string="Client"
-                            context="{'group_by':'client_id'}"/>
+                            context="{'group_by':'partner_id'}"/>
                     <filter name="group_state"  string="Statut"
                             context="{'group_by':'state'}"/>
                     <filter name="group_type"   string="Type client"
