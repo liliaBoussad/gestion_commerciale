@@ -17,7 +17,6 @@ class GicaCommandeGlobaleLine(models.Model):
         ondelete='cascade',
     )
 
-    # ── Produit — Many2one vers product.product ───────────────────────────
     product_id = fields.Many2one(
         'product.product',
         string='Produit / Conditionnement',
@@ -65,17 +64,20 @@ class GicaCommandeGlobaleLine(models.Model):
         for rec in self:
             rec.montant_total = rec.quantity_tonne * rec.prix_unitaire
 
-    @api.depends('commande_id.bon_commande_ids.line_ids.quantity_tonne',
-                 'commande_id.bon_commande_ids.state')
+    @api.depends(
+        'commande_id.bon_commande_ids.order_line.product_uom_qty',
+        'commande_id.bon_commande_ids.state',
+    )
     def _compute_quantity_enlevee(self):
         for rec in self:
+            # On considère les BC dont la date réelle d'enlèvement est renseignée
             bc_enleves = rec.commande_id.bon_commande_ids.filtered(
-                lambda bc: bc.state == 'enleve'
+                lambda bc: bc.date_reelle_enlevement
             )
             enlevee = sum(
-                line.quantity_tonne
+                line.product_uom_qty
                 for bc in bc_enleves
-                for line in bc.line_ids
+                for line in bc.order_line
                 if line.product_id == rec.product_id
             )
             rec.quantity_enlevee  = enlevee
@@ -97,7 +99,12 @@ class GicaCommandeGlobale(models.Model):
         tracking=True,
     )
 
-    client_id = fields.Many2one('gica.client', string='Client', required=True, tracking=True)
+    client_id = fields.Many2one(
+        'gica.client',
+        string='Client',
+        required=True,
+        tracking=True,
+    )
     contrat_id = fields.Many2one(
         'gica.client.contract',
         string='Contrat',
@@ -127,12 +134,20 @@ class GicaCommandeGlobale(models.Model):
     ], string='Statut', default='nouveau', tracking=True, required=True)
 
     line_ids = fields.One2many(
-        'gica.commande.globale.line', 'commande_id', string='Lignes produits',
+        'gica.commande.globale.line',
+        'commande_id',
+        string='Lignes produits',
     )
+
+    # ── Lien vers sale.order (BC) ─────────────────────────────────────────
     bon_commande_ids = fields.One2many(
-        'gica.bon.commande', 'commande_globale_id', string='Bons de Commande',
+        'sale.order',
+        'commande_globale_id',
+        string='Bons de Commande',
     )
-    bon_commande_count = fields.Integer(compute='_compute_bon_commande_count')
+    bon_commande_count = fields.Integer(
+        compute='_compute_bon_commande_count',
+    )
 
     montant_total        = fields.Float(compute='_compute_totaux', store=True)
     quantity_total_tonne = fields.Float(compute='_compute_totaux', store=True)
@@ -140,17 +155,21 @@ class GicaCommandeGlobale(models.Model):
     quantity_restante    = fields.Float(compute='_compute_totaux', store=True)
     taux_realisation     = fields.Float(compute='_compute_totaux', store=True)
 
-    mode_paiement    = fields.Selection(related='contrat_id.mode_paiement',    readonly=True)
+    mode_paiement     = fields.Selection(related='contrat_id.mode_paiement',     readonly=True)
     modalite_paiement = fields.Selection(related='contrat_id.modalite_paiement', readonly=True)
-    devise           = fields.Char(default='DZD', readonly=True)
-    observations     = fields.Text(string='Observations')
+    devise            = fields.Char(default='DZD', readonly=True)
+    observations      = fields.Text(string='Observations')
 
     @api.depends('bon_commande_ids')
     def _compute_bon_commande_count(self):
         for rec in self:
             rec.bon_commande_count = len(rec.bon_commande_ids)
 
-    @api.depends('line_ids.montant_total', 'line_ids.quantity_tonne', 'line_ids.quantity_enlevee')
+    @api.depends(
+        'line_ids.montant_total',
+        'line_ids.quantity_tonne',
+        'line_ids.quantity_enlevee',
+    )
     def _compute_totaux(self):
         for rec in self:
             rec.montant_total        = sum(rec.line_ids.mapped('montant_total'))
@@ -177,7 +196,7 @@ class GicaCommandeGlobale(models.Model):
             lines = []
             for line in self.contrat_id.line_ids:
                 lines.append((0, 0, {
-                    'product_id':    line.product_id.id,
+                    'product_id':     line.product_id.id,
                     'quantity_tonne': line.quantity_tonne,
                     'prix_unitaire':  line.prix_unitaire,
                 }))
@@ -206,18 +225,23 @@ class GicaCommandeGlobale(models.Model):
                     and rec.quantity_total_tonne > 0
                     and rec.quantity_restante <= 0):
                 rec.write({'state': 'cloturee'})
-                rec.message_post(body='✅ Commande clôturée — toute la quantité a été enlevée.')
+                rec.message_post(
+                    body='✅ Commande clôturée — toute la quantité a été enlevée.'
+                )
 
     def action_voir_bons_commande(self):
         self.ensure_one()
         return {
             'type':      'ir.actions.act_window',
             'name':      'Bons de Commande',
-            'res_model': 'gica.bon.commande',
+            'res_model': 'sale.order',
             'view_mode': 'list,form',
             'domain':    [('commande_globale_id', '=', self.id)],
-            'context':   {'default_commande_globale_id': self.id,
-                          'default_client_id': self.client_id.id},
+            'context':   {
+                'default_commande_globale_id': self.id,
+                'default_partner_id': self.client_id.partner_id.id
+                    if self.client_id and hasattr(self.client_id, 'partner_id') else False,
+            },
         }
 
     @api.constrains('contrat_id', 'client_id')

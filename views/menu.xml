@@ -3,11 +3,10 @@
     <data>
 
         <!-- ══════════════════════════════════════════════════
-             Tout sous le menu racine Ventes d'Odoo
-             sale.sale_menu_root est le menu racine de Ventes
+             Menus sous le menu racine Ventes d'Odoo
         ══════════════════════════════════════════════════ -->
 
-        <!-- ── Clients GICA (sous Ventes) ── -->
+        <!-- ── Clients GICA ── -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
                   parent="sale.sale_menu_root"
@@ -42,26 +41,22 @@
                   parent="menu_ventes_gica_clients_root"
                   action="action_gica_client_classification"
                   sequence="50"/>
+        
+         <menuitem id="menu_ventes_gica_client_nature"
+                  name="Natures des clients"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_nature"
+                  sequence="60"/>
 
-        <!-- ── Commandes GICA (sous Ventes) ── -->
-        <menuitem id="menu_ventes_gica_commandes_root"
-                  name="Commandes GICA"
-                  parent="sale.sale_menu_root"
-                  sequence="6"/>
-
+        <!-- ── Commandes Globales au même niveau que Devis/Commandes ── -->
+        <!-- sale.sale_order_menu = conteneur "Commandes" natif Odoo     -->
         <menuitem id="menu_ventes_gica_commande_globale"
                   name="Commandes Globales"
-                  parent="menu_ventes_gica_commandes_root"
+                  parent="sale.sale_order_menu"
                   action="action_gica_commande_globale"
-                  sequence="10"/>
+                  sequence="15"/>
 
-        <menuitem id="menu_ventes_gica_bon_commande"
-                  name="Bons de Commande"
-                  parent="menu_ventes_gica_commandes_root"
-                  action="action_gica_bon_commande"
-                  sequence="20"/>
-
-        <!-- ── Documents GICA (sous Ventes) ── -->
+        <!-- ── Documents GICA ── -->
         <menuitem id="menu_ventes_gica_documents_root"
                   name="Documents GICA"
                   parent="sale.sale_menu_root"
@@ -79,29 +74,15 @@
                   action="action_gica_document_type"
                   sequence="20"/>
 
-        <!-- ── Catalogue (sous Ventes) ── -->
-        <menuitem id="menu_ventes_gica_catalogue_root"
-                  name="Catalogue GICA"
-                  parent="sale.sale_menu_root"
-                  sequence="8"/>
+     
 
-        <menuitem id="menu_ventes_gica_product"
-                  name="Produits"
-                  parent="menu_ventes_gica_catalogue_root"
-                  action="action_gica_product"
-                  sequence="10"/>
-
-        <!-- ── Configuration GICA (sous Ventes → Configuration) ── -->
+        <!-- ── Configuration GICA ── -->
         <menuitem id="menu_ventes_gica_config_root"
-                  name="Configuration GICA"
+                  name="Classifications GICA"
                   parent="sale.sale_menu_root"
                   sequence="99"/>
 
-        <menuitem id="menu_ventes_gica_client_nature"
-                  name="Natures des clients"
-                  parent="menu_ventes_gica_config_root"
-                  action="action_gica_client_nature"
-                  sequence="10"/>
+       
 
         <menuitem id="menu_ventes_gica_client_category"
                   name="Catégories clients"

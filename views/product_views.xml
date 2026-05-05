@@ -28,23 +28,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════
-         Action — Catalogue GICA (filtre produits GICA uniquement)
-         ══════════════════════════════════════════════════════ -->
-    <record id="action_gica_product" model="ir.actions.act_window">
-        <field name="name">Catalogue GICA</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('is_gica_product', '=', True)]</field>
-        <field name="context">{'default_is_gica_product': True}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Aucun produit GICA
-            </p>
-            <p>
-                Créez un produit et cochez "Produit GICA" pour l'ajouter au catalogue.
-            </p>
-        </field>
-    </record>
+    
 
 </odoo>
