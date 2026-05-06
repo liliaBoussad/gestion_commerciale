@@ -20,3 +20,9 @@ access_gica_commande_globale_user,gica.commande.globale user,model_gica_commande
 access_gica_commande_globale_line_manager,gica.commande.globale.line manager,model_gica_commande_globale_line,base.group_system,1,1,1,1
 access_gica_commande_globale_line_user,gica.commande.globale.line user,model_gica_commande_globale_line,base.group_user,1,1,1,0
 access_gica_client_category,gica.client.category,model_gica_client_category,,1,1,1,1
+access_gica_planification_client_manager,gica.planification.client manager,model_gica_planification_client,base.group_system,1,1,1,1
+access_gica_planification_client_user,gica.planification.client user,model_gica_planification_client,base.group_user,1,1,1,0
+access_gica_planification_client_line_manager,gica.planification.client.line manager,model_gica_planification_client_line,base.group_system,1,1,1,1
+access_gica_planification_client_line_user,gica.planification.client.line user,model_gica_planification_client_line,base.group_user,1,1,1,0
+access_gica_planification_usine_manager,gica.planification.usine manager,model_gica_planification_usine,base.group_system,1,1,1,1
+access_gica_planification_usine_user,gica.planification.usine user,model_gica_planification_usine,base.group_user,1,1,0,0

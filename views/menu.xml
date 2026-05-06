@@ -2,10 +2,6 @@
 <odoo>
     <data>
 
-        <!-- ══════════════════════════════════════════════════
-             Menus sous le menu racine Ventes d'Odoo
-        ══════════════════════════════════════════════════ -->
-
         <!-- ── Clients GICA ── -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
@@ -41,20 +37,31 @@
                   parent="menu_ventes_gica_clients_root"
                   action="action_gica_client_classification"
                   sequence="50"/>
-        
-         <menuitem id="menu_ventes_gica_client_nature"
+
+        <menuitem id="menu_ventes_gica_client_nature"
                   name="Natures des clients"
                   parent="menu_ventes_gica_clients_root"
                   action="action_gica_client_nature"
                   sequence="60"/>
 
-        <!-- ── Commandes Globales au même niveau que Devis/Commandes ── -->
-        <!-- sale.sale_order_menu = conteneur "Commandes" natif Odoo     -->
+        <!-- ── Commandes (intégrées dans menu natif Odoo) ── -->
         <menuitem id="menu_ventes_gica_commande_globale"
                   name="Commandes Globales"
                   parent="sale.sale_order_menu"
                   action="action_gica_commande_globale"
                   sequence="15"/>
+
+        <menuitem id="menu_ventes_gica_planification_client"
+                  name="Planifications Clients"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_planification_client"
+                  sequence="20"/>
+
+        <menuitem id="menu_ventes_gica_planification_usine"
+                  name="Planifications Usine"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_planification_usine"
+                  sequence="25"/>
 
         <!-- ── Documents GICA ── -->
         <menuitem id="menu_ventes_gica_documents_root"
@@ -74,15 +81,11 @@
                   action="action_gica_document_type"
                   sequence="20"/>
 
-     
-
-        <!-- ── Configuration GICA ── -->
+        <!-- ── Classifications GICA ── -->
         <menuitem id="menu_ventes_gica_config_root"
                   name="Classifications GICA"
                   parent="sale.sale_menu_root"
                   sequence="99"/>
-
-       
 
         <menuitem id="menu_ventes_gica_client_category"
                   name="Catégories clients"

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Séquence Planification Client : PC/YYYY/XXXX -->
+    <record id="seq_gica_planification_client" model="ir.sequence">
+        <field name="name">Planification Client GICA</field>
+        <field name="code">gica.planification.client</field>
+        <field name="prefix">PC/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Séquence Planification Usine : PU/YYYY/XXXX -->
+    <record id="seq_gica_planification_usine" model="ir.sequence">
+        <field name="name">Planification Usine GICA</field>
+        <field name="code">gica.planification.usine</field>
+        <field name="prefix">PU/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

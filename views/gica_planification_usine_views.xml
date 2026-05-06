@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Formulaire Planification Usine
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_planification_usine_form" model="ir.ui.view">
+        <field name="name">gica.planification.usine.form</field>
+        <field name="model">gica.planification.usine</field>
+        <field name="arch" type="xml">
+            <form string="Planification Usine">
+                <header>
+                    <button name="action_recuperer_planifications"
+                            string="Récupérer Planifications"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_confirmer"
+                            string="Confirmer et Verrouiller"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'en_cours'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,en_cours,confirmee"/>
+                </header>
+                <sheet>
+                    <!-- Compteurs -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-list"
+                                type="object"
+                                name="action_voir_planifications">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planification_count"/>
+                                </span>
+                                <span class="o_stat_text">Total</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button"
+                                icon="fa-check"
+                                type="object"
+                                name="action_voir_planifications">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planification_validee_count"/>
+                                </span>
+                                <span class="o_stat_text">Validées</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button"
+                                icon="fa-clock-o"
+                                type="object"
+                                name="action_voir_planifications">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planification_en_attente_count"/>
+                                </span>
+                                <span class="o_stat_text">En attente</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button"
+                                icon="fa-times"
+                                type="object"
+                                name="action_voir_planifications">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planification_refusee_count"/>
+                                </span>
+                                <span class="o_stat_text">Refusées</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Période (15 jours)">
+                            <field name="date_debut"/>
+                            <field name="date_fin" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Planifications Clients">
+                            <field name="planification_ids"
+                                   readonly="state == 'confirmee'">
+                                <list decoration-success="state == 'validee'"
+                                      decoration-warning="state == 'soumise'"
+                                      decoration-danger="state == 'refusee'">
+                                    <field name="name"/>
+                                    <field name="client_id"/>
+                                    <field name="commande_globale_id"/>
+                                    <field name="date_enlevement"/>
+                                    <field name="quantity_total_tonne" string="Qté (T)"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'validee'"
+                                           decoration-warning="state == 'soumise'"
+                                           decoration-danger="state == 'refusee'"/>
+                                    <button name="action_valider"
+                                            string="Valider"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            invisible="state != 'soumise'"/>
+                                    <button name="action_refuser"
+                                            string="Refuser"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            invisible="state != 'soumise'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observations">
+                            <field name="observations"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Liste -->
+    <record id="view_gica_planification_usine_list" model="ir.ui.view">
+        <field name="name">gica.planification.usine.list</field>
+        <field name="model">gica.planification.usine</field>
+        <field name="arch" type="xml">
+            <list string="Planifications Usine"
+                  decoration-success="state == 'confirmee'"
+                  decoration-info="state == 'en_cours'"
+                  decoration-muted="state == 'brouillon'">
+                <field name="name"/>
+                <field name="date_debut"/>
+                <field name="date_fin"/>
+                <field name="planification_count"    string="Total"/>
+                <field name="planification_en_attente_count" string="En attente"/>
+                <field name="planification_validee_count"    string="Validées"/>
+                <field name="planification_refusee_count"    string="Refusées"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'confirmee'"
+                       decoration-info="state == 'en_cours'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Recherche -->
+    <record id="view_gica_planification_usine_search" model="ir.ui.view">
+        <field name="name">gica.planification.usine.search</field>
+        <field name="model">gica.planification.usine</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="name"/>
+                <filter string="Brouillon"  name="brouillon"
+                        domain="[('state','=','brouillon')]"/>
+                <filter string="En cours"   name="en_cours"
+                        domain="[('state','=','en_cours')]"/>
+                <filter string="Confirmée"  name="confirmee"
+                        domain="[('state','=','confirmee')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gica_planification_usine" model="ir.actions.act_window">
+        <field name="name">Planifications Usine</field>
+        <field name="res_model">gica.planification.usine</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune planification usine
+            </p>
+            <p>
+                Créez une planification usine pour valider les demandes
+                clients sur une période de 15 jours.
+            </p>
+        </field>
+    </record>
+
+</odoo>
