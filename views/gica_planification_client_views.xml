@@ -58,6 +58,9 @@
                         <field name="motif_refus" nolabel="1" readonly="1"/>
                     </group>
 
+                    <!-- Champ invisible pour domaine produits -->
+                    <field name="product_ids" invisible="1"/>
+
                     <!-- BC généré -->
                     <group string="Bon de Commande généré"
                            invisible="not sale_order_id">
@@ -65,13 +68,15 @@
                     </group>
 
                     <notebook>
+                        <!-- Lignes produits filtrées selon BCG -->
                         <page string="Produits demandés">
                             <field name="line_ids"
                                    readonly="state in ('validee', 'refusee')">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
+                                           domain="[('id', 'in', parent.product_ids)]"
+                                           context="{'default_commande_globale_id': parent.commande_globale_id}"/>
                                     <field name="conditionnement" readonly="1"/>
                                     <field name="nbr_paquets"/>
                                     <field name="quantity_tonne" string="Qté (T)"/>

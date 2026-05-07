@@ -205,6 +205,20 @@ class GicaPlanificationClient(models.Model):
         string='Lignes produits',
     )
 
+    product_ids = fields.Many2many(
+        'product.product',
+        compute='_compute_product_ids',
+        string='Produits du BCG',
+    )
+
+    @api.depends('commande_globale_id.line_ids.product_id')
+    def _compute_product_ids(self):
+        for rec in self:
+            if rec.commande_globale_id:
+                rec.product_ids = rec.commande_globale_id.line_ids.mapped('product_id')
+            else:
+                rec.product_ids = False
+
     quantity_total_tonne = fields.Float(
         compute='_compute_totaux',
         store=True,

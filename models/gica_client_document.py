@@ -51,19 +51,18 @@ class GicaDocumentTemplate(models.Model):
 
     @api.model
     def _load_default_templates(self):
-        if self.search_count([]) > 0:
+        if self.search_count([]) >= 50:
             return
 
         # (client_type, section, marche, nature, sequence, nom)
         TEMPLATES = [
             # ── Entreprise de réalisation ─────────────────────────────────
-            ('realisation', 'admin', 'local', 'morale',   10, 'Copie des statuts'),
-            ('realisation', 'admin', 'local', 'morale',   20, 'Registre de commerce électronique'),
-            ('realisation', 'admin', 'local', 'morale',   30, "Numéro d'identification statistique (NIS)"),
-            ('realisation', 'admin', 'local', 'morale',   40, "Numéro d'identification fiscale (NIF)"),
-            ('realisation', 'admin', 'local', 'morale',   50, "Numéro d'article d'imposition (TIN)"),
-            ('realisation', 'admin', 'local', 'morale',   60, "Pièce d'identité du représentant légal"),
-            ('realisation', 'tech',  'local', 'both',     10, "Bon de commande global"),
+            ('realisation', 'admin', 'local', 'morale',  10, 'Copie des statuts'),
+            ('realisation', 'admin', 'local', 'morale',  20, 'Registre de commerce électronique'),
+            ('realisation', 'admin', 'local', 'morale',  30, "Numéro d'identification statistique (NIS)"),
+            ('realisation', 'admin', 'local', 'morale',  40, "Numéro d'identification fiscale (NIF)"),
+            ('realisation', 'admin', 'local', 'morale',  50, "Numéro d'article d'imposition (TIN)"),
+            ('realisation', 'admin', 'local', 'morale',  60, "Pièce d'identité du représentant légal"),
             # ── Investisseur ──────────────────────────────────────────────
             ('investisseur', 'admin', 'local', 'morale',   10, 'Copie des statuts'),
             ('investisseur', 'admin', 'local', 'morale',   20, 'Registre de commerce électronique'),
@@ -71,7 +70,6 @@ class GicaDocumentTemplate(models.Model):
             ('investisseur', 'admin', 'local', 'morale',   40, "Pièce d'identité du représentant légal"),
             ('investisseur', 'admin', 'local', 'physique', 10, "Copie de la pièce d'identité"),
             ('investisseur', 'tech',  'local', 'both',     10, 'Permis de construire en cours de validité'),
-            ('investisseur', 'tech',  'local', 'both',     20, 'Bon de commande'),
             # ── Promoteur immobilier ──────────────────────────────────────
             ('promoteur', 'admin', 'local', 'morale',   10, 'Copie des statuts'),
             ('promoteur', 'admin', 'local', 'morale',   20, 'Registre de commerce électronique'),
@@ -79,32 +77,27 @@ class GicaDocumentTemplate(models.Model):
             ('promoteur', 'admin', 'local', 'morale',   40, "Pièce d'identité du représentant légal"),
             ('promoteur', 'admin', 'local', 'physique', 10, "Copie de la pièce d'identité"),
             ('promoteur', 'tech',  'local', 'both',     10, 'Permis de construire en cours de validité'),
-            ('promoteur', 'tech',  'local', 'both',     20, 'Bon de commande'),
             # ── Transformateur ────────────────────────────────────────────
             ('transformateur', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('transformateur', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('transformateur', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('transformateur', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
-            ('transformateur', 'tech',  'local', 'both',   10, 'Bon de commande'),
             # ── Centre de broyage ─────────────────────────────────────────
             ('broyage', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('broyage', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('broyage', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('broyage', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
-            ('broyage', 'tech',  'local', 'both',   10, 'Bon de commande'),
             # ── Revendeur ─────────────────────────────────────────────────
             ('revendeur', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('revendeur', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('revendeur', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('revendeur', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
-            ('revendeur', 'tech',  'local', 'both',   10, 'Bon de commande'),
             # ── Revendeur agréé ───────────────────────────────────────────
             ('rev_agree', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('rev_agree', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('rev_agree', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('rev_agree', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
             ('rev_agree', 'tech',  'local', 'both',   10, 'Cahier des charges signé'),
-            ('rev_agree', 'tech',  'local', 'both',   20, 'Bon de commande'),
             # ── Distributeur officiel ─────────────────────────────────────
             ('distributeur', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('distributeur', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
@@ -112,26 +105,22 @@ class GicaDocumentTemplate(models.Model):
             ('distributeur', 'admin', 'local', 'morale', 40, "Relevé d'identification bancaire (RIB)"),
             ('distributeur', 'admin', 'local', 'morale', 50, "Pièce d'identité du représentant légal"),
             ('distributeur', 'tech',  'local', 'both',   10, 'Cahier des charges signé'),
-            ('distributeur', 'tech',  'local', 'both',   20, 'Bon de commande'),
             # ── Conditionneur ─────────────────────────────────────────────
             ('conditionneur', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('conditionneur', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('conditionneur', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('conditionneur', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
             ('conditionneur', 'tech',  'local', 'both',   10, 'Cahier des charges signé'),
-            ('conditionneur', 'tech',  'local', 'both',   20, 'Bon de commande'),
             # ── Exportateur ───────────────────────────────────────────────
             ('exportateur', 'admin', 'local', 'morale', 10, 'Copie des statuts'),
             ('exportateur', 'admin', 'local', 'morale', 20, 'Registre de commerce électronique'),
             ('exportateur', 'admin', 'local', 'morale', 30, 'NIS / NIF / TIN'),
             ('exportateur', 'admin', 'local', 'morale', 40, "Pièce d'identité du représentant légal"),
-            ('exportateur', 'tech',  'local', 'both',   10, 'Bon de commande'),
-            # ── Auto-constructeur — Physique uniquement ────────────────────
+            # ── Auto-constructeur ─────────────────────────────────────────
             ('auto_const', 'admin', 'local', 'physique', 10, "Copie de la pièce d'identité"),
             ('auto_const', 'tech',  'local', 'physique', 10, 'Permis de construire (si applicable)'),
             # ── Autres ────────────────────────────────────────────────────
             ('autres', 'admin', 'local', 'both', 10, "Agrément ou statuts de l'association"),
-            ('autres', 'admin', 'local', 'both', 20, "Bon de commande"),
             ('autres', 'tech',  'local', 'both', 10, 'Permis de construire (associations religieuses)'),
             # ── Export international ──────────────────────────────────────
             ('fab_etr', 'admin', 'export', 'morale', 10, 'Copie des statuts (personnes morales)'),
@@ -175,7 +164,7 @@ class GicaClientDocument(models.Model):
     _description = 'Document client — Dossier GICA'
     _order       = 'section, sequence'
 
-    partner_id = fields.Many2one(       # ← était client_id → gica.client
+    partner_id = fields.Many2one(
         'res.partner',
         string='Client',
         required=True,

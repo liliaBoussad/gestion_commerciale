@@ -162,6 +162,18 @@ class GicaCommandeGlobale(models.Model):
         string='Lignes produits',
     )
 
+    # ── Produits disponibles (pour domaine planification) ────────────────
+    product_ids = fields.Many2many(
+        'product.product',
+        compute='_compute_product_ids',
+        string='Produits disponibles',
+    )
+
+    @api.depends('line_ids.product_id')
+    def _compute_product_ids(self):
+        for rec in self:
+            rec.product_ids = rec.line_ids.mapped('product_id')
+
     # ── Lien vers Planifications ──────────────────────────────────────────
     planification_ids = fields.One2many(
         'gica.planification.client',

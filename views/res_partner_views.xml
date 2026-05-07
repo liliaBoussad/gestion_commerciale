@@ -52,7 +52,11 @@
                 <group string="Informations GICA">
                     <group string="Identification">
                         <field name="client_type"/>
-                        <field name="nature_client" invisible="not client_type"/>
+                       <field name="nature_id"
+                            invisible="not client_type"
+                            domain="nature_domain_view"
+                             options="{'no_create': True, 'no_edit': True}"/>
+                       <field name="nature_client" invisible="1"/>
                     </group>
                     <group string="Commercial">
                         <field name="commercial_id"/>
@@ -97,47 +101,26 @@
                         Choisissez un type client et une nature pour générer les documents.
                     </p>
 
-                    <div invisible="not nature_client">
-                        <separator string="Dossier administratif"/>
-                        <field name="document_admin_ids" nolabel="1"
+            <div invisible="not nature_client">
+                 <field name="document_ids" nolabel="1"
                                context="{'default_section': 'admin'}">
-                            <list create="0" delete="0"
-                                  decoration-success="state == 'fourni'"
-                                  decoration-danger="state == 'manquant'">
-                                <field name="name"        string="Document requis" readonly="1"/>
-                                <field name="fichier"     widget="binary"
-                                       filename="fichier_nom" string="Charger"/>
-                                <field name="fichier_nom" string="Fichier" readonly="1"/>
-                                <button name="action_supprimer_fichier" type="object"
-                                        string="Supprimer" class="btn-sm btn-outline-danger"
-                                        invisible="state != 'fourni'"/>
-                                <field name="state" widget="badge"
-                                       decoration-success="state == 'fourni'"
-                                       decoration-danger="state == 'manquant'"/>
-                                <field name="section" column_invisible="1"/>
-                            </list>
-                        </field>
-
-                        <separator string="Dossier technique"/>
-                        <field name="document_tech_ids" nolabel="1"
-                               context="{'default_section': 'tech'}">
-                            <list create="0" delete="0"
-                                  decoration-success="state == 'fourni'"
-                                  decoration-danger="state == 'manquant'">
-                                <field name="name"        string="Document requis" readonly="1"/>
-                                <field name="fichier"     widget="binary"
-                                       filename="fichier_nom" string="Charger"/>
-                                <field name="fichier_nom" string="Fichier" readonly="1"/>
-                                <button name="action_supprimer_fichier" type="object"
-                                        string="Supprimer" class="btn-sm btn-outline-danger"
-                                        invisible="state != 'fourni'"/>
-                                <field name="state" widget="badge"
-                                       decoration-success="state == 'fourni'"
-                                       decoration-danger="state == 'manquant'"/>
-                                <field name="section" column_invisible="1"/>
-                            </list>
-                        </field>
-                    </div>
+                    <list create="0" delete="0"
+                              decoration-success="state == 'fourni'"
+                                        decoration-danger="state == 'manquant'">
+                        <field name="section" string="Section" readonly="1"/>
+                        <field name="name" string="Document requis" readonly="1"/>
+                       <field name="fichier" widget="binary"
+                                         filename="fichier_nom" string="Charger"/>
+                        <field name="fichier_nom" string="Fichier" readonly="1"/>
+                     <button name="action_supprimer_fichier" type="object"
+                    string="Supprimer" class="btn-sm btn-outline-danger"
+                                invisible="state != 'fourni'"/>
+                       <field name="state" widget="badge"
+                   decoration-success="state == 'fourni'"
+                   decoration-danger="state == 'manquant'"/>
+                    </list>
+              </field>
+         </div>
 
                 </page>
             </page>
