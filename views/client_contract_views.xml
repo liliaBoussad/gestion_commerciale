@@ -14,9 +14,6 @@
                   decoration-primary="state == 'draft'">
                 <field name="name"/>
                 <field name="client_id"/>
-                <field name="quantity_total_tonne"/>
-                <field name="montant_total"/>
-                <field name="mode_paiement"/>
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="state" widget="badge"
@@ -36,9 +33,9 @@
         <field name="arch" type="xml">
             <form string="Contrat Client GICA">
                 <header>
-                    <button name="action_activer"  string="Activer"   type="object" class="btn-primary"
+                    <button name="action_activer"   string="Activer"   type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
-                    <button name="action_demarrer" string="Démarrer"  type="object" class="btn-primary"
+                    <button name="action_demarrer"  string="Démarrer"  type="object" class="btn-primary"
                             invisible="state != 'actif'"/>
                     <button name="action_suspendre" string="Suspendre" type="object" class="btn-warning"
                             invisible="state not in ('actif','en_cours')"/>
@@ -57,30 +54,6 @@
                         <field name="client_id"/>
                     </group>
 
-                    <group string="Prix et paiement">
-                        <group>
-                            <field name="montant_total"        readonly="1"/>
-                            <field name="quantity_total_tonne" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="mode_paiement"/>
-                            <field name="modalite_paiement"/>
-                            <field name="delai_paiement"
-                                   invisible="mode_paiement == 'comptant'"/>
-                        </group>
-                    </group>
-
-                    <group string="Livraison">
-                        <group>
-                            <field name="delai_livraison"/>
-                            <field name="lieu_livraison"/>
-                        </group>
-                        <group>
-                            <field name="adresse_livraison"
-                                   invisible="lieu_livraison == 'depart_usine'"/>
-                        </group>
-                    </group>
-
                     <group string="Période du contrat">
                         <group>
                             <field name="date_start"/>
@@ -96,19 +69,10 @@
                         <page string="Produits commandés">
                             <field name="line_ids" readonly="state in ('expire','resilie')">
                                 <list editable="bottom">
-                                    <field name="sequence"         widget="handle"/>
-                                    <!-- ✅ product_id remplace product_type + conditionnement -->
+                                    <field name="sequence" widget="handle"/>
                                     <field name="product_id"
                                            domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="type_ciment"      readonly="1"/>
-                                    <field name="conditionnement"  readonly="1"/>
-                                    <field name="quantity"/>
-                                    <field name="uom"/>
-                                    <field name="quantity_tonne"   readonly="1"/>
-                                    <field name="prix_unitaire"/>
-                                    <field name="montant_total"    readonly="1"/>
-                                    <field name="quantity_livree"  readonly="1"/>
-                                    <field name="quantity_restante" readonly="1"/>
+                                    <field name="quantity" string="Quantité (T)"/>
                                 </list>
                             </field>
                         </page>
@@ -138,7 +102,6 @@
                 <filter name="expire"   string="Expirés"   domain="[('state','=','expire')]"/>
                 <filter name="resilie"  string="Résiliés"  domain="[('state','=','resilie')]"/>
                 <separator/>
-                <!-- Filtres par famille ciment via type_ciment (related stored) -->
                 <filter name="beton"   string="GICA BÉTON"
                         domain="[('line_ids.type_ciment','in',['cem_ii_325','cem_ii_425_n','cem_ii_425_r'])]"/>
                 <filter name="moudhad" string="GICA MOUDHAD"

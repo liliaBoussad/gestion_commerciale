@@ -19,7 +19,7 @@ class GicaCommandeGlobaleLine(models.Model):
 
     product_id = fields.Many2one(
         'product.product',
-        string='Produit / Conditionnement',
+        string='Produit ',
         required=True,
         domain="[('product_tmpl_id.is_gica_product', '=', True)]",
     )

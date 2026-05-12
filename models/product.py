@@ -25,14 +25,8 @@ class ProductTemplate(models.Model):
         ('clinker',       'Clinker'),
     ], string='Famille ciment', tracking=True)
 
-
-class ProductProduct(models.Model):
-    """
-    Héritage de product.product (variantes) pour ajouter
-    le type de conditionnement GICA.
-    """
-    _inherit = 'product.product'
-
+    # ── Déplacé de product.product → product.template ─────────────────────
+    # Plus simple : 1 produit = 1 conditionnement, pas de variantes
     conditionnement_gica = fields.Selection([
         ('sac_25kg',           'Sac 25 kg'),
         ('sac_50kg',           'Sac 50 kg'),
@@ -42,3 +36,19 @@ class ProductProduct(models.Model):
         ('big_bag_client',     'Big-Bag (charge client)'),
         ('big_bag_scaek',      'Big-Bag (charge SCAEK)'),
     ], string='Conditionnement GICA')
+
+
+class ProductProduct(models.Model):
+    """
+    Héritage de product.product (variantes).
+    conditionnement_gica est maintenant sur product.template,
+    on expose un related ici pour la compatibilité avec le code existant.
+    """
+    _inherit = 'product.product'
+
+    conditionnement_gica = fields.Selection(
+        related='product_tmpl_id.conditionnement_gica',
+        string='Conditionnement GICA',
+        store=True,
+        readonly=True,
+    )

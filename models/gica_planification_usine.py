@@ -4,6 +4,30 @@ from odoo.exceptions import ValidationError
 from datetime import timedelta
 
 
+class GicaPlanificationConsolidation(models.Model):
+    _name        = 'gica.planification.consolidation'
+    _description = 'Consolidation Planification Usine GICA'
+    _order       = 'date_enlevement asc, product_id asc'
+
+    planification_usine_id = fields.Many2one(
+        'gica.planification.usine',
+        string='Planification Usine',
+        required=True,
+        ondelete='cascade',
+    )
+    date_enlevement  = fields.Date(string='Date enlèvement', readonly=True)
+    product_id       = fields.Many2one('product.product', string='Produit', readonly=True)
+    conditionnement  = fields.Selection(
+        related='product_id.conditionnement_gica',
+        string='Conditionnement',
+        readonly=True,
+        store=True,
+    )
+    nb_lignes       = fields.Integer(string='Nb clients',    readonly=True)
+    nb_rotations    = fields.Integer(string='Rotations',     readonly=True)
+    quantity_tonne  = fields.Float(string='Qté totale (T)',  readonly=True)
+
+
 class GicaPlanificationUsine(models.Model):
     _name = 'gica.planification.usine'
     _description = 'Planification Usine GICA'
@@ -19,13 +43,8 @@ class GicaPlanificationUsine(models.Model):
         tracking=True,
     )
 
-    date_debut = fields.Date(
-        string='Date début',
-        required=True,
-        tracking=True,
-    )
-
-    date_fin = fields.Date(
+    date_debut = fields.Date(string='Date début', required=True, tracking=True)
+    date_fin   = fields.Date(
         string='Date fin',
         compute='_compute_date_fin',
         store=True,
@@ -45,9 +64,27 @@ class GicaPlanificationUsine(models.Model):
         string='Planifications Clients',
     )
 
+    # ── Lignes produits directes ──────────────────────────────────────────
+    planification_line_ids = fields.One2many(
+        'gica.planification.client.line',
+        'planification_usine_id',
+        string='Lignes produits',
+    )
+
+    # ── Consolidation ─────────────────────────────────────────────────────
+    consolidation_ids = fields.One2many(
+        'gica.planification.consolidation',
+        'planification_usine_id',
+        string='Consolidation',
+        readonly=True,
+    )
+
+    observations = fields.Text(string='Observations')
+
+    # ── Compteurs ─────────────────────────────────────────────────────────
     planification_count = fields.Integer(
         compute='_compute_counts',
-        string='Total Planifications',
+        string='Total',
     )
     planification_validee_count = fields.Integer(
         compute='_compute_counts',
@@ -62,17 +99,25 @@ class GicaPlanificationUsine(models.Model):
         string='En attente',
     )
 
-    observations = fields.Text(string='Observations')
+    # ── Totaux quantités ──────────────────────────────────────────────────
+    quantity_total_demandee = fields.Float(
+        compute='_compute_quantities',
+        store=True,
+        string='Qté totale demandée (T)',
+    )
+    quantity_total_validee = fields.Float(
+        compute='_compute_quantities',
+        store=True,
+        string='Qté totale validée (T)',
+    )
 
     @api.depends('date_debut')
     def _compute_date_fin(self):
         for rec in self:
-            if rec.date_debut:
-                rec.date_fin = rec.date_debut + timedelta(days=14)
-            else:
-                rec.date_fin = False
+            rec.date_fin = rec.date_debut + timedelta(days=14) if rec.date_debut else False
 
-    @api.depends('planification_ids', 'planification_ids.state')
+    @api.depends('planification_ids', 'planification_ids.state',
+                 'planification_line_ids.state')
     def _compute_counts(self):
         for rec in self:
             rec.planification_count = len(rec.planification_ids)
@@ -83,7 +128,24 @@ class GicaPlanificationUsine(models.Model):
                 rec.planification_ids.filtered(lambda p: p.state == 'refusee')
             )
             rec.planification_en_attente_count = len(
-                rec.planification_ids.filtered(lambda p: p.state == 'soumise')
+                rec.planification_line_ids.filtered(lambda l: l.state == 'en_attente')
+            )
+
+    @api.depends(
+        'planification_ids.quantity_total_tonne',
+        'planification_ids.state',
+        'planification_line_ids.quantity_tonne',
+        'planification_line_ids.state',
+    )
+    def _compute_quantities(self):
+        for rec in self:
+            rec.quantity_total_demandee = sum(
+                rec.planification_line_ids.mapped('quantity_tonne')
+            )
+            rec.quantity_total_validee = sum(
+                l.quantity_tonne
+                for l in rec.planification_line_ids
+                if l.state == 'validee'
             )
 
     @api.model_create_multi
@@ -106,7 +168,6 @@ class GicaPlanificationUsine(models.Model):
 
     @api.constrains('date_debut')
     def _check_no_overlap(self):
-        """Vérifie qu'il n'y a pas de chevauchement avec une période confirmée"""
         for rec in self:
             if not rec.date_debut:
                 continue
@@ -124,17 +185,19 @@ class GicaPlanificationUsine(models.Model):
                 )
 
     def action_recuperer_planifications(self):
-        """Récupère toutes les planifications clients soumises pour cette période"""
         self.ensure_one()
         if not self.date_debut or not self.date_fin:
             raise ValidationError('❌ Veuillez définir une date de début.')
 
-        planifications = self.env['gica.planification.client'].search([
-            ('state', '=', 'soumise'),
+        # Chercher via les lignes directement
+        lignes = self.env['gica.planification.client.line'].search([
             ('date_enlevement', '>=', self.date_debut),
             ('date_enlevement', '<=', self.date_fin),
-            ('planification_usine_id', '=', False),
+            ('planification_id.state', '=', 'soumise'),
+            ('planification_id.planification_usine_id', '=', False),
         ])
+
+        planifications = lignes.mapped('planification_id')
 
         if not planifications:
             raise ValidationError(
@@ -148,7 +211,6 @@ class GicaPlanificationUsine(models.Model):
             body=f'📋 {len(planifications)} planification(s) récupérée(s) '
                  f'pour la période {self.date_debut} → {self.date_fin}.'
         )
-
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -160,24 +222,68 @@ class GicaPlanificationUsine(models.Model):
         }
 
     def action_confirmer(self):
-        """Confirme la période — verrouille les dates sur le portail"""
         for rec in self:
-            # Vérifier qu'il n'y a plus de planifications en attente
-            en_attente = rec.planification_ids.filtered(
-                lambda p: p.state == 'soumise'
+            en_attente = rec.planification_line_ids.filtered(
+                lambda l: l.state == 'en_attente'
             )
             if en_attente:
                 raise ValidationError(
-                    f'❌ Il reste {len(en_attente)} planification(s) en attente de traitement.'
+                    f'❌ Il reste {len(en_attente)} ligne(s) en attente de traitement.'
                 )
             rec.write({'state': 'confirmee'})
+            rec._calculer_consolidation()
             rec.message_post(
                 body=f'🔒 Période confirmée et verrouillée : '
                      f'{rec.date_debut} → {rec.date_fin}'
             )
 
+    def _calculer_consolidation(self):
+        """Agrège les lignes validées par (date, produit, conditionnement)"""
+        self.ensure_one()
+        self.consolidation_ids.unlink()
+
+        data = {}
+        for line in self.planification_line_ids.filtered(lambda l: l.state == 'validee'):
+            key = (line.date_enlevement, line.product_id.id, line.conditionnement)
+            if key not in data:
+                data[key] = {
+                    'nb_lignes':      0,
+                    'nb_rotations':   0,
+                    'quantity_tonne': 0.0,
+                }
+            data[key]['nb_lignes']      += 1
+            data[key]['nb_rotations']   += line.rotation
+            data[key]['quantity_tonne'] += line.quantity_tonne
+
+        for (date, product_id, conditionnement), vals in data.items():
+            self.env['gica.planification.consolidation'].create({
+                'planification_usine_id': self.id,
+                'date_enlevement':        date,
+                'product_id':             product_id,
+                'conditionnement':        conditionnement,
+                'nb_lignes':              vals['nb_lignes'],
+                'nb_rotations':           vals['nb_rotations'],
+                'quantity_tonne':         vals['quantity_tonne'],
+            })
+
+        self.message_post(
+            body=f'📊 Consolidation calculée — {len(data)} ligne(s).'
+        )
+
+    def action_calculer_consolidation(self):
+        self.ensure_one()
+        self._calculer_consolidation()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Consolidation',
+                'message': 'Consolidation recalculée avec succès.',
+                'type': 'success',
+            }
+        }
+
     def action_valider_planification(self, planification_id):
-        """Valide une planification client spécifique"""
         self.ensure_one()
         planification = self.env['gica.planification.client'].browse(planification_id)
         if planification.planification_usine_id != self:
@@ -185,7 +291,6 @@ class GicaPlanificationUsine(models.Model):
         planification.action_valider()
 
     def action_refuser_planification(self, planification_id, motif):
-        """Refuse une planification client spécifique"""
         self.ensure_one()
         planification = self.env['gica.planification.client'].browse(planification_id)
         if planification.planification_usine_id != self:
@@ -202,4 +307,3 @@ class GicaPlanificationUsine(models.Model):
             'domain': [('planification_usine_id', '=', self.id)],
             'context': {'default_planification_usine_id': self.id},
         }
-        

@@ -3,7 +3,7 @@
 
     <!-- ══════════════════════════════════════════════════════
          Produits GICA — product.template
-         Chaque produit = 1 type de ciment + 1 conditionnement
+         conditionnement_gica maintenant sur product.template
          ══════════════════════════════════════════════════════ -->
 
     <!-- CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé -->
@@ -11,6 +11,7 @@
         <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_425_crs</field>
+        <field name="conditionnement_gica">sac_50kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -23,6 +24,7 @@
         <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_425_crs</field>
+        <field name="conditionnement_gica">sac_50kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -35,6 +37,7 @@
         <field name="name">CEM I 42.5 N-LH/SR5 — Vrac</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_425_crs</field>
+        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -47,6 +50,7 @@
         <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg Fardelisé</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_525</field>
+        <field name="conditionnement_gica">sac_50kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -59,6 +63,7 @@
         <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_525</field>
+        <field name="conditionnement_gica">sac_50kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -71,6 +76,7 @@
         <field name="name">CEM I 52.5 N-SR5 — Vrac</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_525</field>
+        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -83,6 +89,7 @@
         <field name="name">CEM II/A-L 32.5 N — Sac 25 kg</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_325</field>
+        <field name="conditionnement_gica">sac_25kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -95,6 +102,7 @@
         <field name="name">CEM II/A-L 32.5 N — Sac 25 kg Fardelisé</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_325</field>
+        <field name="conditionnement_gica">sac_25kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -107,6 +115,7 @@
         <field name="name">CEM II/A-L 42.5 N — Sac 25 kg</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_425_n</field>
+        <field name="conditionnement_gica">sac_25kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -119,6 +128,7 @@
         <field name="name">CEM II/A-L 42.5 N — Sac 50 kg Fardelisé</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_425_n</field>
+        <field name="conditionnement_gica">sac_50kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -131,6 +141,7 @@
         <field name="name">CEM II/A-L 42.5 N — Vrac</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_425_n</field>
+        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -143,6 +154,7 @@
         <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Sortie Usine</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">well_cement_g</field>
+        <field name="conditionnement_gica">big_bag_scaek</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -155,6 +167,7 @@
         <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Rendu Site</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">well_cement_g</field>
+        <field name="conditionnement_gica">big_bag_client</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -167,6 +180,7 @@
         <field name="name">Well Cement Class G HSR — Vrac</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">well_cement_g</field>
+        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
@@ -179,6 +193,7 @@
         <field name="name">Clinker — Vrac</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">clinker</field>
+        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>

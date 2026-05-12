@@ -15,8 +15,7 @@ class GicaClientAgrement(models.Model):
         readonly=True, copy=False, default='Nouveau', tracking=True,
     )
 
-    # ── Lié à res.partner directement ────────────────────────────────────
-    partner_id = fields.Many2one(       # ← était client_id → gica.client
+    partner_id = fields.Many2one(
         'res.partner',
         string='Client',
         required=True,
@@ -50,10 +49,19 @@ class GicaClientAgrement(models.Model):
 
     @api.onchange('date_debut')
     def _onchange_date_debut(self):
-        if self.date_debut:
-            self.date_expiration = self.date_debut + relativedelta(years=2)
-        else:
+        if not self.date_debut:
             self.date_expiration = False
+            return
+        today = fields.Date.today()
+        if self.date_debut < today:
+            return {
+                'warning': {
+                    'title': '⛔ Date invalide',
+                    'message': f'La date de début ne peut pas être dans le passé.\n'
+                               f'👉 Choisir une date à partir du {today}.',
+                }
+            }
+        self.date_expiration = self.date_debut + relativedelta(years=2)
 
     state = fields.Selection([
         ('actif',    'Actif'),
@@ -102,17 +110,23 @@ class GicaClientAgrement(models.Model):
 
     @api.constrains('date_debut', 'date_expiration')
     def _check_dates(self):
+        today = fields.Date.today()
         for rec in self:
+            if rec.date_debut and rec.date_debut < today:
+                raise ValidationError(
+                    f'❌ La date de début ne peut pas être dans le passé.\n'
+                    f'👉 Choisir une date à partir du {today}.'
+                )
             if rec.date_debut and rec.date_expiration:
                 if rec.date_expiration <= rec.date_debut:
                     raise ValidationError(
-                        "La date d'expiration doit être postérieure à la date de début."
+                        "❌ La date d'expiration doit être postérieure à la date de début."
                     )
                 delta = relativedelta(rec.date_expiration, rec.date_debut)
                 duree_mois = delta.months + delta.years * 12
                 if duree_mois > 24:
                     raise ValidationError(
-                        "La durée de l'agrément ne peut pas dépasser 2 ans (Section 3.01 GICA)."
+                        "❌ La durée de l'agrément ne peut pas dépasser 2 ans (Section 3.01 GICA)."
                     )
 
     def action_suspendre(self): self.write({'state': 'suspendu'})
@@ -126,9 +140,9 @@ class GicaClientAgrement(models.Model):
             'res_model': 'gica.client.agrement',
             'view_mode': 'form',
             'context': {
-                'default_partner_id':             self.partner_id.id,
-                'default_agrement_precedent_id':  self.id,
-                'default_renouvele':              True,
+                'default_partner_id':            self.partner_id.id,
+                'default_agrement_precedent_id': self.id,
+                'default_renouvele':             True,
             },
         }
 
