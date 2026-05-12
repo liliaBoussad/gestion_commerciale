@@ -1,7 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_gica_client_nature,gica.client.nature,model_gica_client_nature,,1,1,1,1
 access_gica_client,gica.client,model_gica_client,,1,1,1,1
-
 access_gica_client_contract,gica.client.contract,model_gica_client_contract,,1,1,1,1
 access_gica_contract_line,gica.contract.line,model_gica_client_contract_line,base.group_user,1,1,1,1
 access_gica_client_agrement,gica.client.agrement,model_gica_client_agrement,,1,1,1,1
@@ -20,8 +19,11 @@ access_gica_commande_globale_manager,gica.commande.globale manager,model_gica_co
 access_gica_commande_globale_user,gica.commande.globale user,model_gica_commande_globale,base.group_user,1,1,1,0
 access_gica_commande_globale_line_manager,gica.commande.globale.line manager,model_gica_commande_globale_line,base.group_system,1,1,1,1
 access_gica_commande_globale_line_user,gica.commande.globale.line user,model_gica_commande_globale_line,base.group_user,1,1,1,0
-access_gica_bon_commande_manager,gica.bon.commande manager,model_gica_bon_commande,base.group_system,1,1,1,1
-access_gica_bon_commande_user,gica.bon.commande user,model_gica_bon_commande,base.group_user,1,1,1,0
-access_gica_bon_commande_line_manager,gica.bon.commande.line manager,model_gica_bon_commande_line,base.group_system,1,1,1,1
-access_gica_bon_commande_line_user,gica.bon.commande.line user,model_gica_bon_commande_line,base.group_user,1,1,1,0
 access_gica_client_category,gica.client.category,model_gica_client_category,,1,1,1,1
+access_gica_planification_client_manager,gica.planification.client manager,model_gica_planification_client,base.group_system,1,1,1,1
+access_gica_planification_client_user,gica.planification.client user,model_gica_planification_client,base.group_user,1,1,1,0
+access_gica_planification_client_line_manager,gica.planification.client.line manager,model_gica_planification_client_line,base.group_system,1,1,1,1
+access_gica_planification_client_line_user,gica.planification.client.line user,model_gica_planification_client_line,base.group_user,1,1,1,0
+access_gica_planification_usine_manager,gica.planification.usine manager,model_gica_planification_usine,base.group_system,1,1,1,1
+access_gica_planification_usine_user,gica.planification.usine user,model_gica_planification_usine,base.group_user,1,1,0,0
+access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1

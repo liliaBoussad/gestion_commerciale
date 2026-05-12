@@ -41,7 +41,17 @@ class ResPartner(models.Model):
     nature_client = fields.Selection([
         ('morale',   'Personne Morale'),
         ('physique', 'Personne Physique'),
-    ], string='Nature du client', tracking=True)
+    ], string='Nature (interne)', tracking=True)
+
+    nature_id = fields.Many2one(
+        'gica.client.nature',
+        string='Nature du client',
+        tracking=True,
+    )
+
+    nature_domain_view = fields.Char(
+        compute='_compute_nature_domain_view',
+    )
 
     commercial_id = fields.Many2one(
         'res.users', string='Commercial', tracking=True,
@@ -121,9 +131,9 @@ class ResPartner(models.Model):
         string='Documents techniques',
         domain=[('section', '=', 'tech')],
     )
-    doc_total     = fields.Integer(compute='_compute_doc_stats', store=True, string='Total')
-    doc_fournis   = fields.Integer(compute='_compute_doc_stats', store=True, string='Fournis')
-    doc_manquants = fields.Integer(compute='_compute_doc_stats', store=True, string='Manquants')
+    doc_total      = fields.Integer(compute='_compute_doc_stats', store=True, string='Total')
+    doc_fournis    = fields.Integer(compute='_compute_doc_stats', store=True, string='Fournis')
+    doc_manquants  = fields.Integer(compute='_compute_doc_stats', store=True, string='Manquants')
     dossier_valide = fields.Boolean(
         string='Dossier validé', default=False, tracking=True,
     )
@@ -180,25 +190,43 @@ class ResPartner(models.Model):
         for rec in self:
             rec.is_gica_client = bool(rec.client_type)
 
+    @api.depends('client_type')
+    def _compute_nature_domain_view(self):
+        for rec in self:
+            if rec.client_type == 'auto_const':
+                rec.nature_domain_view = "[('type_nature','=','utilise'),('parent_id.name','=','Cas Particuliers')]"
+            elif rec.client_type == 'autres':
+                rec.nature_domain_view = "[('type_nature','=','utilise'),('parent_id.name','=','Autres Clients')]"
+            elif rec.client_type:
+                rec.nature_domain_view = "[('type_nature','=','utilise'),('parent_id','=',False)]"
+            else:
+                rec.nature_domain_view = "[('type_nature','=','utilise')]"
+
     # ── Onchange ──────────────────────────────────────────────────────────
     @api.onchange('client_type')
     def _onchange_client_type(self):
-        """Réinitialise nature et documents. Auto-sélection si une seule nature possible."""
         self.nature_client = False
-        self.document_ids = [(5, 0, 0)]
+        self.nature_id = False
         if self.client_type:
             natures = NATURE_PAR_TYPE.get(self.client_type, [])
             if len(natures) == 1:
                 self.nature_client = natures[0]
-                # Une seule nature → générer directement sans attendre onchange nature
-                self._generer_documents_templates()
+
+    @api.onchange('nature_id')
+    def _onchange_nature_id(self):
+        """Synchronise nature_client depuis nature_id."""
+        if self.nature_id:
+            if 'physique' in self.nature_id.name.lower():
+                self.nature_client = 'physique'
+            else:
+                self.nature_client = 'morale'
+        else:
+            self.nature_client = False
 
     @api.onchange('nature_client')
     def _onchange_nature_client(self):
-        """Génère les documents dès que nature est choisie manuellement."""
-        if not self.client_type or not self.nature_client:
-            return
-        self._generer_documents_templates()
+        """Rien — les documents sont générés via bouton ou au create."""
+        pass
 
     # ── Génération documents ──────────────────────────────────────────────
     def _generer_documents_templates(self):

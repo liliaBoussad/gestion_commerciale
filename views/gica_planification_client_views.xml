@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Formulaire Planification Client
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_planification_client_form" model="ir.ui.view">
+        <field name="name">gica.planification.client.form</field>
+        <field name="model">gica.planification.client</field>
+        <field name="arch" type="xml">
+            <form string="Planification Client">
+                <header>
+                    <button name="action_soumettre"
+                            string="Soumettre à la Commission"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_remettre_brouillon"
+                            string="Remettre en Brouillon"
+                            type="object"
+                            invisible="state != 'soumise'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,soumise,validee"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bc"
+                                invisible="state != 'validee'">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Bons de Commande</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <!-- ── Colonne gauche : cascade Client → BCG ── -->
+                        <group string="Sélection">
+                            <field name="client_id"
+                                   readonly="state in ('validee', 'refusee')"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="1. Choisir le client…"/>
+                            <field name="commande_globale_id"
+                                   readonly="state in ('validee', 'refusee') or not client_id"
+                                   domain="[('client_id', '=', client_id), ('state', 'in', ['nouveau', 'en_cours'])]"
+                                   options="{'no_create': True}"
+                                   placeholder="2. Choisir le BCG actif…"/>
+                        </group>
+
+                    </group>
+
+                    <!-- Motif refus -->
+                    <group string="Motif du refus" invisible="state != 'refusee'">
+                        <field name="motif_refus" nolabel="1" readonly="1"/>
+                    </group>
+
+                    <field name="product_ids" invisible="1"/>
+
+                    <notebook>
+                        <page string="Produits demandés">
+                            <field name="line_ids"
+                                   readonly="state in ('validee', 'refusee') or not commande_globale_id">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"
+                                           domain="[('id', 'in', parent.product_ids)]"/>
+                                    <field name="conditionnement" readonly="1"/>
+                                    <field name="date_enlevement" string="Date enlèvement"/>
+                                    <field name="nbr_paquets"/>
+                                    <field name="quantity_tonne" string="Qté (T)"/>
+                                    <field name="rotation" string="Rotations"/>
+                                    <field name="quantity_disponible"
+                                           string="Disponible BCG (T)"
+                                           readonly="1"/>
+                                    <field name="prix_unitaire"
+                                           string="Prix unit. (DA)"
+                                           readonly="1"/>
+                                    <button name="action_voir_bc"
+                                            string="📄 BC"
+                                            type="object"
+                                            class="btn-sm btn-secondary"
+                                            invisible="not sale_order_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observations">
+                            <field name="observations"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Liste
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_planification_client_list" model="ir.ui.view">
+        <field name="name">gica.planification.client.list</field>
+        <field name="model">gica.planification.client</field>
+        <field name="arch" type="xml">
+            <list string="Planifications Clients"
+                  decoration-success="state == 'validee'"
+                  decoration-warning="state == 'soumise'"
+                  decoration-danger="state == 'refusee'"
+                  decoration-muted="state == 'brouillon'">
+                <field name="name" string="Référence"/>
+                <field name="client_id" string="Client"/>
+                <field name="periode_debut" string="Date début"/>
+                <field name="periode_fin" string="Date fin"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'validee'"
+                       decoration-warning="state == 'soumise'"
+                       decoration-danger="state == 'refusee'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Recherche
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_planification_client_search" model="ir.ui.view">
+        <field name="name">gica.planification.client.search</field>
+        <field name="model">gica.planification.client</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="commande_globale_id"/>
+                <filter string="Brouillon" name="brouillon" domain="[('state','=','brouillon')]"/>
+                <filter string="Soumises"  name="soumise"   domain="[('state','=','soumise')]"/>
+                <filter string="Validées"  name="validee"   domain="[('state','=','validee')]"/>
+                <filter string="Refusées"  name="refusee"   domain="[('state','=','refusee')]"/>
+                <separator/>
+                <filter string="À traiter" name="a_traiter" domain="[('state','=','soumise')]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="BCG"    name="group_bcg"    context="{'group_by': 'commande_globale_id'}"/>
+                    <filter string="Statut" name="group_state"  context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Action
+    ══════════════════════════════════════════════════ -->
+    <record id="action_gica_planification_client" model="ir.actions.act_window">
+        <field name="name">Planifications Clients</field>
+        <field name="res_model">gica.planification.client</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune planification client</p>
+            <p>Sélectionnez un client puis son BCG actif pour créer une planification.</p>
+        </field>
+    </record>
+
+</odoo>

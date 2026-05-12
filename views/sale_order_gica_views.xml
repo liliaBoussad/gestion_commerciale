@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Héritage du formulaire sale.order
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_sale_order_gica_form" model="ir.ui.view">
+        <field name="name">sale.order.gica.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Ajouter un onglet GICA dans le notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Informations GICA" name="gica_info">
+                    <group>
+                        <group string="Références GICA">
+                            <field name="commande_globale_id"
+                                   options="{'no_create': True}"
+                                   readonly="1"/>
+                            <field name="planification_id" readonly="1"/>
+                            <field name="gica_client_id"   readonly="1"/>
+                            <field name="gica_contrat_id"  readonly="1"/>
+                        </group>
+                        <group string="Enlèvement">
+                            <field name="date_prevue_enlevement" readonly="1"/>
+                            <field name="date_reelle_enlevement" readonly="1"/>
+                            <button name="action_marquer_enleve"
+                                    string="Marquer Enlevé"
+                                    type="object"
+                                    class="btn-primary btn-sm"
+                                    invisible="date_reelle_enlevement or state != 'sale'"/>
+                        </group>
+                    </group>
+                    <group string="Scan BC Client (Traçabilité)">
+                        <field name="scan_bc_client"
+                               widget="binary"
+                               filename="scan_bc_client_filename"/>
+                        <field name="scan_bc_client_filename" invisible="1"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Action — Bons de Commande GICA
+         Filtre : uniquement les sale.order liés à un BCG
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_gica_bon_commande" model="ir.actions.act_window">
+        <field name="name">Commandes</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('commande_globale_id', '!=', False)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun bon de commande GICA</p>
+            <p>Les bons de commande sont créés depuis une planification validée.</p>
+        </field>
+    </record>
+
+</odoo>
