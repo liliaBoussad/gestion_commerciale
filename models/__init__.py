@@ -17,3 +17,8 @@ from . import gica_commande_globale
 from . import gica_planification_client   # ← nouveau Phase 1
 from . import gica_planification_usine    # ← nouveau Phase 1
 from . import sale_order_gica
+
+from . import gica_bon_circulation
+from . import gica_wizard_bon_circulation
+
+from . import gica_pesee

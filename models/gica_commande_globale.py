@@ -39,7 +39,7 @@ class GicaCommandeGlobaleLine(models.Model):
     )
 
     quantity_tonne    = fields.Float(string='Quantité (T)',        required=True)
-    prix_unitaire     = fields.Float(string='Prix unitaire (DA)',  required=True)
+    prix_unitaire     = fields.Float(string='Prix unitaire (DA)',  )
 
     montant_total = fields.Float(
         string='Montant total (DA)',

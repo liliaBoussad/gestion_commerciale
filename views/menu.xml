@@ -2,7 +2,9 @@
 <odoo>
     <data>
 
-        <!-- ── Clients GICA ── -->
+        <!-- ══════════════════════════════════════════════════
+             Clients GICA
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
                   parent="sale.sale_menu_root"
@@ -38,50 +40,63 @@
                   action="action_gica_client_classification"
                   sequence="50"/>
 
+        <menuitem id="menu_ventes_gica_documents"
+                  name="Dossiers clients"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_document"
+                  sequence="60"/>
+
+        <menuitem id="menu_ventes_gica_document_type"
+                  name="Documents à fournir"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_document_type"
+                  sequence="70"/>
+
         <menuitem id="menu_ventes_gica_client_nature"
                   name="Natures des clients"
                   parent="menu_ventes_gica_clients_root"
                   action="action_gica_client_nature"
-                  sequence="60"/>
+                  sequence="80"/>
 
-        <!-- ── Commandes (intégrées dans menu natif Odoo) ── -->
+        <!-- ══════════════════════════════════════════════════
+             Commandes — menu natif Odoo
+             Uniquement : Commandes Globales + Bons de Circulation
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_commande_globale"
                   name="Commandes Globales"
                   parent="sale.sale_order_menu"
                   action="action_gica_commande_globale"
                   sequence="15"/>
 
+        <menuitem id="menu_ventes_gica_bon_circulation_commandes"
+                  name="Bons de Circulation"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_bon_circulation"
+                  sequence="20"/>
+
+        <!-- ══════════════════════════════════════════════════
+             Planification Ciment — nouveau module
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_ventes_gica_planification_root"
+                  name="Planification Ciment"
+                  parent="sale.sale_menu_root"
+                  sequence="8"/>
+
         <menuitem id="menu_ventes_gica_planification_client"
                   name="Planifications Clients"
-                  parent="sale.sale_order_menu"
+                  parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_client"
-                  sequence="20"/>
+                  sequence="10"/>
 
         <menuitem id="menu_ventes_gica_planification_usine"
                   name="Planifications Usine"
-                  parent="sale.sale_order_menu"
+                  parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_usine"
-                  sequence="25"/>
-
-        <!-- ── Documents GICA ── -->
-        <menuitem id="menu_ventes_gica_documents_root"
-                  name="Documents GICA"
-                  parent="sale.sale_menu_root"
-                  sequence="7"/>
-
-        <menuitem id="menu_ventes_gica_documents"
-                  name="Dossiers clients"
-                  parent="menu_ventes_gica_documents_root"
-                  action="action_gica_client_document"
-                  sequence="10"/>
-
-        <menuitem id="menu_ventes_gica_document_type"
-                  name="Documents à fournir"
-                  parent="menu_ventes_gica_documents_root"
-                  action="action_gica_document_type"
                   sequence="20"/>
 
-        <!-- ── Classifications GICA ── -->
+        <!-- ══════════════════════════════════════════════════
+             Classifications GICA
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_config_root"
                   name="Classifications GICA"
                   parent="sale.sale_menu_root"

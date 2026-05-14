@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Liste Bascule
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_bascule_list" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.bascule.list</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <list string="Bascule"
+                  decoration-info="state == 'transmis_tare'"
+                  decoration-warning="state in ('pesee_entree', 'chargement', 'pesee_sortie')"
+                  decoration-success="state == 'termine'"
+                  decoration-muted="state == 'annule'"
+                  default_order="name desc">
+                <field name="name" string="N° Bon"/>
+                <field name="sale_order_id" string="Bon de Commande"/>
+                <field name="client_id" string="Client"/>
+                <field name="product_id" string="Produit"/>
+                <field name="conditionnement" string="Conditionnement"/>
+                <field name="chauffeur" string="Chauffeur"/>
+                <field name="matricule" string="Matricule"/>
+                <field name="quantite_prevue" string="Qté prévue (T)"/>
+                <field name="tare_p1" string="Tare P1 (T)"
+                       optional="show"/>
+                <field name="poids_brut_p2" string="Poids P2 (T)"
+                       optional="show"/>
+                <field name="poids_net" string="Poids Net (T)"
+                       optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'transmis_tare'"
+                       decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                       decoration-success="state == 'termine'"
+                       decoration-danger="state == 'annule'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Formulaire Bascule — Interface agent pesage
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_bascule_form" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.bascule.form</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <form string="Bascule — Pesée">
+                <header>
+                    <!-- Avancer -->
+                    <button name="action_transmettre_tare"
+                            string="🚛 Transmettre à la tare"
+                            type="object" class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_pesee_entree"
+                            string="⚖️ Valider Tare P1"
+                            type="object" class="btn-primary"
+                            invisible="state != 'transmis_tare'"/>
+                    <button name="action_chargement"
+                            string="🏭 Démarrer Chargement"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pesee_entree'"/>
+                    <button name="action_pesee_sortie"
+                            string="⚖️ Valider Poids P2"
+                            type="object" class="btn-primary"
+                            invisible="state != 'chargement'"/>
+                    <button name="action_terminer"
+                            string="✅ Terminer"
+                            type="object" class="btn-success"
+                            invisible="state != 'pesee_sortie'"/>
+                    <!-- Corriger -->
+                    <button name="action_retour_brouillon"
+                            string="↩ Retour Brouillon"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'transmis_tare'"
+                            confirm="Retourner en brouillon ?"/>
+                    <button name="action_retour_transmis"
+                            string="↩ Corriger P1"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'pesee_entree'"
+                            confirm="Réinitialiser la Tare P1 ?"/>
+                    <button name="action_retour_pesee_entree"
+                            string="↩ Retour Pesée Entrée"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'chargement'"
+                            confirm="Retourner à la pesée entrée ?"/>
+                    <button name="action_retour_chargement"
+                            string="↩ Corriger P2"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'pesee_sortie'"
+                            confirm="Réinitialiser le Poids Brut P2 ?"/>
+                    <button name="action_annuler"
+                            string="❌ Annuler"
+                            type="object" class="btn-danger"
+                            invisible="state in ('termine', 'annule')"
+                            confirm="Annuler ce bon de circulation ?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,transmis_tare,pesee_entree,chargement,pesee_sortie,termine"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h3><field name="numero_chaine" readonly="1"/></h3>
+                    </div>
+
+                    <!-- Bloc infos principales -->
+                    <group>
+                        <group string="📋 Informations Commande">
+                            <field name="sale_order_id"   string="Bon de Commande" readonly="1"/>
+                            <field name="client_id"       string="Client"          readonly="1"/>
+                            <field name="product_id"      string="Produit"         readonly="1"/>
+                            <field name="conditionnement" string="Conditionnement" readonly="1"/>
+                            <field name="quantite_prevue" string="Qté prévue (T)"  readonly="1"/>
+                            <field name="nbr_paquets"     string="Nb Paquets"      readonly="1"
+                                   invisible="nbr_paquets == 0"/>
+                        </group>
+                        <group string="🚛 Logistique Camion">
+                            <field name="chauffeur"      string="Chauffeur"   readonly="1"/>
+                            <field name="matricule"      string="Matricule"   readonly="1"/>
+                            <field name="camion"         string="Camion"      readonly="1"/>
+                            <field name="lieu_livraison" string="Destination" readonly="1"/>
+                            <field name="numero_rotation" string="N° Rotation" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="⚖️ Pesées"/>
+
+                    <!-- Bloc pesées -->
+                    <group>
+                        <group string="Pesée Vide — Tare P1">
+                            <field name="tare_p1"
+                                   string="Tare P1 (T)"
+                                   readonly="state not in ('transmis_tare',)"/>
+                        </group>
+                        <group string="Pesée Chargée — Poids Brut P2">
+                            <field name="poids_brut_p2"
+                                   string="Poids Brut P2 (T)"
+                                   readonly="state not in ('chargement',)"/>
+                        </group>
+                    </group>
+
+                    <!-- Résultat Net -->
+                    <group invisible="poids_net == 0">
+                        <group string="✅ Poids Net">
+                            <field name="poids_net"
+                                   string="Poids Net (T)"
+                                   readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- QR Code -->
+                    <group string="Code QR" invisible="not qr_code">
+                        <field name="qr_code"
+                               widget="image"
+                               string="Code QR"
+                               options="{'size': 120}"
+                               readonly="1"
+                               nolabel="1"/>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Recherche Bascule
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_bascule_search" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.bascule.search</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un bon">
+                <field name="name"      string="N° Bon / QR"/>
+                <field name="client_id" string="Client"/>
+                <field name="chauffeur" string="Chauffeur"/>
+                <field name="matricule" string="Matricule"/>
+                <field name="sale_order_id" string="Bon de Commande"/>
+                <separator/>
+                <filter name="en_attente"
+                        string="🚛 En attente"
+                        domain="[('state', '=', 'transmis_tare')]"/>
+                <filter name="pesee_entree"
+                        string="⚖️ Pesée P1 faite"
+                        domain="[('state', '=', 'pesee_entree')]"/>
+                <filter name="chargement"
+                        string="🏭 Chargement"
+                        domain="[('state', '=', 'chargement')]"/>
+                <filter name="pesee_sortie"
+                        string="⚖️ Pesée P2 faite"
+                        domain="[('state', '=', 'pesee_sortie')]"/>
+                <filter name="en_cours"
+                        string="🔄 Tous en cours"
+                        domain="[('state', 'in', ['transmis_tare','pesee_entree','chargement','pesee_sortie'])]"/>
+                <separator/>
+                <filter name="termine"
+                        string="✅ Terminés"
+                        domain="[('state', '=', 'termine')]"/>
+                <filter name="aujourd_hui"
+                        string="📅 Aujourd'hui"
+                        domain="[('create_date', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_state"  string="État"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_client" string="Client"
+                            context="{'group_by': 'client_id'}"/>
+                    <filter name="group_date"   string="Date"
+                            context="{'group_by': 'create_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Historique des Pesées
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_pesee_list" model="ir.ui.view">
+        <field name="name">gica.pesee.list</field>
+        <field name="model">gica.pesee</field>
+        <field name="arch" type="xml">
+            <list string="Historique des Pesées"
+                  decoration-info="type_pesee == 'vide'"
+                  decoration-success="type_pesee == 'charge'">
+                <field name="date_pesee"         string="Date de pesée"/>
+                <field name="bon_circulation_id" string="Bon de Circulation"/>
+                <field name="sale_order_id"      string="Commande de Vente"/>
+                <field name="client_id"          string="Client"/>
+                <field name="product_id"         string="Produit"/>
+                <field name="conditionnement"    string="Conditionnement"/>
+                <field name="type_pesee"         string="Type de Pesée"
+                       widget="badge"
+                       decoration-info="type_pesee == 'vide'"
+                       decoration-success="type_pesee == 'charge'"/>
+                <field name="poids"              string="Poids (T)"/>
+                <field name="agent_pesage_id"    string="Agent Pesage"/>
+                <field name="matricule"          string="Matricule"/>
+                <field name="chauffeur"          string="Chauffeur"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_gica_pesee_search" model="ir.ui.view">
+        <field name="name">gica.pesee.search</field>
+        <field name="model">gica.pesee</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="bon_circulation_id" string="N° Bon"/>
+                <field name="client_id"          string="Client"/>
+                <field name="chauffeur"          string="Chauffeur"/>
+                <field name="matricule"          string="Matricule"/>
+                <separator/>
+                <filter name="vide"
+                        string="⚖️ Pesée à vide (P1)"
+                        domain="[('type_pesee', '=', 'vide')]"/>
+                <filter name="charge"
+                        string="⚖️ Pesée en charge (P2)"
+                        domain="[('type_pesee', '=', 'charge')]"/>
+                <separator/>
+                <filter name="aujourd_hui"
+                        string="📅 Aujourd'hui"
+                        domain="[('date_pesee', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_client"  string="Client"
+                            context="{'group_by': 'client_id'}"/>
+                    <filter name="group_type"    string="Type de pesée"
+                            context="{'group_by': 'type_pesee'}"/>
+                    <filter name="group_agent"   string="Agent"
+                            context="{'group_by': 'agent_pesage_id'}"/>
+                    <filter name="group_date"    string="Date"
+                            context="{'group_by': 'date_pesee:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Actions
+    ══════════════════════════════════════════════════ -->
+    <record id="action_gica_bascule" model="ir.actions.act_window">
+        <field name="name">Pesées en cours</field>
+        <field name="res_model">gica.bon.circulation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'not in', ['annule'])]</field>
+        <field name="context">{'search_default_en_cours': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_gica_bascule_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_gica_bascule_form')}),
+        ]"/>
+        <field name="search_view_id" ref="view_gica_bascule_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun bon en cours</p>
+            <p>Les bons transmis à la tare apparaissent ici automatiquement.</p>
+        </field>
+    </record>
+
+    <record id="action_gica_pesee" model="ir.actions.act_window">
+        <field name="name">Historique des Pesées</field>
+        <field name="res_model">gica.pesee</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_gica_pesee_search"/>
+        <field name="context">{'search_default_aujourd_hui': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune pesée enregistrée</p>
+            <p>Les pesées P1 et P2 apparaissent automatiquement après validation.</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Menu principal Bascule
+    ══════════════════════════════════════════════════ -->
+    <menuitem id="menu_gica_bascule_root"
+              name="Bascule"
+              sequence="50"
+              web_icon="stock,static/description/icon.png"/>
+
+    <menuitem id="menu_gica_bascule_pesees"
+              name="Pesées en cours"
+              parent="menu_gica_bascule_root"
+              action="action_gica_bascule"
+              sequence="10"/>
+
+    <menuitem id="menu_gica_bascule_historique"
+              name="Historique des Pesées"
+              parent="menu_gica_bascule_root"
+              action="action_gica_pesee"
+              sequence="20"/>
+
+    <menuitem id="menu_gica_bascule_tous"
+              name="Tous les Bons"
+              parent="menu_gica_bascule_root"
+              action="action_gica_bon_circulation"
+              sequence="30"/>
+
+</odoo>

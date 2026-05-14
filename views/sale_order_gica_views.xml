@@ -1,62 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Héritage du formulaire sale.order
-    ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_sale_order_gica_form" model="ir.ui.view">
         <field name="name">sale.order.gica.form</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
-            <!-- Ajouter un onglet GICA dans le notebook -->
+            <!-- Boutons header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_generer_bons_circulation"
+                        string="🚛 Générer Bons de Circulation"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'sale' or circulation_line_ids"/>
+                <button name="action_marquer_enleve"
+                        string="✅ Marquer Enlevé"
+                        type="object"
+                        class="btn-success"
+                        invisible="date_reelle_enlevement or state != 'sale'"/>
+            </xpath>
+
+            <!-- Stat button Bons de Circulation -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_voir_bons_circulation"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-truck"
+                        invisible="bon_circulation_count == 0">
+                    <field name="bon_circulation_count"
+                           widget="statinfo"
+                           string="Bons Circulation"/>
+                </button>
+            </xpath>
+
+            <!-- Masquer validity_date -->
+            <xpath expr="//field[@name='validity_date']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Ajouter onglet Informations GICA + Bons de Circulation + Scan BC -->
             <xpath expr="//notebook" position="inside">
+
+                <!-- Informations GICA -->
                 <page string="Informations GICA" name="gica_info">
                     <group>
                         <group string="Références GICA">
-                            <field name="commande_globale_id"
-                                   options="{'no_create': True}"
-                                   readonly="1"/>
-                            <field name="planification_id" readonly="1"/>
-                            <field name="gica_client_id"   readonly="1"/>
-                            <field name="gica_contrat_id"  readonly="1"/>
+                            <field name="commande_globale_id" string="BCG"           readonly="1"/>
+                            <field name="planification_id"    string="Planification" readonly="1"/>
+                            <field name="gica_client_id"      string="Client GICA"   readonly="1"/>
+                            <field name="gica_contrat_id"     string="Contrat"       readonly="1"/>
                         </group>
                         <group string="Enlèvement">
-                            <field name="date_prevue_enlevement" readonly="1"/>
-                            <field name="date_reelle_enlevement" readonly="1"/>
-                            <button name="action_marquer_enleve"
-                                    string="Marquer Enlevé"
-                                    type="object"
-                                    class="btn-primary btn-sm"
-                                    invisible="date_reelle_enlevement or state != 'sale'"/>
+                            <field name="date_prevue_enlevement" string="Date prévue"  readonly="1"/>
+                            <field name="date_reelle_enlevement" string="Date réelle"  readonly="1"/>
                         </group>
                     </group>
                     <group string="Scan BC Client (Traçabilité)">
                         <field name="scan_bc_client"
                                widget="binary"
-                               filename="scan_bc_client_filename"/>
+                               filename="scan_bc_client_filename"
+                               string="Scan BC client"/>
                         <field name="scan_bc_client_filename" invisible="1"/>
                     </group>
                 </page>
+
+                <!-- Bons de Circulation -->
+                <page string="🚛 Bons de Circulation" name="circulation">
+                    <button name="action_generer_bons_circulation"
+                            string="🚛 Générer les rotations"
+                            type="object"
+                            class="btn-primary mb-2"
+                            invisible="circulation_line_ids"/>
+                    <field name="circulation_line_ids">
+                        <list decoration-success="state == 'genere'"
+                              decoration-muted="state == 'planifie'">
+                            <field name="numero_rotation" string="Rotation N°"/>
+                            <field name="product_id"      string="Produit"         readonly="1"/>
+                            <field name="conditionnement" string="Conditionnement" readonly="1"/>
+                            <field name="quantite"        string="Qté (T)"         readonly="1"/>
+                            <field name="nbr_paquets"     string="Nb Paquets"      readonly="1"/>
+                            <field name="chauffeur"       string="Chauffeur"/>
+                            <field name="matricule"       string="Matricule"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'genere'"
+                                   decoration-warning="state == 'planifie'"/>
+                            <button name="action_ouvrir_wizard"
+                                    string="🚛 Générer Bon"
+                                    type="object"
+                                    class="btn-primary btn-sm"
+                                    invisible="state == 'genere'"/>
+                            <button name="action_voir_bon"
+                                    string="👁 Voir"
+                                    type="object"
+                                    class="btn-secondary btn-sm"
+                                    invisible="not bon_circulation_id"/>
+                        </list>
+                    </field>
+                </page>
+
             </xpath>
 
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Action — Bons de Commande GICA
-         Filtre : uniquement les sale.order liés à un BCG
-    ══════════════════════════════════════════════════════════════════════ -->
     <record id="action_gica_bon_commande" model="ir.actions.act_window">
-        <field name="name">Commandes</field>
+        <field name="name">Bons de Commande</field>
         <field name="res_model">sale.order</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('commande_globale_id', '!=', False)]</field>
-        <field name="context">{}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Aucun bon de commande GICA</p>
-            <p>Les bons de commande sont créés depuis une planification validée.</p>
+            <p class="o_view_nocontent_smiling_face">Aucun bon de commande</p>
+            <p>Les bons de commande sont créés automatiquement après validation d'une planification.</p>
         </field>
     </record>
 

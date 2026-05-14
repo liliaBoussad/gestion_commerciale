@@ -257,6 +257,7 @@ class GicaPlanificationClientLine(models.Model):
                 'name': self.product_id.display_name,
             })],
         })
+        order.action_confirm()
         self.write({'sale_order_id': order.id})
 
 

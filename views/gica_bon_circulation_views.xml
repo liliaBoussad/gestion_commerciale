@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Formulaire Bon de Circulation
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_bon_circulation_form" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.form</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <form string="Bon de Circulation">
+                <header>
+                    <button name="action_transmettre_tare"
+                            string="Transmettre à la tare"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_pesee_entree"
+                            string="⚖️ Pesée Entrée"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'transmis_tare'"/>
+                    <button name="action_chargement"
+                            string="🏭 Chargement"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'pesee_entree'"/>
+                    <button name="action_pesee_sortie"
+                            string="⚖️ Pesée Sortie"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'chargement'"/>
+                    <button name="action_terminer"
+                            string="✅ Terminer"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'pesee_sortie'"/>
+                    <button name="action_annuler"
+                            string="Annuler"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('termine', 'annule')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,transmis_tare,pesee_entree,chargement,pesee_sortie,termine"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_bc_from_circ"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text"
+                                invisible="not sale_order_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Commande</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <!-- INFORMATIONS COMMANDE -->
+                        <group string="INFORMATIONS COMMANDE">
+                            <field name="sale_order_id" readonly="1"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="conditionnement" readonly="1"/>
+                            <field name="quantite_prevue" readonly="1"/>
+                            <field name="nbr_paquets" readonly="1"/>
+                            <field name="numero_chaine" readonly="1"/>
+                            <field name="numero_rotation" readonly="1"/>
+                        </group>
+
+                        <!-- LOGISTIQUE & CAMION -->
+                        <group string="LOGISTIQUE &amp; CAMION">
+                            <field name="chauffeur"/>
+                            <field name="numero_permis"/>
+                            <field name="matricule"/>
+                            <field name="camion"/>
+                            <field name="remorque"/>
+                            <field name="prestataire"/>
+                            <field name="lieu_livraison"/>
+                            <field name="qr_code" widget="image"
+                                   string="Code QR"
+                                   options="{'size': 128}"/>
+                        </group>
+                    </group>
+
+                    <!-- PESÉES & CHARGEMENT -->
+                    <group string="POIDS (T)">
+                        <group>
+                            <field name="tare_p1"      string="Tare P1 (T)"/>
+                            <field name="poids_brut_p2" string="Poids Brut P2 (T)"/>
+                            <field name="poids_net"    string="Poids Net (T)" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Liste Bon de Circulation
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_bon_circulation_list" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.list</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <list string="Bons de Circulation"
+                  decoration-success="state == 'termine'"
+                  decoration-info="state in ('transmis_tare','pesee_entree','chargement','pesee_sortie')"
+                  decoration-muted="state == 'annule'">
+                <field name="name" string="Référence"/>
+                <field name="sale_order_id" string="BC"/>
+                <field name="client_id" string="Client"/>
+                <field name="product_id" string="Produit"/>
+                <field name="conditionnement" string="Conditionnement"/>
+                <field name="numero_rotation" string="Rotation"/>
+                <field name="chauffeur"/>
+                <field name="matricule"/>
+                <field name="quantite_prevue" string="Qté prévue (T)"/>
+                <field name="poids_net" string="Poids net (T)"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'termine'"
+                       decoration-info="state == 'transmis_tare'"
+                       decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                       decoration-danger="state == 'annule'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Wizard
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_wizard_bon_circulation_form" model="ir.ui.view">
+        <field name="name">gica.wizard.bon.circulation.form</field>
+        <field name="model">gica.wizard.bon.circulation</field>
+        <field name="arch" type="xml">
+            <form string="Générer Bon de Circulation">
+                <group string="Commande">
+                    <field name="sale_order_id" readonly="1"/>
+                    <field name="product_id"    readonly="1"/>
+                    <field name="quantite"      readonly="1"/>
+                    <field name="nbr_paquets"   readonly="1"/>
+                </group>
+                <group string="Logistique &amp; Camion">
+                    <group>
+                        <field name="chauffeur"      required="1"/>
+                        <field name="numero_permis"/>
+                        <field name="matricule"      required="1"/>
+                        <field name="camion"/>
+                    </group>
+                    <group>
+                        <field name="remorque"/>
+                        <field name="prestataire"/>
+                        <field name="lieu_livraison"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_generer"
+                            string="✅ Générer le Bon de Circulation"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Annuler"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         Action
+    ══════════════════════════════════════════════════ -->
+    <record id="action_gica_bon_circulation" model="ir.actions.act_window">
+        <field name="name">Bons de Circulation</field>
+        <field name="res_model">gica.bon.circulation</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun bon de circulation</p>
+            <p>Les bons de circulation sont générés depuis les bons de commande.</p>
+        </field>
+    </record>
+
+</odoo>
