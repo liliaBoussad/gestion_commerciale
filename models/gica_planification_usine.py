@@ -189,34 +189,65 @@ class GicaPlanificationUsine(models.Model):
         if not self.date_debut or not self.date_fin:
             raise ValidationError('❌ Veuillez définir une date de début.')
 
-        # Chercher via les lignes directement
+        # Chercher uniquement les lignes dont la date est dans cette période
         lignes = self.env['gica.planification.client.line'].search([
             ('date_enlevement', '>=', self.date_debut),
             ('date_enlevement', '<=', self.date_fin),
             ('planification_id.state', '=', 'soumise'),
             ('planification_id.planification_usine_id', '=', False),
+            ('state', '=', 'en_attente'),
         ])
 
-        planifications = lignes.mapped('planification_id')
-
-        if not planifications:
+        if not lignes:
             raise ValidationError(
-                f'⚠️ Aucune planification cliente soumise pour la période '
+                f'⚠️ Aucune ligne soumise pour la période '
                 f'{self.date_debut} → {self.date_fin}.'
             )
 
-        planifications.write({'planification_usine_id': self.id})
+        # Rattacher uniquement les lignes (pas forcément toute la planification)
+        planifications_concernees = lignes.mapped('planification_id')
+
+        # Pour chaque planification, vérifier si TOUTES ses lignes sont dans cette période
+        planifications_completes = self.env['gica.planification.client']
+        planifications_partielles = self.env['gica.planification.client']
+
+        for planif in planifications_concernees:
+            lignes_planif = planif.line_ids
+            lignes_dans_periode = lignes_planif.filtered(
+                lambda l: l.date_enlevement
+                and self.date_debut <= l.date_enlevement <= self.date_fin
+            )
+            if len(lignes_dans_periode) == len(lignes_planif):
+                # Toutes les lignes sont dans cette période → rattacher la planification
+                planifications_completes |= planif
+            else:
+                # Certaines lignes seulement → rattacher uniquement ces lignes
+                planifications_partielles |= planif
+
+        # Rattacher les planifications complètes
+        if planifications_completes:
+            planifications_completes.write({'planification_usine_id': self.id})
+
+        # Pour les planifications partielles, rattacher uniquement les lignes concernées
+        if planifications_partielles:
+            lignes_partielles = lignes.filtered(
+                lambda l: l.planification_id in planifications_partielles
+            )
+            lignes_partielles.write({'planification_usine_id': self.id})
+
+        total_planifs = len(planifications_completes) + len(planifications_partielles)
         self.write({'state': 'en_cours'})
         self.message_post(
-            body=f'📋 {len(planifications)} planification(s) récupérée(s) '
-                 f'pour la période {self.date_debut} → {self.date_fin}.'
+            body=f'📋 {total_planifs} planification(s) récupérée(s) '
+                 f'({len(lignes)} ligne(s)) pour la période '
+                 f'{self.date_debut} → {self.date_fin}.'
         )
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': 'Planifications récupérées',
-                'message': f'{len(planifications)} planification(s) récupérée(s).',
+                'message': f'{len(lignes)} ligne(s) récupérée(s).',
                 'type': 'success',
             }
         }
@@ -236,6 +267,11 @@ class GicaPlanificationUsine(models.Model):
                 body=f'🔒 Période confirmée et verrouillée : '
                      f'{rec.date_debut} → {rec.date_fin}'
             )
+
+    def action_remettre_en_cours(self):
+        for rec in self:
+            rec.write({'state': 'en_cours'})
+            rec.message_post(body='↩️ Période remise en cours.')
 
     def _calculer_consolidation(self):
         """Agrège les lignes validées par (date, produit, conditionnement)"""

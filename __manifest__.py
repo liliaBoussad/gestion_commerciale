@@ -20,8 +20,9 @@
         'data/gica_client_category_data.xml',
         'data/gica_circulation_sequences.xml',
 
+          # Rapports — AVANT les vues
         'reports/report_ticket_pesee.xml',
-
+        'reports/report_bon_circulation.xml',
 
         # Views — ordre important !
         'views/gica_client_nature_views.xml',       
@@ -39,6 +40,8 @@
         'views/gica_commande_globale_views.xml',
         'views/gica_planification_client_views.xml',
         'views/gica_planification_usine_views.xml',
+        'views/gica_planification_calendar_views.xml',
+
         'views/sale_order_gica_views.xml',
         'views/gica_bon_circulation_views.xml',
         'views/gica_bascule_views.xml',

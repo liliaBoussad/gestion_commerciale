@@ -67,6 +67,10 @@
                             string="✅ Terminer"
                             type="object" class="btn-success"
                             invisible="state != 'pesee_sortie'"/>
+                    <button name="%(gestion_commerciale.report_bon_circulation)d"
+                            string="🖨️ Imprimer Bon"
+                            type="action"
+                            class="btn-secondary"/>
                     <!-- Corriger -->
                     <button name="action_retour_brouillon"
                             string="↩ Retour Brouillon"

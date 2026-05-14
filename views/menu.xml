@@ -94,6 +94,12 @@
                   action="action_gica_planification_usine"
                   sequence="20"/>
 
+          <menuitem id="menu_ventes_gica_planification_calendar"
+                  name="Calendrier"
+                  parent="menu_ventes_gica_planification_root"
+                  action="action_gica_planification_calendar"
+                  sequence="30"/>
+
         <!-- ══════════════════════════════════════════════════
              Classifications GICA
         ══════════════════════════════════════════════════ -->

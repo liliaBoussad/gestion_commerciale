@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════
+         Vue Calendrier — Planifications par date d'enlèvement
+    ══════════════════════════════════════════════════ -->
+    <record id="view_gica_planification_line_calendar" model="ir.ui.view">
+        <field name="name">gica.planification.client.line.calendar</field>
+        <field name="model">gica.planification.client.line</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendrier des Planifications"
+                      date_start="date_enlevement"
+                      color="state"
+                      mode="month"
+                      quick_create="false">
+                <field name="client_id" string="Client"/>
+                <field name="product_id" string="Produit"/>
+                <field name="quantity_tonne" string="Qté (T)"/>
+                <field name="state" string="État" filters="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue Liste pour affichage par date -->
+    <record id="view_gica_planification_line_list_cal" model="ir.ui.view">
+        <field name="name">gica.planification.client.line.list.cal</field>
+        <field name="model">gica.planification.client.line</field>
+        <field name="arch" type="xml">
+            <list string="Planifications"
+                  decoration-success="state == 'validee'"
+                  decoration-warning="state == 'en_attente'"
+                  decoration-danger="state == 'refusee'">
+                <field name="date_enlevement" string="Date enlèvement"/>
+                <field name="planification_id" string="Planification"/>
+                <field name="client_id" string="Client"/>
+                <field name="commande_globale_id" string="BCG"/>
+                <field name="product_id" string="Produit"/>
+                <field name="conditionnement" string="Conditionnement"/>
+                <field name="quantity_tonne" string="Qté (T)" sum="Total (T)"/>
+                <field name="rotation" string="Rotations"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'validee'"
+                       decoration-warning="state == 'en_attente'"
+                       decoration-danger="state == 'refusee'"/>
+                <button name="action_voir_bc"
+                        string="Voir BC"
+                        type="object"
+                        class="btn-secondary btn-sm"
+                        invisible="not sale_order_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action calendrier -->
+    <record id="action_gica_planification_calendar" model="ir.actions.act_window">
+        <field name="name">Calendrier des Planifications</field>
+        <field name="res_model">gica.planification.client.line</field>
+        <field name="view_mode">calendar,list</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_gica_planification_line_calendar')}),
+            (0, 0, {'view_mode': 'list',     'view_id': ref('view_gica_planification_line_list_cal')}),
+        ]"/>
+        <field name="domain">[('planification_id.state', 'in', ['soumise', 'validee', 'refusee'])]</field>
+        <field name="context">{'search_default_group_date': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune planification</p>
+            <p>Les planifications soumises et validées apparaissent ici.</p>
+        </field>
+    </record>
+
+</odoo>
