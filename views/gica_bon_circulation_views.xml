@@ -63,7 +63,6 @@
                             <field name="conditionnement" readonly="1"/>
                             <field name="quantite_prevue" readonly="1"/>
                             <field name="nbr_paquets" readonly="1"/>
-                            <field name="numero_chaine" readonly="1"/>
                             <field name="numero_rotation" readonly="1"/>
                         </group>
                         <group string="LOGISTIQUE &amp; CAMION">
@@ -74,9 +73,6 @@
                             <field name="remorque"/>
                             <field name="prestataire"/>
                             <field name="lieu_livraison"/>
-                            <field name="qr_code" widget="image"
-                                   string="Code QR"
-                                   options="{'size': 128}"/>
                         </group>
                     </group>
 

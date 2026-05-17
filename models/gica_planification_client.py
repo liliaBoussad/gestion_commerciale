@@ -7,6 +7,20 @@ class GicaPlanificationClientLine(models.Model):
     _name = 'gica.planification.client.line'
     _description = 'Ligne Planification Client GICA'
     _order = 'date_enlevement, sequence, id'
+    _rec_name = 'display_name_cal'
+
+    display_name_cal = fields.Char(
+        string='Nom',
+        compute='_compute_display_name_cal',
+        store=True,
+    )
+
+    @api.depends('client_id', 'product_id', 'quantity_tonne')
+    def _compute_display_name_cal(self):
+        for rec in self:
+            client = rec.client_id.display_name if rec.client_id else '—'
+            produit = rec.product_id.name if rec.product_id else '—'
+            rec.display_name_cal = f'{client} — {produit} ({rec.quantity_tonne:.0f}T)'
 
     sequence = fields.Integer(default=10)
 

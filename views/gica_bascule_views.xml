@@ -66,7 +66,29 @@
                     <button name="action_terminer"
                             string="✅ Terminer"
                             type="object" class="btn-success"
-                            invisible="state != 'pesee_sortie'"/>
+                            invisible="state != 'pesee_sortie' or ecart_type != 'ok'"/>
+                    <!-- Surplus -->
+                    <button name="action_accepter_surplus"
+                            string="✅ Accepter le surplus"
+                            type="object" class="btn-success"
+                            invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
+                            confirm="Le client accepte de payer le surplus ?"/>
+                    <button name="action_decharger_surplus"
+                            string="🔄 Décharger le surplus"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
+                            confirm="Retour au chargement pour décharger le surplus ?"/>
+                    <!-- Manque -->
+                    <button name="action_recharger_manque"
+                            string="🔄 Recharger"
+                            type="object" class="btn-warning"
+                            invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
+                            confirm="Retour au chargement pour compléter la quantité ?"/>
+                    <button name="action_accepter_manque"
+                            string="✅ Accepter la quantité partielle"
+                            type="object" class="btn-success"
+                            invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
+                            confirm="Le client accepte la quantité partielle ?"/>
                     <button name="%(gestion_commerciale.report_bon_circulation)d"
                             string="🖨️ Imprimer Bon"
                             type="action"
@@ -104,7 +126,6 @@
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
-                        <h3><field name="numero_chaine" readonly="1"/></h3>
                     </div>
 
                     <!-- Bloc infos principales -->
@@ -152,15 +173,35 @@
                         </group>
                     </group>
 
-                    <!-- QR Code -->
-                    <group string="Code QR" invisible="not qr_code">
-                        <field name="qr_code"
-                               widget="image"
-                               string="Code QR"
-                               options="{'size': 120}"
-                               readonly="1"
-                               nolabel="1"/>
-                    </group>
+                    <!-- Alerte Écart -->
+                    <div class="alert alert-warning"
+                         invisible="state != 'pesee_sortie' or ecart_type == 'ok'">
+                        <field name="ecart_type" invisible="1"/>
+                        <field name="ecart_poids" invisible="1"/>
+                        <strong invisible="ecart_type != 'surplus'">
+                            ⚠️ Surplus détecté !
+                            Poids net supérieur à la quantité prévue.
+                        </strong>
+                        <strong invisible="ecart_type != 'manque'">
+                            ⚠️ Manque détecté !
+                            Poids net inférieur à la quantité prévue.
+                        </strong>
+                    </div>
+
+                    <!-- Historique des pesées -->
+                    <separator string="📋 Historique des pesées"/>
+                    <field name="pesee_ids" readonly="1">
+                        <list decoration-info="type_pesee == 'vide'"
+                              decoration-success="type_pesee == 'charge'">
+                            <field name="date_pesee"      string="Date / Heure"/>
+                            <field name="type_pesee"      string="Type" widget="badge"
+                                   decoration-info="type_pesee == 'vide'"
+                                   decoration-success="type_pesee == 'charge'"/>
+                            <field name="poids"           string="Poids (T)"/>
+                            <field name="note"            string="Observation"/>
+                            <field name="agent_pesage_id" string="Agent"/>
+                        </list>
+                    </field>
 
                 </sheet>
                 <chatter/>

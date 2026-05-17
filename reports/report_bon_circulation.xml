@@ -6,7 +6,7 @@
             <t t-foreach="docs" t-as="doc">
                 <div class="page" style="font-family: Arial, sans-serif; font-size: 11px; color: #222; padding: 0; margin: 0;">
 
-                    <!-- EN-TÊTE GICA -->
+                    <!-- EN-TETE GICA -->
                     <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #333; margin-bottom: 6px;">
                         <tr>
                             <td style="width: 140px; vertical-align: middle; padding: 4px;">
@@ -20,18 +20,18 @@
                                 <div style="font-size: 13px; font-weight: bold; margin-top: 3px;">
                                     SOCIETE DES CIMENTS D'AIN EL KEBIRA
                                 </div>
-                                <div style="font-size: 12px; font-weight: bold;">« S.C.A.E.K »</div>
+                                <div style="font-size: 12px; font-weight: bold;">&#171; S.C.A.E.K &#187;</div>
                                 <div style="font-size: 8px; color: #555; margin-top: 3px; font-weight: bold;">
                                     E.P.E/S.P.A au Capital Social de : 2 200 000 000,00 DA
                                 </div>
                                 <div style="font-size: 8px; color: #555;">
-                                    N° identification fiscale : 099819008236319 / N° Article d'imposition : 1902.20.10.011 / N° RC : 98 B 0082363
+                                    NN°#176; identification fiscale : 099819008236319 / NN°#176; Article d'imposition : 1902.20.10.011 / NN°#176; RC : 98 B 0082363
                                 </div>
                             </td>
                         </tr>
                     </table>
 
-                    <!-- DATE + TITRE + N° -->
+                    <!-- DATE + TITRE + N -->
                     <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
                         <tr>
                             <td style="padding: 5px 10px; width: 28%; font-weight: bold; font-size: 11px; border-right: 1px solid #999;">
@@ -41,7 +41,7 @@
                                 Bon de Circulation
                             </td>
                             <td style="padding: 5px 10px; text-align: right; font-weight: bold; font-size: 11px; width: 28%;">
-                                N° <t t-esc="doc.name"/>
+                                NN°#176; <t t-esc="doc.name"/>
                             </td>
                         </tr>
                     </table>
@@ -55,31 +55,31 @@
                         </tr>
                         <tr>
                             <td style="padding: 3px 10px; width: 50%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Commande de Vente :</b> <t t-esc="doc.sale_order_id.name or '—'"/>
+                                <b>Commande de Vente :</b> <t t-esc="doc.sale_order_id.name or ''"/>
                             </td>
                             <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>BCG :</b> <t t-esc="doc.sale_order_id.commande_globale_id.name if doc.sale_order_id.commande_globale_id else '—'"/>
+                                <b>BCG :</b> <t t-esc="doc.sale_order_id.commande_globale_id.name if doc.sale_order_id.commande_globale_id else ''"/>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 3px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Code Client :</b> <t t-esc="doc.sale_order_id.partner_id.ref or '—'"/>
+                                <b>Code Client :</b> <t t-esc="doc.sale_order_id.partner_id.ref or ''"/>
                             </td>
                             <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>Contrat :</b> <t t-esc="doc.sale_order_id.gica_contrat_id.name if doc.sale_order_id.gica_contrat_id else '—'"/>
+                                <b>Contrat :</b> <t t-esc="doc.sale_order_id.gica_contrat_id.name if doc.sale_order_id.gica_contrat_id else ''"/>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 3px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Raison Sociale :</b> <t t-esc="doc.sale_order_id.partner_id.name or '—'"/>
+                                <b>Raison Sociale :</b> <t t-esc="doc.sale_order_id.partner_id.name or ''"/>
                             </td>
                             <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>Planification :</b> <t t-esc="doc.planification_line_id.planification_id.name if doc.planification_line_id else '—'"/>
+                                <b>Planification :</b> <t t-esc="doc.planification_line_id.planification_id.name if doc.planification_line_id else ''"/>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 3px 10px; border-right: 1px solid #eee;">
-                                <b>Activite :</b> <t t-esc="doc.sale_order_id.partner_id.industry_id.name if doc.sale_order_id.partner_id.industry_id else ''"/>
+                                <b>Activite :</b>
                             </td>
                             <td style="padding: 3px 10px;"></td>
                         </tr>
@@ -94,8 +94,10 @@
                         </tr>
                         <tr>
                             <td style="padding: 8px 10px; border: 1px solid #999; text-align: center; font-weight: bold;">
-                                <t t-esc="doc.product_id.display_name or '—'"/>
-                                <t t-if="doc.conditionnement"> <t t-esc="doc.conditionnement"/></t>
+                                <t t-esc="doc.product_id.display_name or ''"/>
+                                <t t-if="doc.conditionnement">
+                                    &#8212; <t t-esc="dict([('sac_25kg','Sac 25 kg'),('sac_50kg','Sac 50 kg'),('sac_25kg_fardelise','Sac 25 kg Fardelise'),('sac_50kg_fardelise','Sac 50 kg Fardelise'),('vrac','VRAC'),('big_bag_client','Big-Bag client'),('big_bag_scaek','Big-Bag SCAEK')]).get(doc.conditionnement, doc.conditionnement)"/>
+                                </t>
                             </td>
                             <td style="padding: 8px 10px; border: 1px solid #999; text-align: center;">
                                 <t t-esc="doc.nbr_paquets or 0"/>
@@ -114,30 +116,30 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 3px 10px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Chauffeur :</b> <t t-esc="doc.chauffeur or '—'"/>
+                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
+                                <b>Chauffeur :</b> <t t-esc="doc.chauffeur or ''"/>
                             </td>
-                            <td style="padding: 3px 10px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Lieu de Livraison :</b> <t t-esc="doc.lieu_livraison or '—'"/>
+                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
+                                <b>Lieu de Livraison :</b> <t t-esc="doc.lieu_livraison or ''"/>
                             </td>
-                            <td style="padding: 3px 10px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Prestataire :</b> <t t-esc="doc.prestataire or '—'"/>
+                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
+                                <b>Prestataire :</b> <t t-esc="doc.prestataire or ''"/>
                             </td>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>N° Chaine :</b> <t t-esc="doc.numero_chaine or '—'"/>
+                            <td style="padding: 3px 8px; border-bottom: 1px solid #eee;">
+                                <b>NN°#176; Chaine :</b><br/><t t-esc="doc.numero_chaine or ''"/>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 3px 10px; border-right: 1px solid #eee;">
-                                <b>N° Permis :</b> <t t-esc="doc.numero_permis or '—'"/>
+                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
+                                <b>NN°#176; Permis :</b> <t t-esc="doc.numero_permis or ''"/>
                             </td>
-                            <td style="padding: 3px 10px; border-right: 1px solid #eee;">
-                                <b>Camion :</b> <t t-esc="doc.camion or '—'"/>
+                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
+                                <b>Camion :</b> <t t-esc="doc.camion or ''"/>
                             </td>
-                            <td style="padding: 3px 10px; border-right: 1px solid #eee;">
-                                <b>Remorque :</b> <t t-esc="doc.remorque or '—'"/>
+                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
+                                <b>Remorque :</b> <t t-esc="doc.remorque or ''"/>
                             </td>
-                            <td style="padding: 3px 10px;"></td>
+                            <td style="padding: 3px 8px;"></td>
                         </tr>
                     </table>
 
@@ -164,8 +166,9 @@
                             </td>
                             <td style="vertical-align: middle; text-align: center; padding: 8px 10px;">
                                 <div style="font-size: 11px; color: #555; margin-bottom: 3px; font-weight: bold;">Poste de chargement</div>
-                                <div style="font-size: 26px; font-weight: bold; color: #1a3a5c; letter-spacing: 1px;">
-                                    <t t-esc="doc.camion or 'VRAC'"/>
+                                <div style="font-size: 24px; font-weight: bold; color: #1a3a5c; letter-spacing: 1px;">
+                                    <t t-if="doc.camion"><t t-esc="doc.camion"/></t>
+                                    <t t-else="">VRAC</t>
                                 </div>
                             </td>
                         </tr>
@@ -191,15 +194,9 @@
                         </tr>
                     </table>
 
-                    <!-- QR CODE + PIED DE PAGE -->
+                    <!-- PIED DE PAGE -->
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td style="width: 90px; vertical-align: top; padding-right: 8px;">
-                                <t t-if="doc.qr_code">
-                                    <img t-att-src="'data:image/png;base64,' + (doc.qr_code.decode('utf-8') if isinstance(doc.qr_code, bytes) else doc.qr_code)"
-                                         style="width: 75px; height: 75px;"/>
-                                </t>
-                            </td>
                             <td style="vertical-align: middle; text-align: center; font-size: 8px; color: #555; line-height: 1.5;">
                                 <b>SIEGE SOCIAL : OULED ADOUANE BP 01 - AIN EL KEBIRA (W.SETIF) ALGERIE</b><br/>
                                 DIRECTION GENERALE : TEL : +(213)36 82 83 39 / +(213)36 82 83 41 - FAX : +(213) 36 82 83 46<br/>

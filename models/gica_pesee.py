@@ -67,11 +67,12 @@ class GicaPesee(models.Model):
 
     # ── Pesée ─────────────────────────────────────────────────────────────
     type_pesee = fields.Selection([
-        ('vide',   'Pesée à vide (Entrée)'),
-        ('charge', 'Pesée en charge (Sortie)'),
+        ('vide',   'Pesée à vide — P1 (Tare)'),
+        ('charge', 'Pesée en charge — P2 (Brut)'),
     ], string='Type de Pesée', required=True, readonly=True)
 
     poids = fields.Float(string='Poids (T)', readonly=True)
+    note  = fields.Char(string='Observation', readonly=True)
 
     date_pesee = fields.Datetime(
         string='Date de pesée',
