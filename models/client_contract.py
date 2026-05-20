@@ -116,11 +116,44 @@ class GicaClientContract(models.Model):
         tracking=True,
     )
 
+    # ── client_id pointe vers gica.client (cohérent avec BCG et planification)
     client_id = fields.Many2one(
         'gica.client',
         string='Client',
         required=True,
         tracking=True,
+    )
+
+    # ── client_type calculé depuis partner_id ─────────────────────────────
+    client_type = fields.Selection([
+        ('realisation',    'Entreprise de réalisation'),
+        ('investisseur',   'Investisseur'),
+        ('promoteur',      'Promoteur immobilier'),
+        ('transformateur', 'Transformateur'),
+        ('broyage',        'Centre de broyage'),
+        ('revendeur',      'Revendeur'),
+        ('rev_agree',      'Revendeur agréé'),
+        ('distributeur',   'Distributeur officiel'),
+        ('conditionneur',  'Conditionneur'),
+        ('exportateur',    'Exportateur'),
+        ('auto_const',     'Auto-constructeur'),
+        ('autres',         'Autres'),
+    ], string='Type client', compute='_compute_client_type', store=True, readonly=True)
+
+    @api.depends('client_id', 'client_id.partner_id', 'client_id.partner_id.client_type')
+    def _compute_client_type(self):
+        for rec in self:
+            if rec.client_id and rec.client_id.partner_id:
+                rec.client_type = rec.client_id.partner_id.client_type
+            else:
+                rec.client_type = False
+
+    # ── Projet — obligatoire pour Entreprise de réalisation ───────────────
+    project_id = fields.Many2one(
+        'gica.project',
+        string='Projet associé',
+        tracking=True,
+        domain="[('client_id', '=', client_id)]",
     )
 
     line_ids = fields.One2many(
@@ -185,6 +218,18 @@ class GicaClientContract(models.Model):
     motif_suspension = fields.Text(string='Motif de suspension / résiliation', tracking=True)
     observations     = fields.Text(string='Observations')
 
+    # ── Onchange client — remplit automatiquement le projet ───────────────
+    @api.onchange('client_id')
+    def _onchange_client_id(self):
+        self.project_id = False
+        if self.client_id:
+            if self.client_id.partner_id.client_type == 'realisation':
+                projet = self.env['gica.project'].search([
+                    ('client_id', '=', self.client_id.id),
+                ], limit=1)
+                if projet:
+                    self.project_id = projet.id
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -194,11 +239,24 @@ class GicaClientContract(models.Model):
                 ) or 'Nouveau'
         return super().create(vals_list)
 
+    # ── CONTRAINTE : projet obligatoire pour entreprise de réalisation ────
+    @api.constrains('client_id', 'project_id')
+    def _check_project_realisation(self):
+        for rec in self:
+            if (rec.client_id
+                    and rec.client_id.partner_id.client_type == 'realisation'
+                    and not rec.project_id):
+                raise ValidationError(
+                    '❌ Un projet est obligatoire pour une Entreprise de réalisation.\n'
+                    '👉 Veuillez sélectionner un projet pour ce client.'
+                )
+
+    # ── CONTRAINTE : dates ────────────────────────────────────────────────
     @api.constrains('date_start', 'date_end')
     def _check_dates(self):
         today = fields.Date.today()
         for rec in self:
-            if rec.date_start and rec.date_start < today:
+            if rec.date_start and rec.date_start < today and not rec._origin.id:
                 raise ValidationError(
                     f'❌ La date de début ne peut pas être dans le passé.\n'
                     f'👉 Choisir une date à partir du {today}.'
@@ -245,8 +303,18 @@ class GicaClientContract(models.Model):
                     'Un même produit/conditionnement ne peut pas apparaître deux fois.'
                 )
 
-    def action_activer(self):  self.write({'state': 'actif'})
-    def action_demarrer(self): self.write({'state': 'en_cours'})
+    def action_activer(self):
+        for rec in self:
+            if (rec.client_id
+                    and rec.client_id.partner_id.client_type == 'realisation'
+                    and not rec.project_id):
+                raise ValidationError(
+                    '❌ Un projet est obligatoire pour une Entreprise de réalisation.\n'
+                    '👉 Veuillez sélectionner un projet avant d\'activer ce contrat.'
+                )
+            rec.write({'state': 'actif'})
+
+    def action_demarrer(self):  self.write({'state': 'en_cours'})
     def action_suspendre(self): self.write({'state': 'suspendu'})
     def action_resilier(self):  self.write({'state': 'resilie'})
 

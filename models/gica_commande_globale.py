@@ -19,7 +19,7 @@ class GicaCommandeGlobaleLine(models.Model):
 
     product_id = fields.Many2one(
         'product.product',
-        string='Produit ',
+        string='Produit',
         required=True,
         domain="[('product_tmpl_id.is_gica_product', '=', True)]",
     )
@@ -38,8 +38,8 @@ class GicaCommandeGlobaleLine(models.Model):
         readonly=True,
     )
 
-    quantity_tonne    = fields.Float(string='Quantité (T)',        required=True)
-    prix_unitaire     = fields.Float(string='Prix unitaire (DA)',  )
+    quantity_tonne  = fields.Float(string='Quantité (T)', required=True)
+    prix_unitaire   = fields.Float(string='Prix unitaire (DA)')
 
     montant_total = fields.Float(
         string='Montant total (DA)',
@@ -94,7 +94,6 @@ class GicaCommandeGlobaleLine(models.Model):
     )
     def _compute_quantity_planifiee(self):
         for rec in self:
-            # Planifications soumises ou validées (pas refusées)
             planifs = rec.commande_id.planification_ids.filtered(
                 lambda p: p.state in ('soumise', 'validee')
             )
@@ -122,12 +121,15 @@ class GicaCommandeGlobale(models.Model):
         tracking=True,
     )
 
+    # ── client_id pointe vers res.partner ────────────────────────────────
     client_id = fields.Many2one(
-        'gica.client',
+        'res.partner',
         string='Client',
         required=True,
         tracking=True,
+        domain="[('is_gica_client', '=', True)]",
     )
+
     contrat_id = fields.Many2one(
         'gica.client.contract',
         string='Contrat',
@@ -162,7 +164,6 @@ class GicaCommandeGlobale(models.Model):
         string='Lignes produits',
     )
 
-    # ── Produits disponibles (pour domaine planification) ────────────────
     product_ids = fields.Many2many(
         'product.product',
         compute='_compute_product_ids',
@@ -174,7 +175,6 @@ class GicaCommandeGlobale(models.Model):
         for rec in self:
             rec.product_ids = rec.line_ids.mapped('product_id')
 
-    # ── Lien vers Planifications ──────────────────────────────────────────
     planification_ids = fields.One2many(
         'gica.planification.client',
         'commande_globale_id',
@@ -189,7 +189,6 @@ class GicaCommandeGlobale(models.Model):
         string='En attente',
     )
 
-    # ── Lien vers BC (sale.order) ─────────────────────────────────────────
     bon_commande_ids = fields.One2many(
         'sale.order',
         'commande_globale_id',
@@ -252,6 +251,10 @@ class GicaCommandeGlobale(models.Model):
                 ) or 'Nouveau'
         return super().create(vals_list)
 
+    @api.onchange('client_id')
+    def _onchange_client_id(self):
+        self.contrat_id = False
+
     @api.onchange('contrat_id')
     def _onchange_contrat_id(self):
         if self.contrat_id:
@@ -301,8 +304,7 @@ class GicaCommandeGlobale(models.Model):
             'domain':    [('commande_globale_id', '=', self.id)],
             'context':   {
                 'default_commande_globale_id': self.id,
-                'default_partner_id': self.client_id.partner_id.id
-                    if self.client_id and hasattr(self.client_id, 'partner_id') else False,
+                'default_partner_id': self.client_id.id if self.client_id else False,
             },
         }
 

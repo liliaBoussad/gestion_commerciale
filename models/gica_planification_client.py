@@ -31,12 +31,11 @@ class GicaPlanificationClientLine(models.Model):
         ondelete='cascade',
     )
 
-    # ── État de validation par ligne ──────────────────────────────────────
     state = fields.Selection([
         ('en_attente', 'En attente'),
         ('validee',    'Validée'),
         ('refusee',    'Refusée'),
-    ], string='État', default='en_attente', tracking=True)
+    ], string='État', default='en_attente')
 
     product_id = fields.Many2one(
         'product.product',
@@ -52,15 +51,10 @@ class GicaPlanificationClientLine(models.Model):
         readonly=True,
     )
 
-    # ── Date enlèvement par ligne ─────────────────────────────────────────
-    date_enlevement = fields.Date(
-        string="Date d'enlèvement",
-        required=True,
-    )
-
-    nbr_paquets    = fields.Integer(string='Nombre de Paquets')
-    quantity_tonne = fields.Float(string='Quantité (T)', required=True)
-    rotation       = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
+    date_enlevement = fields.Date(string="Date d'enlèvement", required=True)
+    nbr_paquets     = fields.Integer(string='Nombre de Paquets')
+    quantity_tonne  = fields.Float(string='Quantité (T)', required=True)
+    rotation        = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
 
     quantity_disponible = fields.Float(
         string='Qté restante BCG (T)',
@@ -74,16 +68,15 @@ class GicaPlanificationClientLine(models.Model):
         store=True,
     )
 
-    # ── BC généré par ligne ───────────────────────────────────────────────
     sale_order_id = fields.Many2one(
         'sale.order',
         string='Bon de Commande',
         readonly=True,
     )
 
-    # ── Related pour affichage dans vue usine ─────────────────────────────
+    # ── client_id pointe vers res.partner ────────────────────────────────
     client_id = fields.Many2one(
-        'gica.client',
+        'res.partner',
         related='planification_id.client_id',
         string='Client',
         store=True,
@@ -202,18 +195,15 @@ class GicaPlanificationClientLine(models.Model):
     def _onchange_date_enlevement(self):
         if not self.date_enlevement:
             return
-        # ── Weekend (vendredi=4, samedi=5) ────────────────────────────────
         if self.date_enlevement.weekday() in (4, 5):
             jour = "Vendredi" if self.date_enlevement.weekday() == 4 else "Samedi"
             return {
                 'warning': {
                     'title': '⛔ Jour non ouvrable',
                     'message': f'Le {jour} {self.date_enlevement} est un jour de weekend.\n'
-                               f'Les enlèvements ne sont pas autorisés le vendredi et samedi.\n'
                                f'👉 Veuillez choisir une autre date.',
                 }
             }
-        # ── Période verrouillée ───────────────────────────────────────────
         periode = self.env['gica.planification.usine'].search([
             ('state',      '=',  'confirmee'),
             ('date_debut', '<=', self.date_enlevement),
@@ -223,13 +213,11 @@ class GicaPlanificationClientLine(models.Model):
             return {
                 'warning': {
                     'title': '🔒 Période verrouillée',
-                    'message': f'La date {self.date_enlevement} est dans une période verrouillée :\n'
-                               f'{periode.name} ({periode.date_debut} → {periode.date_fin})\n'
+                    'message': f'La date {self.date_enlevement} est dans une période verrouillée.\n'
                                f'👉 Veuillez choisir une autre date.',
                 }
             }
 
-    # ── Actions validation/refus par ligne ────────────────────────────────
     def action_valider_ligne(self):
         for rec in self:
             rec.write({'state': 'validee'})
@@ -258,17 +246,18 @@ class GicaPlanificationClientLine(models.Model):
         if self.sale_order_id:
             return
         planif = self.planification_id
-        partner = planif.client_id.partner_id if hasattr(planif.client_id, 'partner_id') else False
+        # client_id est maintenant res.partner directement
+        partner = planif.client_id
         order = self.env['sale.order'].create({
-            'partner_id': partner.id if partner else False,
-            'commande_globale_id': planif.commande_globale_id.id,
-            'planification_id': planif.id,
+            'partner_id':             partner.id if partner else False,
+            'commande_globale_id':    planif.commande_globale_id.id,
+            'planification_id':       planif.id,
             'date_prevue_enlevement': self.date_enlevement,
             'order_line': [(0, 0, {
-                'product_id': self.product_id.id,
+                'product_id':      self.product_id.id,
                 'product_uom_qty': self.quantity_tonne,
-                'price_unit': self.prix_unitaire,
-                'name': self.product_id.display_name,
+                'price_unit':      self.prix_unitaire,
+                'name':            self.product_id.display_name,
             })],
         })
         order.action_confirm()
@@ -290,11 +279,13 @@ class GicaPlanificationClient(models.Model):
         tracking=True,
     )
 
+    # ── client_id pointe vers res.partner ────────────────────────────────
     client_id = fields.Many2one(
-        'gica.client',
+        'res.partner',
         string='Client',
         required=True,
         tracking=True,
+        domain="[('is_gica_client', '=', True)]",
     )
 
     commande_globale_id = fields.Many2one(
@@ -313,7 +304,6 @@ class GicaPlanificationClient(models.Model):
         string='Contrat',
     )
 
-    # Date min des lignes
     date_enlevement = fields.Date(
         string="Date min. enlèvement",
         compute='_compute_date_enlevement',
@@ -341,7 +331,6 @@ class GicaPlanificationClient(models.Model):
         tracking=True,
     )
 
-    # ── Dates de la période usine liée ───────────────────────────────────
     periode_debut = fields.Date(
         related='planification_usine_id.date_debut',
         string='Date début période',
@@ -361,7 +350,6 @@ class GicaPlanificationClient(models.Model):
         string='Lignes produits',
     )
 
-    # ── One2many vers lignes pour planification usine ─────────────────────
     planification_line_ids = fields.One2many(
         'gica.planification.client.line',
         'planification_usine_id',
@@ -448,7 +436,6 @@ class GicaPlanificationClient(models.Model):
         return super().create(vals_list)
 
     def _recompute_state(self):
-        """Recalcule le state de la planification selon l'état des lignes"""
         for rec in self:
             if rec.state not in ('soumise',):
                 continue
@@ -458,19 +445,13 @@ class GicaPlanificationClient(models.Model):
             nb_attente = len(lignes.filtered(lambda l: l.state == 'en_attente'))
             nb_refusee = len(lignes.filtered(lambda l: l.state == 'refusee'))
             total      = len(lignes)
-
             if nb_attente == 0:
-                # Toutes les lignes sont traitées
                 if nb_refusee == total:
-                    # Toutes refusées
                     rec.write({'state': 'refusee'})
                     rec.message_post(body='❌ Toutes les lignes ont été refusées.')
-                    rec._notifier_client_refus(rec.motif_refus or '')
                 else:
-                    # Au moins une validée
                     rec.write({'state': 'validee'})
                     rec.message_post(body='✅ Planification traitée — BCs générés.')
-                    rec._notifier_client_validation()
 
     def action_soumettre(self):
         for rec in self:
@@ -483,14 +464,12 @@ class GicaPlanificationClient(models.Model):
             rec.message_post(body=f'📋 Planification soumise avec {len(rec.line_ids)} ligne(s).')
 
     def action_valider(self):
-        """Valide toutes les lignes en attente"""
         for rec in self:
             lignes_attente = rec.line_ids.filtered(lambda l: l.state == 'en_attente')
             for line in lignes_attente:
                 line.action_valider_ligne()
 
     def action_refuser(self, motif=''):
-        """Refuse toutes les lignes en attente"""
         for rec in self:
             if motif:
                 rec.write({'motif_refus': motif})
@@ -514,21 +493,3 @@ class GicaPlanificationClient(models.Model):
             if rec.state == 'soumise':
                 rec.line_ids.write({'state': 'en_attente'})
                 rec.write({'state': 'brouillon'})
-
-    def _notifier_client_validation(self):
-        self.ensure_one()
-        template = self.env.ref(
-            'gestion_commerciale.email_template_planification_validee',
-            raise_if_not_found=False,
-        )
-        if template:
-            template.send_mail(self.id, force_send=True)
-
-    def _notifier_client_refus(self, motif):
-        self.ensure_one()
-        template = self.env.ref(
-            'gestion_commerciale.email_template_planification_refusee',
-            raise_if_not_found=False,
-        )
-        if template:
-            template.send_mail(self.id, force_send=True)

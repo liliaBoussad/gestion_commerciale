@@ -1,66 +1,71 @@
+# -*- coding: utf-8 -*-
 from odoo import models, fields
 
-class GicaProject(models.Model):
-    _name = 'gica.project'
-    _description = 'Projet client'
 
-    client_id = fields.Many2one(
-        'gica.client',
-        string="Client",
-        ondelete='cascade'
-    )
+class GicaProject(models.Model):
+    _name        = 'gica.project'
+    _description = 'Projet client'
+    _inherit     = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(
-        string="Nom du projet",
-        required=True
+        string='Nom du projet',
+        required=True,
+        tracking=True,
+    )
+
+    # ── client_id pointe vers gica.client — cohérent avec contrat et BCG ──
+    client_id = fields.Many2one(
+        'gica.client',
+        string='Client',
+        required=True,
+        ondelete='cascade',
+        tracking=True,
     )
 
     line_ids = fields.One2many(
         'gica.project.line',
         'project_id',
-        string="Produits du projet"
+        string='Produits du projet',
     )
-
-    
-
-
 
 
 class GicaProjectLine(models.Model):
-    _name = 'gica.project.line'
+    _name        = 'gica.project.line'
     _description = 'Produit du projet'
-
-    client_id = fields.Many2one(
-    related='project_id.client_id',
-    store=True
-    )
-
-    project_name = fields.Char(
-    related='project_id.name',
-    string="Nom du projet",
-    store=True
-    )
 
     project_id = fields.Many2one(
         'gica.project',
-        string="Projet",
-        ondelete="cascade"
+        string='Projet',
+        required=True,
+        ondelete='cascade',
+    )
+
+    client_id = fields.Many2one(
+        related='project_id.client_id',
+        string='Client',
+        store=True,
+        readonly=True,
+    )
+
+    project_name = fields.Char(
+        related='project_id.name',
+        string='Nom du projet',
+        store=True,
+        readonly=True,
     )
 
     product_id = fields.Many2one(
         'product.product',
-        string="Produit",
-        required=True
+        string='Produit',
+        required=True,
     )
 
-    quantity = fields.Float(
-        string="Quantité"
-    )
+    quantity = fields.Float(string='Quantité')
 
     unite_mesure = fields.Selection([
-        ('sac50', 'Sac 50 kg'),
-        ('sac25', 'Sac 25 kg'),
-        ('vrac', 'Vrac'),
+        ('sac50',    'Sac 50 kg'),
+        ('sac25',    'Sac 25 kg'),
+        ('vrac',     'Vrac'),
         ('bigbag2t', 'Big Bag 2 tonnes'),
-        ('fardeau60', 'Fardeau 60 sacs')
-    ], string="Unité")
+        ('fardeau60','Fardeau 60 sacs'),
+    ], string='Unité')

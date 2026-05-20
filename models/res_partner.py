@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
 
-# Natures possibles par catégorie
 NATURE_PAR_TYPE = {
     'realisation':    ['morale'],
     'investisseur':   ['morale', 'physique'],
@@ -17,6 +17,8 @@ NATURE_PAR_TYPE = {
     'auto_const':     ['physique'],
     'autres':         ['morale', 'physique'],
 }
+
+AGREMENT_TYPES = ['distributeur', 'conditionneur', 'rev_agree']
 
 
 class ResPartner(models.Model):
@@ -68,15 +70,26 @@ class ResPartner(models.Model):
         store=True,
     )
 
-    # ── Agrément ──────────────────────────────────────────────────────────
-    AGREMENT_TYPES = ['distributeur', 'conditionneur', 'rev_agree']
+    # ── Informations fiscales ─────────────────────────────────────────────
+    nrc        = fields.Char(string='N° RC')
+    nif        = fields.Char(string='N.I.F')
+    nis        = fields.Char(string='N.I.S')
+    ai         = fields.Char(string='A.I')
+    fax        = fields.Char(string='Fax')
+    rib        = fields.Char(string='RIB/RIP')
+    swift      = fields.Char(string='SWIFT')
+    nrc_valide = fields.Boolean(string='NRC Validé', default=False)
+    nif_valide = fields.Boolean(string='NIF Validé', default=False)
+    nis_valide = fields.Boolean(string='NIS Validé', default=False)
+    nin        = fields.Char(string='N° Identification Nationale (NIN)')
 
+    # ── Agrément ──────────────────────────────────────────────────────────
     agrement_ids = fields.One2many(
         'gica.client.agrement', 'partner_id', string='Agréments',
     )
     agrement_actif_id = fields.Many2one(
         'gica.client.agrement',
-        string='Agrément actif',
+        string='Agrément en cours',
         compute='_compute_agrement_actif',
         store=True,
     )
@@ -90,7 +103,7 @@ class ResPartner(models.Model):
         related='agrement_actif_id.state', string='Statut agrément', readonly=True,
     )
     agrement_count = fields.Integer(
-        compute='_compute_agrement_count', string="Nombre d'agréments",
+        compute='_compute_agrement_count', string="Agrément(s)",
     )
     need_agrement = fields.Boolean(
         compute='_compute_need_agrement', store=True, string='Agrément manquant',
@@ -100,20 +113,22 @@ class ResPartner(models.Model):
     def _compute_agrement_actif(self):
         for rec in self:
             actif = rec.agrement_ids.filtered(
-                lambda a: a.state == 'actif'
+                lambda a: a.state == 'en_cours'
             ).sorted('date_debut', reverse=True)
             rec.agrement_actif_id = actif[0] if actif else False
 
-    @api.depends('agrement_ids')
+    @api.depends('agrement_ids.state')
     def _compute_agrement_count(self):
         for rec in self:
-            rec.agrement_count = len(rec.agrement_ids)
+            rec.agrement_count = len(
+                rec.agrement_ids.filtered(lambda a: a.state == 'en_cours')
+            )
 
     @api.depends('client_type', 'agrement_actif_id')
     def _compute_need_agrement(self):
         for rec in self:
             rec.need_agrement = (
-                rec.client_type in self.AGREMENT_TYPES
+                rec.client_type in AGREMENT_TYPES
                 and not rec.agrement_actif_id
             )
 
@@ -150,7 +165,6 @@ class ResPartner(models.Model):
     # ── Classification ────────────────────────────────────────────────────
     exclusivite_gica = fields.Boolean(
         string='Exclusivité GICA', default=False, tracking=True,
-        help='Le client achète exclusivement des produits GICA (+10 pts).',
     )
     classification_actuelle = fields.Selection([
         ('platinum', 'PLATINUM'),
@@ -173,7 +187,6 @@ class ResPartner(models.Model):
         string='Délai de paiement (jours)',
         compute='_compute_delai_paiement',
         store=True,
-        help='PLATINUM=30j | GOLD=15j | SILVER/BRONZE=0j',
     )
 
     @api.depends('classification_actuelle')
@@ -214,7 +227,6 @@ class ResPartner(models.Model):
 
     @api.onchange('nature_id')
     def _onchange_nature_id(self):
-        """Synchronise nature_client depuis nature_id."""
         if self.nature_id:
             if 'physique' in self.nature_id.name.lower():
                 self.nature_client = 'physique'
@@ -225,12 +237,58 @@ class ResPartner(models.Model):
 
     @api.onchange('nature_client')
     def _onchange_nature_client(self):
-        """Rien — les documents sont générés via bouton ou au create."""
         pass
+
+    # ── Validation métier ─────────────────────────────────────────────────
+    def _verifier_dossier_client(self):
+        for rec in self:
+            if not rec.client_type:
+                continue
+            erreurs = []
+            if rec.nature_client == 'morale':
+                if not rec.nrc:
+                    erreurs.append('N° RC manquant')
+                elif not rec.nrc_valide:
+                    erreurs.append('N° RC non validé')
+                if not rec.nif:
+                    erreurs.append('N.I.F manquant')
+                elif not rec.nif_valide:
+                    erreurs.append('N.I.F non validé')
+                if not rec.nis:
+                    erreurs.append('N.I.S manquant')
+                elif not rec.nis_valide:
+                    erreurs.append('N.I.S non validé')
+            elif rec.nature_client == 'physique':
+                if not rec.nin:
+                    erreurs.append('N° Identification Nationale (NIN) manquant')
+            if rec.document_ids:
+                manquants = rec.document_ids.filtered(lambda d: d.state != 'fourni')
+                if manquants:
+                    erreurs.append(
+                        f'{len(manquants)} document(s) non fourni(s) : '
+                        + ', '.join(manquants.mapped('name'))
+                    )
+            if rec.client_type in AGREMENT_TYPES and not rec.agrement_actif_id:
+                erreurs.append('Agrément actif obligatoire pour ce type de client')
+            if erreurs:
+                raise ValidationError(
+                    'Impossible de sauvegarder ce client :\n\n'
+                    + '\n'.join(f'• {e}' for e in erreurs)
+                )
+
+    @api.constrains('nrc_valide', 'nif_valide', 'nis_valide', 'dossier_valide')
+    def _check_fiscal_avant_validation(self):
+        for rec in self:
+            if rec.dossier_valide and rec.nature_client == 'morale':
+                if not rec.nrc_valide:
+                    raise ValidationError('N° RC doit être vérifié avant de valider le dossier.')
+                if not rec.nif_valide:
+                    raise ValidationError('N.I.F doit être vérifié avant de valider le dossier.')
+                if not rec.nis_valide:
+                    raise ValidationError('N.I.S doit être vérifié avant de valider le dossier.')
 
     # ── Génération documents ──────────────────────────────────────────────
     def _generer_documents_templates(self):
-        """Génère les documents (onchange) depuis gica.document.template."""
         if not self.client_type or not self.nature_client:
             return
         Tmpl = self.env['gica.document.template']
@@ -251,7 +309,6 @@ class ResPartner(models.Model):
         self.document_ids = new_lines
 
     def _generate_documents(self):
-        """Génère et sauvegarde les documents en base (appelé au create)."""
         self.ensure_one()
         Tmpl = self.env['gica.document.template']
         Tmpl._load_default_templates()
@@ -287,6 +344,29 @@ class ResPartner(models.Model):
 
     def action_valider_dossier(self):
         self.ensure_one()
+        if self.nature_client == 'morale':
+            manquants   = []
+            non_valides = []
+            if not self.nrc:
+                manquants.append('N° RC')
+            elif not self.nrc_valide:
+                non_valides.append('N° RC')
+            if not self.nif:
+                manquants.append('N.I.F')
+            elif not self.nif_valide:
+                non_valides.append('N.I.F')
+            if not self.nis:
+                manquants.append('N.I.S')
+            elif not self.nis_valide:
+                non_valides.append('N.I.S')
+            if manquants:
+                raise ValidationError(
+                    f'Champs obligatoires manquants : {", ".join(manquants)}'
+                )
+            if non_valides:
+                raise ValidationError(
+                    f'Validez d\'abord ces champs fiscaux : {", ".join(non_valides)}'
+                )
         self.dossier_valide = True
 
     def action_reinitialiser_dossier(self):
@@ -295,6 +375,15 @@ class ResPartner(models.Model):
 
     def action_creer_agrement(self):
         self.ensure_one()
+        agrement_en_cours = self.agrement_ids.filtered(
+            lambda a: a.state == 'en_cours'
+        )
+        if agrement_en_cours:
+            raise ValidationError(
+                f'❌ Ce client possède déjà un agrément en cours : '
+                f'{agrement_en_cours[0].name}.\n'
+                f'👉 Veuillez d\'abord le résilier avant d\'en créer un nouveau.'
+            )
         return {
             'type':      'ir.actions.act_window',
             'name':      "Créer un agrément",
@@ -313,6 +402,48 @@ class ResPartner(models.Model):
             'view_mode': 'list,form',
             'domain':    [('partner_id', '=', self.id)],
             'context':   {'default_partner_id': self.id},
+        }
+
+    def action_creer_contrat(self):
+        self.ensure_one()
+        gica_client = self.env['gica.client'].search(
+            [('partner_id', '=', self.id)], limit=1
+        )
+        if not gica_client:
+            raise ValidationError(
+                "Ce partenaire n'est pas enregistré comme client GICA."
+            )
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Créer un contrat',
+            'res_model': 'gica.client.contract',
+            'view_mode': 'form',
+            'target':    'current',
+            'context':   {'default_client_id': gica_client.id},
+        }
+
+    def action_verifier_nrc(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://sidjilcom.cnrc.dz/group/sidjilcom/repertoire-des-commercants',
+            'target': 'new',
+        }
+
+    def action_verifier_nif(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://www.mfdgi.gov.dz/',
+            'target': 'new',
+        }
+
+    def action_verifier_nis(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://www.ons.dz/',
+            'target': 'new',
         }
 
     def action_calculer_classification(self):

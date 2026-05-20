@@ -1,74 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         LISTE — res.partner (clients GICA)
-    ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- LISTE -->
     <record id="view_gica_client_list" model="ir.ui.view">
         <field name="name">gica.client.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <list string="Clients GICA">
-                <field name="name"             string="Nom"/>
-                <field name="client_type"      string="Type client"/>
-                <field name="nature_client"    string="Nature"/>
-                <field name="sale_type"        string="Type de vente"/>
-                <field name="commercial_id"    string="Commercial"/>
-                <field name="phone"            string="Téléphone"/>
-                <field name="email"            string="E-mail"/>
-                <field name="city"             string="Ville"/>
+                <field name="ref"           string="Code Client"/>
+                <field name="name"          string="Nom"/>
+                <field name="client_type"   string="Type client"/>
+                <field name="nature_client" string="Nature"/>
+                <field name="sale_type"     string="Type de vente"/>
+                <field name="commercial_id" string="Commercial"/>
+                <field name="phone"         string="Téléphone"/>
+                <field name="email"         string="E-mail"/>
+                <field name="city"          string="Ville"/>
             </list>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         FORMULAIRE — gica.client
-    ══════════════════════════════════════════════════════════════════════════ -->
-    <record id="view_gica_client_form" model="ir.ui.view">
-        <field name="name">gica.client.form</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <form string="Client GICA">
-                <sheet>
-
-                    <div class="oe_title">
-                        <label for="name"/>
-                        <h1><field name="name" placeholder="Nom du client"/></h1>
-                    </div>
-
-                    <group>
-                        <group string="Informations client">
-                            <field name="client_type"/>
-                            <field name="nature_client"/>
-                            <field name="sale_type"/>
-                            <field name="commercial_id"/>
-                        </group>
-                        <group string="Coordonnées">
-                            <field name="phone"/>
-                            <field name="mobile"/>
-                            <field name="email"/>
-                            <field name="street"/>
-                            <field name="city"/>
-                            <field name="country_id"/>
-                        </group>
-                    </group>
-
-                   
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <!-- ══════════════════════════════════════════════════════════════════════
-         RECHERCHE — res.partner (clients GICA)
-    ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- RECHERCHE -->
     <record id="view_gica_client_search" model="ir.ui.view">
         <field name="name">gica.client.search</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <search string="Rechercher un client">
                 <field name="name"          string="Nom"/>
+                <field name="ref"           string="Code Client"/>
                 <field name="commercial_id" string="Commercial"/>
                 <field name="client_type"   string="Type client"/>
                 <filter name="filter_morale"   string="Personne Morale"
@@ -94,9 +53,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         ACTION — pointe vers res.partner filtré is_gica_client
-    ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ACTION -->
     <record id="action_gica_client" model="ir.actions.act_window">
         <field name="name">Clients GICA</field>
         <field name="res_model">res.partner</field>

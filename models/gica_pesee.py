@@ -15,7 +15,6 @@ class GicaPesee(models.Model):
         default='Nouveau',
     )
 
-    # ── Liens ─────────────────────────────────────────────────────────────
     bon_circulation_id = fields.Many2one(
         'gica.bon.circulation',
         string='Bon de Circulation',
@@ -31,9 +30,9 @@ class GicaPesee(models.Model):
         readonly=True,
     )
 
-    # ── Infos client/produit ──────────────────────────────────────────────
+    # ── client_id pointe vers res.partner ────────────────────────────────
     client_id = fields.Many2one(
-        'gica.client',
+        'res.partner',
         related='bon_circulation_id.client_id',
         string='Client',
         store=True,
@@ -65,7 +64,6 @@ class GicaPesee(models.Model):
         readonly=True,
     )
 
-    # ── Pesée ─────────────────────────────────────────────────────────────
     type_pesee = fields.Selection([
         ('vide',   'Pesée à vide — P1 (Tare)'),
         ('charge', 'Pesée en charge — P2 (Brut)'),
