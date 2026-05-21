@@ -209,6 +209,20 @@ class GicaClientContract(models.Model):
     motif_suspension = fields.Text(string='Motif de suspension / résiliation', tracking=True)
     observations     = fields.Text(string='Observations')
 
+    # ── BCG lié (calculé automatiquement, sans store) ─────────────────────
+    # Pas de store=True : recalculé à chaque affichage, toujours frais.
+    # Le cache est invalidé manuellement depuis gica.commande.globale
+    # lors d'un create() ou unlink() pour rafraîchir l'UI immédiatement.
+    commande_globale_id = fields.Many2one(
+        'gica.commande.globale',
+        string='Commande Globale',
+        compute='_compute_commande_globale_id',
+    )
+    commande_globale_count = fields.Integer(
+        string='BCG',
+        compute='_compute_commande_globale_count',
+    )
+
     # ── Contrainte unicité projet ─────────────────────────────────────────
     _sql_constraints = [
         (
@@ -217,6 +231,22 @@ class GicaClientContract(models.Model):
             '❌ Ce projet a déjà un contrat associé !',
         ),
     ]
+
+    # ── Computed BCG ──────────────────────────────────────────────────────
+    @api.depends()
+    def _compute_commande_globale_id(self):
+        BCG = self.env['gica.commande.globale']
+        for rec in self:
+            bcg = BCG.search(
+                [('contrat_id', '=', rec.id),
+                 ('state', 'not in', ['annulee'])],
+                limit=1,
+            )
+            rec.commande_globale_id = bcg
+
+    def _compute_commande_globale_count(self):
+        for rec in self:
+            rec.commande_globale_count = 1 if rec.commande_globale_id else 0
 
     # ── ORM ───────────────────────────────────────────────────────────────
     @api.model_create_multi
@@ -228,17 +258,14 @@ class GicaClientContract(models.Model):
                 ) or 'Nouveau'
         records = super().create(vals_list)
         # Invalide le cache contract_id sur les projets liés
-        # pour que le bouton "Créer un contrat" disparaisse immédiatement.
         project_ids = records.mapped('project_id')
         if project_ids:
             project_ids.invalidate_recordset(['contract_id'])
         return records
 
     def unlink(self):
-        # Mémorise les projets avant suppression pour invalider après.
         project_ids = self.mapped('project_id')
         res = super().unlink()
-        # Invalide le cache : le bouton "Créer un contrat" réapparaît.
         if project_ids:
             project_ids.invalidate_recordset(['contract_id'])
         return res
@@ -271,7 +298,6 @@ class GicaClientContract(models.Model):
     # ── Contraintes ───────────────────────────────────────────────────────
     @api.constrains('client_id', 'project_id')
     def _check_projet_realisation(self):
-        """Bloque la sauvegarde si un client ER n'a pas de projet associé."""
         for rec in self:
             if rec.client_id.client_type == 'realisation' and not rec.project_id:
                 raise ValidationError(
@@ -320,7 +346,6 @@ class GicaClientContract(models.Model):
 
     # ── Actions ───────────────────────────────────────────────────────────
     def action_activer(self):
-        """Bloque l'activation si client ER sans projet."""
         for rec in self:
             if rec.client_id.client_type == 'realisation' and not rec.project_id:
                 raise ValidationError(
@@ -337,6 +362,34 @@ class GicaClientContract(models.Model):
 
     def action_resilier(self):
         self.write({'state': 'resilie'})
+
+    def action_voir_bcg(self):
+        """Ouvre le BCG existant, ou redirige vers la création si absent."""
+        self.ensure_one()
+        if not self.commande_globale_id:
+            return self.action_creer_bcg()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'BCG — {self.name}',
+            'res_model': 'gica.commande.globale',
+            'view_mode': 'form',
+            'res_id': self.commande_globale_id.id,
+        }
+
+    def action_creer_bcg(self):
+        """Ouvre le formulaire de création d'un BCG pré-rempli."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Créer une commande globale',
+            'res_model': 'gica.commande.globale',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {
+                'default_contrat_id': self.id,
+                'default_client_id':  self.client_id.id,
+            },
+        }
 
     # ── Cron ──────────────────────────────────────────────────────────────
     @api.model

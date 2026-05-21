@@ -44,17 +44,41 @@
                             invisible="state not in ('actif','en_cours')"/>
                     <button name="action_resilier"  string="Résilier"  type="object" class="btn-danger"
                             invisible="state in ('resilie','expire','draft')"/>
+
+                    <!-- Bouton Créer BCG : visible uniquement si le contrat est actif/en_cours
+                         ET qu'aucune BCG active n'existe encore -->
+                    <button name="action_creer_bcg"
+                            string="Créer une BCG"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state not in ('actif','en_cours') or commande_globale_id"/>
+
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,actif,en_cours,expire"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Smart button BCG : visible uniquement si une BCG existe -->
+                        <button name="action_voir_bcg" type="object"
+                                class="oe_stat_button" icon="fa-shopping-cart"
+                                invisible="commande_globale_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="commande_globale_count"/>
+                                </span>
+                                <span class="o_stat_text">BCG</span>
+                            </div>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name"/></h1>
                     </div>
 
-                    <!-- Champ technique invisible — pilote les règles d'affichage -->
-                    <field name="client_type" invisible="1"/>
+                    <!-- Champs techniques invisibles — pilotent les règles d'affichage -->
+                    <field name="client_type"         invisible="1"/>
+                    <field name="commande_globale_id" invisible="1"/>
 
                     <group string="Client">
                         <group>
@@ -74,8 +98,6 @@
                             <field name="date_end"/>
                         </group>
                     </group>
-
-                    
 
                     <group string="Motif" invisible="state not in ('suspendu','resilie')">
                         <field name="motif_suspension" nolabel="1"/>

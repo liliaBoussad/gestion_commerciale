@@ -121,7 +121,6 @@ class GicaCommandeGlobale(models.Model):
         tracking=True,
     )
 
-    # ── client_id pointe vers res.partner ────────────────────────────────
     client_id = fields.Many2one(
         'res.partner',
         string='Client',
@@ -242,6 +241,7 @@ class GicaCommandeGlobale(models.Model):
                 if rec.quantity_total_tonne else 0.0
             )
 
+    # ── ORM ───────────────────────────────────────────────────────────────
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -249,8 +249,24 @@ class GicaCommandeGlobale(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'gica.commande.globale'
                 ) or 'Nouveau'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        # Invalide le cache commande_globale_id sur les contrats liés
+        # pour que le bouton "Créer BCG" disparaisse immédiatement.
+        contrat_ids = records.mapped('contrat_id')
+        if contrat_ids:
+            contrat_ids.invalidate_recordset(['commande_globale_id'])
+        return records
 
+    def unlink(self):
+        # Mémorise les contrats avant suppression pour invalider après.
+        contrat_ids = self.mapped('contrat_id')
+        res = super().unlink()
+        # Invalide le cache : le bouton "Créer BCG" réapparaît.
+        if contrat_ids:
+            contrat_ids.invalidate_recordset(['commande_globale_id'])
+        return res
+
+    # ── Onchange ──────────────────────────────────────────────────────────
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.contrat_id = False
@@ -267,6 +283,7 @@ class GicaCommandeGlobale(models.Model):
                 }))
             self.line_ids = lines
 
+    # ── Actions ───────────────────────────────────────────────────────────
     def action_demarrer(self):
         for rec in self:
             if not rec.line_ids:
@@ -319,6 +336,7 @@ class GicaCommandeGlobale(models.Model):
             'context':   {'default_commande_globale_id': self.id},
         }
 
+    # ── Contraintes ───────────────────────────────────────────────────────
     @api.constrains('contrat_id', 'client_id')
     def _check_contrat_client(self):
         for rec in self:
