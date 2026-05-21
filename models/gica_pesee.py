@@ -30,10 +30,10 @@ class GicaPesee(models.Model):
         readonly=True,
     )
 
-    # ── client_id pointe vers res.partner ────────────────────────────────
-    client_id = fields.Many2one(
+    # ── partner_id pointe vers res.partner ────────────────────────────────
+    partner_id = fields.Many2one(
         'res.partner',
-        related='bon_circulation_id.client_id',
+        related='bon_circulation_id.partner_id',
         string='Client',
         store=True,
         readonly=True,

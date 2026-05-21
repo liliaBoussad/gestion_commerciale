@@ -41,4 +41,25 @@
         <field name="number_increment">1</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <!-- Séquence Projet : PROJ/YYYY/XXXX -->
+    <record id="seq_gica_project" model="ir.sequence">
+        <field name="name">Projet GICA</field>
+        <field name="code">gica.project</field>
+        <field name="prefix">PROJ/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+<!-- Séquence Code Client : CLI-XXXX -->
+    <record id="seq_gica_client_ref" model="ir.sequence">
+        <field name="name">Code Client GICA</field>
+        <field name="code">gica.client.ref</field>
+        <field name="prefix">CLI-</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="number_next">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

@@ -16,7 +16,7 @@
                   default_order="name desc">
                 <field name="name" string="N° Bon"/>
                 <field name="sale_order_id" string="Bon de Commande"/>
-                <field name="client_id" string="Client"/>
+                <field name="partner_id" string="Client"/>
                 <field name="product_id" string="Produit"/>
                 <field name="conditionnement" string="Conditionnement"/>
                 <field name="chauffeur" string="Chauffeur"/>
@@ -132,7 +132,7 @@
                     <group>
                         <group string="📋 Informations Commande">
                             <field name="sale_order_id"   string="Bon de Commande" readonly="1"/>
-                            <field name="client_id"       string="Client"          readonly="1"/>
+                            <field name="partner_id"       string="Client"          readonly="1"/>
                             <field name="product_id"      string="Produit"         readonly="1"/>
                             <field name="conditionnement" string="Conditionnement" readonly="1"/>
                             <field name="quantite_prevue" string="Qté prévue (T)"  readonly="1"/>
@@ -218,7 +218,7 @@
         <field name="arch" type="xml">
             <search string="Rechercher un bon">
                 <field name="name"      string="N° Bon / QR"/>
-                <field name="client_id" string="Client"/>
+                <field name="partner_id" string="Client"/>
                 <field name="chauffeur" string="Chauffeur"/>
                 <field name="matricule" string="Matricule"/>
                 <field name="sale_order_id" string="Bon de Commande"/>
@@ -249,7 +249,7 @@
                     <filter name="group_state"  string="État"
                             context="{'group_by': 'state'}"/>
                     <filter name="group_client" string="Client"
-                            context="{'group_by': 'client_id'}"/>
+                            context="{'group_by': 'partner_id'}"/>
                     <filter name="group_date"   string="Date"
                             context="{'group_by': 'create_date:day'}"/>
                 </group>
@@ -270,7 +270,7 @@
                 <field name="date_pesee"         string="Date de pesée"/>
                 <field name="bon_circulation_id" string="Bon de Circulation"/>
                 <field name="sale_order_id"      string="Commande de Vente"/>
-                <field name="client_id"          string="Client"/>
+                <field name="partner_id"          string="Client"/>
                 <field name="product_id"         string="Produit"/>
                 <field name="conditionnement"    string="Conditionnement"/>
                 <field name="type_pesee"         string="Type de Pesée"
@@ -291,7 +291,7 @@
         <field name="arch" type="xml">
             <search string="Rechercher">
                 <field name="bon_circulation_id" string="N° Bon"/>
-                <field name="client_id"          string="Client"/>
+                <field name="partner_id"          string="Client"/>
                 <field name="chauffeur"          string="Chauffeur"/>
                 <field name="matricule"          string="Matricule"/>
                 <separator/>
@@ -307,7 +307,7 @@
                         domain="[('date_pesee', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_client"  string="Client"
-                            context="{'group_by': 'client_id'}"/>
+                            context="{'group_by': 'partner_id'}"/>
                     <filter name="group_type"    string="Type de pesée"
                             context="{'group_by': 'type_pesee'}"/>
                     <filter name="group_agent"   string="Agent"

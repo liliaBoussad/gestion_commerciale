@@ -27,7 +27,6 @@
         # Views — ordre important !
         'views/gica_client_nature_views.xml',       
         'views/gica_client_category_views.xml',
-        'views/gica_client_views.xml',
         'views/res_partner_views.xml',             
         'views/client_contract_views.xml',
         'views/client_agrement_views.xml',

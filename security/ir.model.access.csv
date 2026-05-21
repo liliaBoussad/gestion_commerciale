@@ -1,6 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_gica_client_nature,gica.client.nature,model_gica_client_nature,,1,1,1,1
-access_gica_client,gica.client,model_gica_client,,1,1,1,1
 access_gica_client_contract,gica.client.contract,model_gica_client_contract,,1,1,1,1
 access_gica_contract_line,gica.contract.line,model_gica_client_contract_line,base.group_user,1,1,1,1
 access_gica_client_agrement,gica.client.agrement,model_gica_client_agrement,,1,1,1,1

@@ -12,11 +12,13 @@
                   decoration-warning="state == 'suspendu'"
                   decoration-muted="state in ('expire','resilie')"
                   decoration-primary="state == 'draft'">
-                <field name="name"       string="N° Contrat"/>
-                <field name="client_id"  string="Client"/>
-                <field name="project_id" string="Projet" optional="show"/>
-                <field name="date_start" string="Date début"/>
-                <field name="date_end"   string="Date fin"/>
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="client_type" column_invisible="1"/>
+                <field name="project_id" optional="show"
+                       invisible="client_type != 'realisation'"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'en_cours'"
                        decoration-info="state == 'actif'"
@@ -48,46 +50,35 @@
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
-                        <h1><field name="name" readonly="1"/></h1>
+                        <h1><field name="name"/></h1>
                     </div>
 
-                    <!-- client_type invisible — utilisé pour l'invisible du projet -->
+                    <!-- Champ technique invisible — pilote les règles d'affichage -->
                     <field name="client_type" invisible="1"/>
 
-                    <group string="Informations">
+                    <group string="Client">
                         <group>
-                            <field name="client_id"
-                                   readonly="state != 'draft'"/>
+                            <field name="client_id"/>
+                            <!-- Projet : visible et obligatoire uniquement pour ER -->
                             <field name="project_id"
                                    invisible="client_type != 'realisation'"
-                                   readonly="state != 'draft'"
-                                   domain="[('client_id', '=', client_id)]"
-                                   options="{'no_create': True}"/>
-                        </group>
-                        <group>
-                            <field name="date_start" readonly="state != 'draft'"/>
-                            <field name="date_end"   readonly="state != 'draft'"/>
+                                   required="client_type == 'realisation'"
+                                   options="{'no_create': True}"
+                                   domain="[('client_id', '=', client_id)]"/>
                         </group>
                     </group>
 
-                    <group string="Modalités de paiement">
+                    <group string="Période du contrat">
                         <group>
-                            <field name="mode_paiement"/>
-                            <field name="modalite_paiement"/>
-                        </group>
-                        <group>
-                            <field name="delai_paiement"/>
-                            <field name="delai_livraison"/>
-                            <field name="lieu_livraison"/>
-                            <field name="adresse_livraison"
-                                   invisible="lieu_livraison != 'livraison_site'"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
                         </group>
                     </group>
 
-                    <group string="Motif"
-                           invisible="state not in ('suspendu','resilie')">
-                        <field name="motif_suspension" nolabel="1"
-                               placeholder="Saisissez le motif..."/>
+                    
+
+                    <group string="Motif" invisible="state not in ('suspendu','resilie')">
+                        <field name="motif_suspension" nolabel="1"/>
                     </group>
 
                     <notebook>
@@ -97,21 +88,25 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id"
                                            domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="quantity"       string="Quantité"/>
-                                    <field name="uom"            string="Unité"/>
-                                    <field name="quantity_tonne" string="Qté (T)" readonly="1"/>
-                                    <field name="prix_unitaire"  string="Prix (DA)"/>
-                                    <field name="montant_total"  string="Total (DA)" readonly="1"/>
+                                    <field name="type_ciment" optional="show"/>
+                                    <field name="conditionnement" optional="show"/>
+                                    <field name="quantity"/>
+                                    <field name="uom"/>
+                                    <field name="quantity_tonne"/>
+                                    <field name="prix_unitaire"/>
+                                    <field name="montant_total"/>
+                                    <field name="quantity_livree"/>
+                                    <field name="quantity_restante"/>
                                 </list>
                             </field>
                             <group class="oe_subtotal_footer">
-                                <field name="quantity_total_tonne" string="Total (T)"  readonly="1"/>
-                                <field name="montant_total"        string="Total (DA)" readonly="1"/>
+                                <field name="quantity_total_tonne" string="Total (tonnes)"/>
+                                <field name="montant_total" string="Montant total (DA)"
+                                       widget="monetary"/>
                             </group>
                         </page>
                         <page string="Observations">
-                            <field name="observations"
-                                   placeholder="Notes, clauses particulières..."/>
+                            <field name="observations" placeholder="Notes, clauses particulières..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -137,6 +132,9 @@
                 <filter name="expire"   string="Expirés"   domain="[('state','=','expire')]"/>
                 <filter name="resilie"  string="Résiliés"  domain="[('state','=','resilie')]"/>
                 <separator/>
+                <filter name="realisation" string="Entreprises de réalisation"
+                        domain="[('client_type','=','realisation')]"/>
+                <separator/>
                 <filter name="beton"   string="GICA BÉTON"
                         domain="[('line_ids.type_ciment','in',['cem_ii_325','cem_ii_425_n','cem_ii_425_r'])]"/>
                 <filter name="moudhad" string="GICA MOUDHAD"
@@ -146,12 +144,9 @@
                 <filter name="clinker" string="Clinker"
                         domain="[('line_ids.type_ciment','=','clinker')]"/>
                 <group expand="0" string="Regrouper par">
-                    <filter name="group_client"  string="Client"
-                            context="{'group_by':'client_id'}"/>
-                    <filter name="group_project" string="Projet"
-                            context="{'group_by':'project_id'}"/>
-                    <filter name="group_state"   string="Statut"
-                            context="{'group_by':'state'}"/>
+                    <filter name="group_client"  string="Client"  context="{'group_by':'client_id'}"/>
+                    <filter name="group_projet"  string="Projet"  context="{'group_by':'project_id'}"/>
+                    <filter name="group_state"   string="Statut"  context="{'group_by':'state'}"/>
                 </group>
             </search>
         </field>

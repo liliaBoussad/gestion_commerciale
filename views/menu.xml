@@ -3,7 +3,7 @@
     <data>
 
         <!-- ══════════════════════════════════════════════════
-             Clients GICA
+             Clients GICA — menu racine
         ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
@@ -13,7 +13,7 @@
         <menuitem id="menu_ventes_gica_client"
                   name="Liste des clients"
                   parent="menu_ventes_gica_clients_root"
-                  action="action_gica_client"
+                  action="action_gica_clients"
                   sequence="10"/>
 
         <menuitem id="menu_ventes_gica_contrat"
@@ -60,7 +60,6 @@
 
         <!-- ══════════════════════════════════════════════════
              Commandes — menu natif Odoo
-             Uniquement : Commandes Globales + Bons de Circulation
         ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_commande_globale"
                   name="Commandes Globales"
@@ -75,7 +74,7 @@
                   sequence="20"/>
 
         <!-- ══════════════════════════════════════════════════
-             Planification Ciment — nouveau module
+             Planification Ciment
         ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_planification_root"
                   name="Planification Ciment"
@@ -94,7 +93,7 @@
                   action="action_gica_planification_usine"
                   sequence="20"/>
 
-          <menuitem id="menu_ventes_gica_planification_calendar"
+        <menuitem id="menu_ventes_gica_planification_calendar"
                   name="Calendrier"
                   parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_calendar"

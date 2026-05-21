@@ -108,6 +108,7 @@ class GicaClientContract(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date_start desc'
 
+    # ── Identification ────────────────────────────────────────────────────
     name = fields.Char(
         string='Numéro du contrat',
         readonly=True,
@@ -116,46 +117,30 @@ class GicaClientContract(models.Model):
         tracking=True,
     )
 
-    # ── client_id pointe vers gica.client (cohérent avec BCG et planification)
     client_id = fields.Many2one(
-        'gica.client',
+        'res.partner',
         string='Client',
         required=True,
         tracking=True,
     )
 
-    # ── client_type calculé depuis partner_id ─────────────────────────────
-    client_type = fields.Selection([
-        ('realisation',    'Entreprise de réalisation'),
-        ('investisseur',   'Investisseur'),
-        ('promoteur',      'Promoteur immobilier'),
-        ('transformateur', 'Transformateur'),
-        ('broyage',        'Centre de broyage'),
-        ('revendeur',      'Revendeur'),
-        ('rev_agree',      'Revendeur agréé'),
-        ('distributeur',   'Distributeur officiel'),
-        ('conditionneur',  'Conditionneur'),
-        ('exportateur',    'Exportateur'),
-        ('auto_const',     'Auto-constructeur'),
-        ('autres',         'Autres'),
-    ], string='Type client', compute='_compute_client_type', store=True, readonly=True)
+    # ── Type client calculé (pour invisible dans la vue) ──────────────────
+    client_type = fields.Selection(
+        related='client_id.client_type',
+        string='Type client',
+        store=True,
+        readonly=True,
+    )
 
-    @api.depends('client_id', 'client_id.partner_id', 'client_id.partner_id.client_type')
-    def _compute_client_type(self):
-        for rec in self:
-            if rec.client_id and rec.client_id.partner_id:
-                rec.client_type = rec.client_id.partner_id.client_type
-            else:
-                rec.client_type = False
-
-    # ── Projet — obligatoire pour Entreprise de réalisation ───────────────
+    # ── Projet (visible uniquement si Entreprise de réalisation) ──────────
     project_id = fields.Many2one(
         'gica.project',
-        string='Projet associé',
+        string='Projet',
         tracking=True,
         domain="[('client_id', '=', client_id)]",
     )
 
+    # ── Lignes produits ───────────────────────────────────────────────────
     line_ids = fields.One2many(
         'gica.client.contract.line',
         'contract_id',
@@ -163,6 +148,7 @@ class GicaClientContract(models.Model):
         copy=True,
     )
 
+    # ── Totaux ────────────────────────────────────────────────────────────
     montant_total = fields.Float(
         string='Montant total (DA)',
         compute='_compute_totaux',
@@ -180,6 +166,7 @@ class GicaClientContract(models.Model):
             rec.montant_total        = sum(rec.line_ids.mapped('montant_total'))
             rec.quantity_total_tonne = sum(rec.line_ids.mapped('quantity_tonne'))
 
+    # ── Paiement ──────────────────────────────────────────────────────────
     mode_paiement = fields.Selection([
         ('comptant', 'Paiement au comptant'),
         ('terme',    'Paiement à terme'),
@@ -195,17 +182,21 @@ class GicaClientContract(models.Model):
         ('especes',          'Espèces (max 200 000 DA, points de vente)'),
     ], string='Modalité de paiement', tracking=True)
 
-    delai_paiement   = fields.Integer(string='Délai de paiement (jours)', default=0, tracking=True)
-    delai_livraison  = fields.Integer(string='Délai de livraison (jours)', tracking=True)
-    lieu_livraison   = fields.Selection([
+    delai_paiement  = fields.Integer(string='Délai de paiement (jours)', default=0, tracking=True)
+    delai_livraison = fields.Integer(string='Délai de livraison (jours)', tracking=True)
+
+    # ── Livraison ─────────────────────────────────────────────────────────
+    lieu_livraison = fields.Selection([
         ('depart_usine',   'Départ usine'),
         ('livraison_site', 'Livraison sur site client'),
     ], string='Lieu de livraison', tracking=True)
     adresse_livraison = fields.Char(string='Adresse de livraison')
 
+    # ── Dates ─────────────────────────────────────────────────────────────
     date_start = fields.Date(string='Date début', required=True, tracking=True)
     date_end   = fields.Date(string='Date fin',   required=True, tracking=True)
 
+    # ── Statut ────────────────────────────────────────────────────────────
     state = fields.Selection([
         ('draft',    'Brouillon'),
         ('actif',    'Actif'),
@@ -218,18 +209,16 @@ class GicaClientContract(models.Model):
     motif_suspension = fields.Text(string='Motif de suspension / résiliation', tracking=True)
     observations     = fields.Text(string='Observations')
 
-    # ── Onchange client — remplit automatiquement le projet ───────────────
-    @api.onchange('client_id')
-    def _onchange_client_id(self):
-        self.project_id = False
-        if self.client_id:
-            if self.client_id.partner_id.client_type == 'realisation':
-                projet = self.env['gica.project'].search([
-                    ('client_id', '=', self.client_id.id),
-                ], limit=1)
-                if projet:
-                    self.project_id = projet.id
+    # ── Contrainte unicité projet ─────────────────────────────────────────
+    _sql_constraints = [
+        (
+            'unique_project_contract',
+            'UNIQUE(project_id)',
+            '❌ Ce projet a déjà un contrat associé !',
+        ),
+    ]
 
+    # ── ORM ───────────────────────────────────────────────────────────────
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -237,34 +226,33 @@ class GicaClientContract(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'gica.client.contract'
                 ) or 'Nouveau'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        # Invalide le cache contract_id sur les projets liés
+        # pour que le bouton "Créer un contrat" disparaisse immédiatement.
+        project_ids = records.mapped('project_id')
+        if project_ids:
+            project_ids.invalidate_recordset(['contract_id'])
+        return records
 
-    # ── CONTRAINTE : projet obligatoire pour entreprise de réalisation ────
-    @api.constrains('client_id', 'project_id')
-    def _check_project_realisation(self):
-        for rec in self:
-            if (rec.client_id
-                    and rec.client_id.partner_id.client_type == 'realisation'
-                    and not rec.project_id):
-                raise ValidationError(
-                    '❌ Un projet est obligatoire pour une Entreprise de réalisation.\n'
-                    '👉 Veuillez sélectionner un projet pour ce client.'
-                )
+    def unlink(self):
+        # Mémorise les projets avant suppression pour invalider après.
+        project_ids = self.mapped('project_id')
+        res = super().unlink()
+        # Invalide le cache : le bouton "Créer un contrat" réapparaît.
+        if project_ids:
+            project_ids.invalidate_recordset(['contract_id'])
+        return res
 
-    # ── CONTRAINTE : dates ────────────────────────────────────────────────
-    @api.constrains('date_start', 'date_end')
-    def _check_dates(self):
-        today = fields.Date.today()
-        for rec in self:
-            if rec.date_start and rec.date_start < today and not rec._origin.id:
-                raise ValidationError(
-                    f'❌ La date de début ne peut pas être dans le passé.\n'
-                    f'👉 Choisir une date à partir du {today}.'
-                )
-            if rec.date_start and rec.date_end and rec.date_end <= rec.date_start:
-                raise ValidationError(
-                    '❌ La date de fin doit être postérieure à la date de début.'
-                )
+    # ── Onchange ──────────────────────────────────────────────────────────
+    @api.onchange('client_id')
+    def _onchange_client_id(self):
+        """Quand on sélectionne un client ER, le projet se remplit automatiquement."""
+        self.project_id = False
+        if self.client_id and self.client_id.client_type == 'realisation':
+            projet = self.env['gica.project'].search(
+                [('client_id', '=', self.client_id.id)], limit=1
+            )
+            self.project_id = projet or False
 
     @api.onchange('date_start')
     def _onchange_date_start(self):
@@ -273,10 +261,37 @@ class GicaClientContract(models.Model):
             return {
                 'warning': {
                     'title': '⛔ Date invalide',
-                    'message': f'La date de début ne peut pas être dans le passé.\n'
-                               f'👉 Choisir une date à partir du {today}.',
+                    'message': (
+                        f'La date de début ne peut pas être dans le passé.\n'
+                        f'👉 Choisir une date à partir du {today}.'
+                    ),
                 }
             }
+
+    # ── Contraintes ───────────────────────────────────────────────────────
+    @api.constrains('client_id', 'project_id')
+    def _check_projet_realisation(self):
+        """Bloque la sauvegarde si un client ER n'a pas de projet associé."""
+        for rec in self:
+            if rec.client_id.client_type == 'realisation' and not rec.project_id:
+                raise ValidationError(
+                    '❌ Un projet est obligatoire pour une Entreprise de réalisation.\n'
+                    '👉 Créez d\'abord un projet pour ce client avant de créer le contrat.'
+                )
+
+    @api.constrains('date_start', 'date_end')
+    def _check_dates(self):
+        today = fields.Date.today()
+        for rec in self:
+            if rec.date_start and rec.date_start < today:
+                raise ValidationError(
+                    f'❌ La date de début ne peut pas être dans le passé.\n'
+                    f'👉 Choisir une date à partir du {today}.'
+                )
+            if rec.date_start and rec.date_end and rec.date_end <= rec.date_start:
+                raise ValidationError(
+                    '❌ La date de fin doit être postérieure à la date de début.'
+                )
 
     @api.constrains('line_ids', 'mode_paiement')
     def _check_paiement_clinker(self):
@@ -303,21 +318,27 @@ class GicaClientContract(models.Model):
                     'Un même produit/conditionnement ne peut pas apparaître deux fois.'
                 )
 
+    # ── Actions ───────────────────────────────────────────────────────────
     def action_activer(self):
+        """Bloque l'activation si client ER sans projet."""
         for rec in self:
-            if (rec.client_id
-                    and rec.client_id.partner_id.client_type == 'realisation'
-                    and not rec.project_id):
+            if rec.client_id.client_type == 'realisation' and not rec.project_id:
                 raise ValidationError(
-                    '❌ Un projet est obligatoire pour une Entreprise de réalisation.\n'
-                    '👉 Veuillez sélectionner un projet avant d\'activer ce contrat.'
+                    '❌ Impossible d\'activer ce contrat : projet manquant.\n'
+                    '👉 Associez un projet avant d\'activer le contrat.'
                 )
-            rec.write({'state': 'actif'})
+        self.write({'state': 'actif'})
 
-    def action_demarrer(self):  self.write({'state': 'en_cours'})
-    def action_suspendre(self): self.write({'state': 'suspendu'})
-    def action_resilier(self):  self.write({'state': 'resilie'})
+    def action_demarrer(self):
+        self.write({'state': 'en_cours'})
 
+    def action_suspendre(self):
+        self.write({'state': 'suspendu'})
+
+    def action_resilier(self):
+        self.write({'state': 'resilie'})
+
+    # ── Cron ──────────────────────────────────────────────────────────────
     @api.model
     def _cron_check_expiration(self):
         today = fields.Date.today()

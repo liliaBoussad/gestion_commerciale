@@ -39,9 +39,9 @@ class GicaBonCirculation(models.Model):
     )
 
     # ── Infos commande (related) ───────────────────────────────────────────
-    client_id = fields.Many2one(
-        'gica.client',
-        related='sale_order_id.gica_client_id',
+    partner_id = fields.Many2one(
+        'res.partner',
+        related='sale_order_id.partner_id',
         string='Client',
         store=True,
         readonly=True,

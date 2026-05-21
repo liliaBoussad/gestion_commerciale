@@ -58,7 +58,7 @@
                     <group>
                         <group string="INFORMATIONS COMMANDE">
                             <field name="sale_order_id" readonly="1"/>
-                            <field name="client_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
                             <field name="product_id" readonly="1"/>
                             <field name="conditionnement" readonly="1"/>
                             <field name="quantite_prevue" readonly="1"/>
@@ -99,7 +99,7 @@
                   decoration-muted="state == 'annule'">
                 <field name="name" string="Référence"/>
                 <field name="sale_order_id" string="BC"/>
-                <field name="client_id" string="Client"/>
+                <field name="partner_id" readonly="1"/>
                 <field name="product_id" string="Produit"/>
                 <field name="conditionnement" string="Conditionnement"/>
                 <field name="numero_rotation" string="Rotation"/>
