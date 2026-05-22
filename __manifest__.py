@@ -43,7 +43,14 @@
 
         'views/sale_order_gica_views.xml',
         'views/gica_bon_circulation_views.xml',
+        'data/clinker_sequences.xml',
         'views/gica_bascule_views.xml',
+
+        # Clinker
+        'views/clinker_cadence_views.xml',
+        'views/clinker_global_order_views.xml',
+        'views/clinker_planning_views.xml',
+        'views/clinker_approbation_wizard_views.xml',
 
         'views/menu.xml',
     ],

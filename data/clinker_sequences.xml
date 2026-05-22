@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Séquence BCG Clinker : BC-GC/YYYY/XXXX -->
+    <record id="seq_clinker_global_order" model="ir.sequence">
+        <field name="name">BCG Clinker</field>
+        <field name="code">clinker.global.order</field>
+        <field name="prefix">BC-GC/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Séquence Planification Clinker : PLC/YYYY/XXXX -->
+    <record id="seq_clinker_planning" model="ir.sequence">
+        <field name="name">Planification Clinker</field>
+        <field name="code">clinker.planning</field>
+        <field name="prefix">PLC/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

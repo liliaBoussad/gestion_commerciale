@@ -26,9 +26,14 @@ access_gica_planification_client_line_user,gica.planification.client.line user,m
 access_gica_planification_usine_manager,gica.planification.usine manager,model_gica_planification_usine,base.group_system,1,1,1,1
 access_gica_planification_usine_user,gica.planification.usine user,model_gica_planification_usine,base.group_user,1,1,0,0
 access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1
-
 access_gica_bon_circulation,gica.bon.circulation,model_gica_bon_circulation,base.group_user,1,1,1,1
 access_gica_circulation_line,gica.circulation.line,model_gica_circulation_line,base.group_user,1,1,1,1
 access_gica_wizard_bon_circulation,gica.wizard.bon.circulation,model_gica_wizard_bon_circulation,base.group_user,1,1,1,1
-
 access_gica_pesee,gica.pesee,model_gica_pesee,base.group_user,1,1,1,1
+access_clinker_cadence,clinker.cadence,model_clinker_cadence,,1,1,1,1
+access_clinker_global_order,clinker.global.order,model_clinker_global_order,,1,1,1,1
+access_clinker_global_order_line,clinker.global.order.line,model_clinker_global_order_line,,1,1,1,1
+access_clinker_planning,clinker.planning,model_clinker_planning,,1,1,1,1
+access_clinker_sale_order,clinker.sale.order,model_sale_order,,1,1,1,1
+access_clinker_approbation_wizard,clinker.approbation.wizard,model_clinker_approbation_wizard,base.group_user,1,1,1,1
+access_clinker_approbation_wizard_line,clinker.approbation.wizard.line,model_clinker_approbation_wizard_line,base.group_user,1,1,1,1

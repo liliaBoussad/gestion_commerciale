@@ -3,7 +3,7 @@
     <data>
 
         <!-- ══════════════════════════════════════════════════
-             Clients GICA — menu racine
+             Clients GICA
         ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
@@ -79,7 +79,7 @@
         <menuitem id="menu_ventes_gica_planification_root"
                   name="Planification Ciment"
                   parent="sale.sale_menu_root"
-                  sequence="8"/>
+                  sequence="6"/>
 
         <menuitem id="menu_ventes_gica_planification_client"
                   name="Planifications Clients"
@@ -98,6 +98,44 @@
                   parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_calendar"
                   sequence="30"/>
+
+        <!-- ══════════════════════════════════════════════════
+             Ventes Clinker
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_clinker_ventes_root"
+                  name="Ventes Clinker"
+                  parent="sale.sale_menu_root"
+                  sequence="7"/>
+
+        <menuitem id="menu_clinker_ventes_bcg"
+                  name="BCG Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_global_order"
+                  sequence="10"/>
+
+        <menuitem id="menu_clinker_ventes_planning"
+                  name="Planification Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_planning"
+                  sequence="20"/>
+
+        <menuitem id="menu_clinker_ventes_approbation"
+                  name="Approbation Planning"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_approbation_wizard"
+                  sequence="30"/>
+
+        <menuitem id="menu_clinker_ventes_commandes"
+                  name="Commandes Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_commandes"
+                  sequence="40"/>
+
+        <menuitem id="menu_clinker_ventes_cadence"
+                  name="Cadence Usine Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_cadence_readonly"
+                  sequence="50"/>
 
         <!-- ══════════════════════════════════════════════════
              Classifications GICA
@@ -124,6 +162,31 @@
                   parent="menu_ventes_gica_config_root"
                   action="action_gica_scoring_category"
                   sequence="40"/>
+
+        <!-- ══════════════════════════════════════════════════
+             MODULE PRODUCTION CLINKER — menu racine indépendant
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_production_root"
+                  name="Production"
+                  web_icon="stock,static/description/icon.png"
+                  sequence="50"/>
+
+        <menuitem id="menu_production_clinker_root"
+                  name="Clinker"
+                  parent="menu_production_root"
+                  sequence="10"/>
+
+        <menuitem id="menu_production_clinker_bcg"
+                  name="BCG Clinker"
+                  parent="menu_production_clinker_root"
+                  action="action_clinker_global_order_production"
+                  sequence="10"/>
+
+        <menuitem id="menu_production_clinker_cadence"
+                  name="Cadence Usine Clinker"
+                  parent="menu_production_clinker_root"
+                  action="action_clinker_cadence"
+                  sequence="20"/>
 
     </data>
 </odoo>

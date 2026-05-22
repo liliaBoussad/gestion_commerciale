@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- FORMULAIRE -->
+    <record id="view_clinker_planning_form" model="ir.ui.view">
+        <field name="name">clinker.planning.form</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <form string="Planification Clinker">
+                <header>
+                    <button name="action_soumettre" string="Soumettre"
+                            type="object" class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_brouillon" string="↩️ Brouillon"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'soumis'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,soumis,approuve,refuse"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Informations">
+                            <field name="bcg_id"          readonly="state != 'brouillon'"/>
+                            <field name="client_id"       readonly="1"/>
+                            <field name="code_client"     readonly="1"/>
+                            <field name="date_chargement" readonly="state != 'brouillon'"/>
+                        </group>
+                        <group string="Quantités">
+                            <field name="estimation"         readonly="state != 'brouillon'"/>
+                            <field name="quantite_approuvee" readonly="1"/>
+                            <field name="quantite_livree"    readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Traitement" invisible="state == 'brouillon'">
+                        <group>
+                            <field name="approuve_par"    readonly="1"/>
+                            <field name="date_traitement" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="bc_quotidien_id" readonly="1"/>
+                            <field name="motif_refus"     readonly="1"
+                                   invisible="state != 'refuse'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- LISTE -->
+    <record id="view_clinker_planning_list" model="ir.ui.view">
+        <field name="name">clinker.planning.list</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <list string="Planification Clinker"
+                  decoration-success="state == 'approuve'"
+                  decoration-warning="state == 'soumis'"
+                  decoration-danger="state == 'refuse'"
+                  decoration-muted="state == 'brouillon'">
+                <field name="date_chargement"    string="Date de C..."/>
+                <field name="code_client"        string="Code Client"/>
+                <field name="client_id"          string="Client"/>
+                <field name="bcg_id"             string="BC-G"/>
+                <field name="estimation"         string="Estimation (T)"/>
+                <field name="quantite_approuvee" string="Approuvé (T)"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'approuve'"
+                       decoration-warning="state == 'soumis'"
+                       decoration-danger="state == 'refuse'"/>
+                <field name="bc_quotidien_id" string="BC-Quotidien"/>
+                <field name="motif_refus"     string="Motif de Refus" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- CALENDRIER -->
+    <record id="view_clinker_planning_calendar" model="ir.ui.view">
+        <field name="name">clinker.planning.calendar</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <calendar string="Planification Clinker"
+                      date_start="date_chargement"
+                      color="client_id"
+                      mode="month"
+                      quick_create="false">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="estimation"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- RECHERCHE -->
+    <record id="view_clinker_planning_search" model="ir.ui.view">
+        <field name="name">clinker.planning.search</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une planification">
+                <field name="client_id"       string="Client"/>
+                <field name="bcg_id"          string="BCG"/>
+                <field name="date_chargement" string="Date"/>
+                <separator/>
+                <filter name="jour"     string="Aujourd'hui"
+                        domain="[('date_chargement','=',context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="soumis"   string="Soumises"   domain="[('state','=','soumis')]"/>
+                <filter name="approuve" string="Approuvées" domain="[('state','=','approuve')]"/>
+                <filter name="refuse"   string="Refusées"   domain="[('state','=','refuse')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_date"   string="Date"
+                            context="{'group_by':'date_chargement'}"/>
+                    <filter name="group_client" string="Client"
+                            context="{'group_by':'client_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION LISTE -->
+    <record id="action_clinker_planning" model="ir.actions.act_window">
+        <field name="name">Planification Clinker</field>
+        <field name="res_model">clinker.planning</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="search_view_id" ref="view_clinker_planning_search"/>
+        <field name="context">{'search_default_jour': 1, 'search_default_group_date': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune planification clinker.</p>
+        </field>
+    </record>
+
+</odoo>
