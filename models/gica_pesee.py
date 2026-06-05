@@ -45,7 +45,7 @@ class GicaPesee(models.Model):
         store=True,
         readonly=True,
     )
-    conditionnement = fields.Selection(
+    conditionnement = fields.Char(
         related='bon_circulation_id.conditionnement',
         string='Conditionnement',
         store=True,

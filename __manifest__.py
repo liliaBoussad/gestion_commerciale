@@ -4,6 +4,7 @@
     'version': '1.0',
     'summary': 'Gestion des clients GICA',
     'author': 'GICA Project',
+    'license': 'LGPL-3', 
     'category': 'Sales',
     'depends': ['base', 'mail', 'sale', 'product', 'sale_management', 'portal'],
     'data': [
@@ -12,6 +13,7 @@
         # Data
         'data/gica_client_nature_data.xml',
         'data/products_data.xml',
+        #'data/pricelists_data.xml',
         'data/gica_scoring_category_data.xml',
         'data/gica_classification_data.xml',
         'data/gica_commandes_data.xml',
@@ -23,6 +25,8 @@
           # Rapports — AVANT les vues
         'reports/report_ticket_pesee.xml',
         'reports/report_bon_circulation.xml',
+        
+        'templates/portal_templates.xml',
 
         # Views — ordre important !
         'views/gica_client_nature_views.xml',       

@@ -52,12 +52,24 @@ class GicaBonCirculation(models.Model):
         readonly=True,
         tracking=True,
     )
-    conditionnement = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
-        store=True,
-        readonly=True,
+    conditionnement = fields.Char(
+    string='Conditionnement',
+    compute='_compute_conditionnement',
+    store=True,
+    readonly=True,
     )
+
+    @api.depends('product_id')
+    def _compute_conditionnement(self):
+        for rec in self:
+            if rec.product_id:
+                attr_line = rec.product_id.product_template_attribute_value_ids.filtered(
+                    lambda v: v.attribute_id.name == 'Conditionnement'
+                )
+                rec.conditionnement = attr_line[0].name if attr_line else ''
+            else:
+                rec.conditionnement = ''
+                
     quantite_prevue = fields.Float(
         string='Quantité Prévue (T)',
         readonly=True,

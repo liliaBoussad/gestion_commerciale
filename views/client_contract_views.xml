@@ -45,8 +45,7 @@
                     <button name="action_resilier"  string="Résilier"  type="object" class="btn-danger"
                             invisible="state in ('resilie','expire','draft')"/>
 
-                    <!-- Bouton Créer BCG : visible uniquement si le contrat est actif/en_cours
-                         ET qu'aucune BCG active n'existe encore -->
+                    <!-- Bouton Créer BCG : votre version -->
                     <button name="action_creer_bcg"
                             string="Créer une BCG"
                             type="object"
@@ -57,8 +56,8 @@
                            statusbar_visible="draft,actif,en_cours,expire"/>
                 </header>
                 <sheet>
+                    <!-- Smart button BCG : votre version -->
                     <div class="oe_button_box" name="button_box">
-                        <!-- Smart button BCG : visible uniquement si une BCG existe -->
                         <button name="action_voir_bcg" type="object"
                                 class="oe_stat_button" icon="fa-shopping-cart"
                                 invisible="commande_globale_count == 0">
@@ -76,14 +75,13 @@
                         <h1><field name="name"/></h1>
                     </div>
 
-                    <!-- Champs techniques invisibles — pilotent les règles d'affichage -->
+                    <!-- Champs techniques invisibles -->
                     <field name="client_type"         invisible="1"/>
                     <field name="commande_globale_id" invisible="1"/>
 
                     <group string="Client">
                         <group>
                             <field name="client_id"/>
-                            <!-- Projet : visible et obligatoire uniquement pour ER -->
                             <field name="project_id"
                                    invisible="client_type != 'realisation'"
                                    required="client_type == 'realisation'"
@@ -97,6 +95,12 @@
                             <field name="date_start"/>
                             <field name="date_end"/>
                         </group>
+                        <!-- Binôme : paiement dans le formulaire -->
+                        <group string="Paiement">
+                            <field name="mode_paiement"/>
+                            <field name="modalite_paiement"/>
+                            <field name="delai_paiement"/>
+                        </group>
                     </group>
 
                     <group string="Motif" invisible="state not in ('suspendu','resilie')">
@@ -108,12 +112,14 @@
                             <field name="line_ids" readonly="state in ('expire','resilie')">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
+                                    <field name="product_tmpl_id"
+                                           domain="[('is_gica_product','=',True)]"
+                                           string="Produit"/>
+                                    <field name="conditionnement"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="type_ciment" optional="show"/>
-                                    <field name="conditionnement" optional="show"/>
-                                    <field name="quantity"/>
-                                    <field name="uom"/>
+                                    <field name="quantity" string="Quantité"/>
+                                    <field name="uom" string="Unité"/>
                                     <field name="quantity_tonne"/>
                                     <field name="prix_unitaire"/>
                                     <field name="montant_total"/>
@@ -125,6 +131,14 @@
                                 <field name="quantity_total_tonne" string="Total (tonnes)"/>
                                 <field name="montant_total" string="Montant total (DA)"
                                        widget="monetary"/>
+                            </group>
+                        </page>
+                        <page string="Livraison">
+                            <group>
+                                <field name="lieu_livraison"/>
+                                <field name="adresse_livraison"
+                                       invisible="lieu_livraison != 'livraison_site'"/>
+                                <field name="delai_livraison"/>
                             </group>
                         </page>
                         <page string="Observations">

@@ -17,12 +17,25 @@ class GicaPlanificationConsolidation(models.Model):
     )
     date_enlevement  = fields.Date(string='Date enlèvement', readonly=True)
     product_id       = fields.Many2one('product.product', string='Produit', readonly=True)
-    conditionnement  = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
-        readonly=True,
-        store=True,
+    conditionnement = fields.Char(
+    string='Conditionnement',
+    compute='_compute_conditionnement',
+    store=True,
+    readonly=True,
     )
+
+    @api.depends('product_id')
+    def _compute_conditionnement(self):
+        for rec in self:
+            if rec.product_id:
+                attr_line = rec.product_id.product_template_attribute_value_ids.filtered(
+                    lambda v: v.attribute_id.name == 'Conditionnement'
+                )
+                rec.conditionnement = attr_line[0].name if attr_line else ''
+            else:
+                rec.conditionnement = ''
+
+
     nb_lignes       = fields.Integer(string='Nb clients',    readonly=True)
     nb_rotations    = fields.Integer(string='Rotations',     readonly=True)
     quantity_tonne  = fields.Float(string='Qté totale (T)',  readonly=True)

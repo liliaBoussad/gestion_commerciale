@@ -83,7 +83,8 @@
 
                     <!-- Alerte expiration proche -->
                     <div class="alert alert-warning"
-                         invisible="not expiration_proche">
+                        role="alert"
+                        invisible="not expiration_proche">
                         <i class="fa fa-exclamation-triangle"/>
                         ⚠️ Cet agrément expire dans moins de 30 jours. Pensez à le renouveler.
                     </div>

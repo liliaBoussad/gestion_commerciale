@@ -7,6 +7,22 @@ class GicaCommandeGlobaleLine(models.Model):
     _name = 'gica.commande.globale.line'
     _description = 'Ligne Commande Globale GICA'
     _order = 'sequence, id'
+    _rec_name = 'display_name_line'
+
+    display_name_line = fields.Char(
+        string='Désignation',
+        compute='_compute_display_name_line',
+        store=True,
+    )
+
+    @api.depends('product_tmpl_id', 'conditionnement')
+    def _compute_display_name_line(self):
+        for rec in self:
+            produit = rec.product_tmpl_id.name if rec.product_tmpl_id else '—'
+            cond = dict(rec._fields['conditionnement'].selection).get(
+                rec.conditionnement, rec.conditionnement or '—'
+            )
+            rec.display_name_line = cond
 
     sequence = fields.Integer(default=10)
 
@@ -17,29 +33,40 @@ class GicaCommandeGlobaleLine(models.Model):
         ondelete='cascade',
     )
 
-    product_id = fields.Many2one(
-        'product.product',
+    product_tmpl_id = fields.Many2one(
+        'product.template',
         string='Produit',
         required=True,
-        domain="[('product_tmpl_id.is_gica_product', '=', True)]",
+        domain="[('is_gica_product', '=', True)]",
+    )
+
+    conditionnement = fields.Selection([
+        ('sac_25kg',           'Sac 25 kg'),
+        ('sac_50kg',           'Sac 50 kg'),
+        ('sac_25kg_fardelise', 'Sac 25 kg Fardelisé'),
+        ('sac_50kg_fardelise', 'Sac 50 kg Fardelisé'),
+        ('vrac',               'Vrac'),
+        ('big_bag_client',     'Big-Bag (charge client)'),
+        ('big_bag_scaek',      'Big-Bag (charge SCAEK)'),
+    ], string='Conditionnement', required=True)
+
+    product_id = fields.Many2one(
+        'product.product',
+        string='Variante',
+        compute='_compute_product_id',
+        store=True,
     )
 
     product_name = fields.Char(
-        related='product_id.product_tmpl_id.name',
-        string='Produit',
+        related='product_tmpl_id.name',
+        string='Nom produit',
         readonly=True,
         store=True,
-    )
-
-    conditionnement = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
-        store=True,
-        readonly=True,
+        translate=False,
     )
 
     quantity_tonne  = fields.Float(string='Quantité (T)', required=True)
-    prix_unitaire   = fields.Float(string='Prix unitaire (DA)')
+    prix_unitaire   = fields.Float(string='Prix unitaire (DA)', default=0.0)
 
     montant_total = fields.Float(
         string='Montant total (DA)',
@@ -65,26 +92,52 @@ class GicaCommandeGlobaleLine(models.Model):
         store=True,
     )
 
+    @api.depends('product_tmpl_id', 'conditionnement')
+    def _compute_product_id(self):
+        for rec in self:
+            if rec.product_tmpl_id and rec.conditionnement:
+                label = dict(
+                    rec._fields['conditionnement'].selection
+                ).get(rec.conditionnement)
+                variant = rec.product_tmpl_id.product_variant_ids.filtered(
+                    lambda v: any(
+                        a.attribute_id.name == 'Conditionnement' and
+                        a.product_attribute_value_id.name == label
+                        for a in v.product_template_attribute_value_ids
+                    )
+                )
+                rec.product_id = variant[0] if variant else False
+            else:
+                rec.product_id = False
+
     @api.depends('quantity_tonne', 'prix_unitaire')
     def _compute_montant_total(self):
         for rec in self:
             rec.montant_total = rec.quantity_tonne * rec.prix_unitaire
 
     @api.depends(
+        'quantity_tonne',
         'commande_id.bon_commande_ids.order_line.product_uom_qty',
         'commande_id.bon_commande_ids.date_reelle_enlevement',
     )
     def _compute_quantity_enlevee(self):
         for rec in self:
-            bc_enleves = rec.commande_id.bon_commande_ids.filtered(
-                lambda bc: bc.date_reelle_enlevement
-            )
-            enlevee = sum(
-                line.product_uom_qty
-                for bc in bc_enleves
-                for line in bc.order_line
-                if line.product_id == rec.product_id
-            )
+            enlevee = 0.0
+            if rec.commande_id and rec.product_tmpl_id and rec.conditionnement:
+                label = dict(
+                    rec._fields['conditionnement'].selection
+                ).get(rec.conditionnement)
+                bc_enleves = rec.commande_id.bon_commande_ids.filtered(
+                    lambda bc: bc.date_reelle_enlevement
+                )
+                for bc in bc_enleves:
+                    for line in bc.order_line:
+                        if (line.product_id.product_tmpl_id == rec.product_tmpl_id
+                                and line.product_id.product_template_attribute_value_ids.filtered(
+                                    lambda a: a.attribute_id.name == 'Conditionnement'
+                                    and a.product_attribute_value_id.name == label
+                                )):
+                            enlevee += line.product_uom_qty
             rec.quantity_enlevee  = enlevee
             rec.quantity_restante = rec.quantity_tonne - enlevee
 
@@ -104,6 +157,16 @@ class GicaCommandeGlobaleLine(models.Model):
                 if line.product_id == rec.product_id
             )
             rec.quantity_planifiee = planifiee
+
+    @api.onchange('product_tmpl_id')
+    def _onchange_product_tmpl_id(self):
+        self.conditionnement = False
+        self.prix_unitaire = 0.0
+
+    @api.onchange('product_tmpl_id', 'conditionnement')
+    def _onchange_product_conditionnement(self):
+        if self.product_tmpl_id and self.conditionnement:
+            self.prix_unitaire = self.product_tmpl_id.list_price
 
 
 class GicaCommandeGlobale(models.Model):
@@ -143,6 +206,7 @@ class GicaCommandeGlobale(models.Model):
         default=fields.Date.today,
         tracking=True,
     )
+
     date_expiration = fields.Date(
         string="Date d'expiration",
         related='contrat_id.date_end',
@@ -169,6 +233,20 @@ class GicaCommandeGlobale(models.Model):
         string='Produits disponibles',
     )
 
+    product_tmpl_contrat_ids = fields.Many2many(
+        'product.template',
+        compute='_compute_product_tmpl_contrat_ids',
+        string='Produits du contrat',
+    )
+
+    @api.depends('contrat_id.line_ids.product_tmpl_id')
+    def _compute_product_tmpl_contrat_ids(self):
+        for rec in self:
+            rec.product_tmpl_contrat_ids = (
+                rec.contrat_id.line_ids.mapped('product_tmpl_id')
+                if rec.contrat_id else False
+            )
+
     @api.depends('line_ids.product_id')
     def _compute_product_ids(self):
         for rec in self:
@@ -179,10 +257,12 @@ class GicaCommandeGlobale(models.Model):
         'commande_globale_id',
         string='Planifications',
     )
+
     planification_count = fields.Integer(
         compute='_compute_planification_count',
         string='Nb Planifications',
     )
+
     planification_en_attente_count = fields.Integer(
         compute='_compute_planification_count',
         string='En attente',
@@ -193,6 +273,7 @@ class GicaCommandeGlobale(models.Model):
         'commande_globale_id',
         string='Bons de Commande',
     )
+
     bon_commande_count = fields.Integer(
         compute='_compute_bon_commande_count',
         string='Nb BC',
@@ -208,7 +289,14 @@ class GicaCommandeGlobale(models.Model):
     mode_paiement     = fields.Selection(related='contrat_id.mode_paiement',     readonly=True)
     modalite_paiement = fields.Selection(related='contrat_id.modalite_paiement', readonly=True)
     devise            = fields.Char(default='DZD', readonly=True)
-    observations      = fields.Text(string='Observations')
+
+    pricelist_id = fields.Many2one(
+        'product.pricelist',
+        string='Liste de prix',
+        tracking=True,
+    )
+
+    observations = fields.Text(string='Observations')
 
     @api.depends('planification_ids', 'planification_ids.state')
     def _compute_planification_count(self):
@@ -241,7 +329,6 @@ class GicaCommandeGlobale(models.Model):
                 if rec.quantity_total_tonne else 0.0
             )
 
-    # ── ORM ───────────────────────────────────────────────────────────────
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -250,23 +337,18 @@ class GicaCommandeGlobale(models.Model):
                     'gica.commande.globale'
                 ) or 'Nouveau'
         records = super().create(vals_list)
-        # Invalide le cache commande_globale_id sur les contrats liés
-        # pour que le bouton "Créer BCG" disparaisse immédiatement.
         contrat_ids = records.mapped('contrat_id')
         if contrat_ids:
             contrat_ids.invalidate_recordset(['commande_globale_id'])
         return records
 
     def unlink(self):
-        # Mémorise les contrats avant suppression pour invalider après.
         contrat_ids = self.mapped('contrat_id')
         res = super().unlink()
-        # Invalide le cache : le bouton "Créer BCG" réapparaît.
         if contrat_ids:
             contrat_ids.invalidate_recordset(['commande_globale_id'])
         return res
 
-    # ── Onchange ──────────────────────────────────────────────────────────
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.contrat_id = False
@@ -277,13 +359,13 @@ class GicaCommandeGlobale(models.Model):
             lines = []
             for line in self.contrat_id.line_ids:
                 lines.append((0, 0, {
-                    'product_id':     line.product_id.id,
-                    'quantity_tonne': line.quantity_tonne,
-                    'prix_unitaire':  line.prix_unitaire,
+                    'product_tmpl_id': line.product_tmpl_id.id,
+                    'conditionnement': line.conditionnement,
+                    'quantity_tonne':  line.quantity_tonne,
+                    'prix_unitaire':   line.prix_unitaire,
                 }))
             self.line_ids = lines
 
-    # ── Actions ───────────────────────────────────────────────────────────
     def action_demarrer(self):
         for rec in self:
             if not rec.line_ids:
@@ -336,7 +418,6 @@ class GicaCommandeGlobale(models.Model):
             'context':   {'default_commande_globale_id': self.id},
         }
 
-    # ── Contraintes ───────────────────────────────────────────────────────
     @api.constrains('contrat_id', 'client_id')
     def _check_contrat_client(self):
         for rec in self:
@@ -356,3 +437,35 @@ class GicaCommandeGlobale(models.Model):
                     f'Le contrat {rec.contrat_id.name} a déjà une commande '
                     f'globale active : {existing[0].name}.'
                 )
+
+    @api.constrains('client_id', 'contrat_id')
+    def _check_blocages_metier(self):
+        today = fields.Date.today()
+        for rec in self:
+            agrement = rec.client_id.agrement_actif_id
+            if agrement and agrement.date_expiration < today:
+                raise ValidationError(
+                    f'❌ Agrément expiré le {agrement.date_expiration} pour '
+                    f'{rec.client_id.display_name}.\n'
+                    f'👉 Renouvelez l\'agrément avant de créer un BCG.'
+                )
+            if rec.contrat_id and rec.contrat_id.date_end < today:
+                raise ValidationError(
+                    f'❌ Le contrat {rec.contrat_id.name} a expiré le '
+                    f'{rec.contrat_id.date_end}.\n'
+                    f'👉 Créez un avenant ou un nouveau contrat.'
+                )
+            if rec.contrat_id:
+                bcg_actifs = self.search([
+                    ('contrat_id', '=', rec.contrat_id.id),
+                    ('state', 'not in', ['annulee', 'cloturee']),
+                    ('id', '!=', rec.id),
+                ])
+                qty_utilisee = sum(bcg_actifs.mapped('quantity_total_tonne'))
+                qty_contrat  = rec.contrat_id.quantity_total_tonne
+                if qty_utilisee >= qty_contrat:
+                    raise ValidationError(
+                        f'❌ La quantité du contrat {rec.contrat_id.name} est épuisée '
+                        f'({qty_contrat:.0f} T).\n'
+                        f'👉 Créez un avenant pour ajouter de la quantité.'
+                    )

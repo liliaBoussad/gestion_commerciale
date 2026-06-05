@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════
-         Formulaire Planification Client
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_form" model="ir.ui.view">
         <field name="name">gica.planification.client.form</field>
         <field name="model">gica.planification.client</field>
@@ -40,7 +37,6 @@
                     </div>
 
                     <group>
-                        <!-- ── Colonne gauche : cascade Client → BCG ── -->
                         <group string="Sélection">
                             <field name="client_id"
                                    readonly="state in ('validee', 'refusee')"
@@ -52,25 +48,31 @@
                                    options="{'no_create': True}"
                                    placeholder="2. Choisir le BCG actif…"/>
                         </group>
-
                     </group>
 
-                    <!-- Motif refus -->
                     <group string="Motif du refus" invisible="state != 'refusee'">
                         <field name="motif_refus" nolabel="1" readonly="1"/>
                     </group>
 
-                    <field name="product_ids" invisible="1"/>
+                    <!-- Binôme : product_tmpl_ids pour filtrer les produits -->
+                    <field name="product_tmpl_ids" invisible="1"/>
 
                     <notebook>
                         <page string="Produits demandés">
                             <field name="line_ids"
-                                   readonly="state in ('validee', 'refusee') or not commande_globale_id">
+                                   readonly="state in ('validee', 'refusee') or not commande_globale_id"
+                                   context="{'default_product_tmpl_ids': product_tmpl_ids}">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"
-                                           domain="[('id', 'in', parent.product_ids)]"/>
-                                    <field name="conditionnement" readonly="1"/>
+                                    <!-- Binôme : product_tmpl_id + conditionnement -->
+                                    <field name="product_tmpl_id"
+                                           string="Produit"
+                                           domain="[('id', 'in', context.get('default_product_tmpl_ids', []))]"/>
+                                    <field name="bcg_line_id"
+                                        string="Conditionnement"
+                                        domain="[('id', 'in', conditionnement_ids)]"
+                                        options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="conditionnement" column_invisible="1"/>                                    <field name="product_id" column_invisible="1"/>
                                     <field name="date_enlevement" string="Date enlèvement"/>
                                     <field name="nbr_paquets"/>
                                     <field name="quantity_tonne" string="Qté (T)"/>
@@ -78,6 +80,7 @@
                                     <field name="quantity_disponible"
                                            string="Disponible BCG (T)"
                                            readonly="1"/>
+                                    <!-- Votre version : prix unitaire visible -->
                                     <field name="prix_unitaire"
                                            string="Prix unit. (DA)"
                                            readonly="1"/>
@@ -99,9 +102,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Liste
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_list" model="ir.ui.view">
         <field name="name">gica.planification.client.list</field>
         <field name="model">gica.planification.client</field>
@@ -123,9 +123,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Recherche
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_search" model="ir.ui.view">
         <field name="name">gica.planification.client.search</field>
         <field name="model">gica.planification.client</field>
@@ -149,9 +146,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Action
-    ══════════════════════════════════════════════════ -->
     <record id="action_gica_planification_client" model="ir.actions.act_window">
         <field name="name">Planifications Clients</field>
         <field name="res_model">gica.planification.client</field>

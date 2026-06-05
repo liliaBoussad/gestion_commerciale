@@ -174,7 +174,7 @@
                     </group>
 
                     <!-- Alerte Écart -->
-                    <div class="alert alert-warning"
+                    <div class="alert alert-warning"   role="alert"
                          invisible="state != 'pesee_sortie' or ecart_type == 'ok'">
                         <field name="ecart_type" invisible="1"/>
                         <field name="ecart_poids" invisible="1"/>

@@ -17,23 +17,34 @@ class GicaClientContractLine(models.Model):
         ondelete='cascade',
     )
 
-    product_id = fields.Many2one(
-        'product.product',
+    # ── De la binôme : product_tmpl_id + conditionnement + _compute_product_id ──
+    product_tmpl_id = fields.Many2one(
+        'product.template',
         string='Produit',
         required=True,
-        domain="[('product_tmpl_id.is_gica_product', '=', True)]",
+        domain="[('is_gica_product', '=', True)]",
+    )
+
+    conditionnement = fields.Selection([
+        ('sac_25kg',           'Sac 25 kg'),
+        ('sac_50kg',           'Sac 50 kg'),
+        ('sac_25kg_fardelise', 'Sac 25 kg Fardelisé'),
+        ('sac_50kg_fardelise', 'Sac 50 kg Fardelisé'),
+        ('vrac',               'Vrac'),
+        ('big_bag_client',     'Big-Bag (charge client)'),
+        ('big_bag_scaek',      'Big-Bag (charge SCAEK)'),
+    ], string='Conditionnement', required=True)
+
+    product_id = fields.Many2one(
+        'product.product',
+        string='Variante',
+        compute='_compute_product_id',
+        store=True,
     )
 
     type_ciment = fields.Selection(
-        related='product_id.product_tmpl_id.type_ciment',
+        related='product_tmpl_id.type_ciment',
         string='Famille ciment',
-        store=True,
-        readonly=True,
-    )
-
-    conditionnement = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
         store=True,
         readonly=True,
     )
@@ -70,6 +81,23 @@ class GicaClientContractLine(models.Model):
         store=True,
     )
 
+    @api.depends('product_tmpl_id', 'conditionnement')
+    def _compute_product_id(self):
+        for rec in self:
+            if rec.product_tmpl_id and rec.conditionnement:
+                variant = rec.product_tmpl_id.product_variant_ids.filtered(
+                    lambda v: any(
+                        a.attribute_id.name == 'Conditionnement' and
+                        a.product_attribute_value_id.name == dict(
+                            rec._fields['conditionnement'].selection
+                        ).get(rec.conditionnement)
+                        for a in v.product_template_attribute_value_ids
+                    )
+                )
+                rec.product_id = variant[0] if variant else False
+            else:
+                rec.product_id = False
+
     @api.depends('quantity', 'uom', 'conditionnement')
     def _compute_quantity_tonne(self):
         for rec in self:
@@ -96,10 +124,15 @@ class GicaClientContractLine(models.Model):
             rec.quantity_livree   = 0.0
             rec.quantity_restante = rec.quantity
 
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        if self.product_id:
-            self.prix_unitaire = self.product_id.lst_price
+    @api.onchange('product_tmpl_id')
+    def _onchange_product_tmpl_id(self):
+        self.conditionnement = False
+        self.prix_unitaire = 0.0
+
+    @api.onchange('product_tmpl_id', 'conditionnement')
+    def _onchange_product_conditionnement(self):
+        if self.product_tmpl_id and self.conditionnement:
+            self.prix_unitaire = self.product_tmpl_id.list_price
 
 
 class GicaClientContract(models.Model):
@@ -117,6 +150,7 @@ class GicaClientContract(models.Model):
         tracking=True,
     )
 
+    # ── Votre version : res.partner ───────────────────────────────────────
     client_id = fields.Many2one(
         'res.partner',
         string='Client',
@@ -124,7 +158,6 @@ class GicaClientContract(models.Model):
         tracking=True,
     )
 
-    # ── Type client calculé (pour invisible dans la vue) ──────────────────
     client_type = fields.Selection(
         related='client_id.client_type',
         string='Type client',
@@ -132,7 +165,6 @@ class GicaClientContract(models.Model):
         readonly=True,
     )
 
-    # ── Projet (visible uniquement si Entreprise de réalisation) ──────────
     project_id = fields.Many2one(
         'gica.project',
         string='Projet',
@@ -209,10 +241,7 @@ class GicaClientContract(models.Model):
     motif_suspension = fields.Text(string='Motif de suspension / résiliation', tracking=True)
     observations     = fields.Text(string='Observations')
 
-    # ── BCG lié (calculé automatiquement, sans store) ─────────────────────
-    # Pas de store=True : recalculé à chaque affichage, toujours frais.
-    # Le cache est invalidé manuellement depuis gica.commande.globale
-    # lors d'un create() ou unlink() pour rafraîchir l'UI immédiatement.
+    # ── BCG lié ───────────────────────────────────────────────────────────
     commande_globale_id = fields.Many2one(
         'gica.commande.globale',
         string='Commande Globale',
@@ -257,7 +286,6 @@ class GicaClientContract(models.Model):
                     'gica.client.contract'
                 ) or 'Nouveau'
         records = super().create(vals_list)
-        # Invalide le cache contract_id sur les projets liés
         project_ids = records.mapped('project_id')
         if project_ids:
             project_ids.invalidate_recordset(['contract_id'])
@@ -273,7 +301,6 @@ class GicaClientContract(models.Model):
     # ── Onchange ──────────────────────────────────────────────────────────
     @api.onchange('client_id')
     def _onchange_client_id(self):
-        """Quand on sélectionne un client ER, le projet se remplit automatiquement."""
         self.project_id = False
         if self.client_id and self.client_id.client_type == 'realisation':
             projet = self.env['gica.project'].search(
@@ -338,8 +365,11 @@ class GicaClientContract(models.Model):
     @api.constrains('line_ids')
     def _check_no_duplicate_product(self):
         for rec in self:
-            products = [l.product_id.id for l in rec.line_ids]
-            if len(products) != len(set(products)):
+            combinations = [
+                (l.product_tmpl_id.id, l.conditionnement)
+                for l in rec.line_ids
+            ]
+            if len(combinations) != len(set(combinations)):
                 raise ValidationError(
                     'Un même produit/conditionnement ne peut pas apparaître deux fois.'
                 )
@@ -364,7 +394,6 @@ class GicaClientContract(models.Model):
         self.write({'state': 'resilie'})
 
     def action_voir_bcg(self):
-        """Ouvre le BCG existant, ou redirige vers la création si absent."""
         self.ensure_one()
         if not self.commande_globale_id:
             return self.action_creer_bcg()
@@ -377,7 +406,6 @@ class GicaClientContract(models.Model):
         }
 
     def action_creer_bcg(self):
-        """Ouvre le formulaire de création d'un BCG pré-rempli."""
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
@@ -394,6 +422,7 @@ class GicaClientContract(models.Model):
     # ── Cron ──────────────────────────────────────────────────────────────
     @api.model
     def _cron_check_expiration(self):
+        """Passe les contrats expirés à l'état 'expire' chaque nuit."""
         today = fields.Date.today()
         self.search([
             ('state', 'in', ['actif', 'en_cours']),

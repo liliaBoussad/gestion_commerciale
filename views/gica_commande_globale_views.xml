@@ -67,15 +67,20 @@
                     <notebook>
                         <page string="Produits">
                             <field name="line_ids"
-                                   readonly="state in ('cloturee', 'annulee')">
+                                readonly="state in ('cloturee', 'annulee')">
                                 <list editable="bottom">
                                     <field name="sequence"           widget="handle"/>
-                                    <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
+                                    <field name="product_tmpl_id"
+                                        domain="[('is_gica_product','=',True)]"
+                                        string="Produit"/>
+                                    <field name="conditionnement"/>
+                                    <field name="product_id"         invisible="1"/>
                                     <field name="quantity_tonne"     string="Qté totale (T)"/>
-                                    <field name="quantity_planifiee" string="Planifiée (T)" readonly="1"/>
-                                    <field name="quantity_enlevee"   string="Enlevée (T)"   readonly="1"/>
-                                    <field name="quantity_restante"  string="Restante (T)"  readonly="1"/>
+                                    <field name="prix_unitaire"      string="Prix unitaire (DA)"/>
+                                    <field name="montant_total"      string="Montant (DA)"    readonly="1"/>
+                                    <field name="quantity_planifiee" string="Planifiée (T)"   readonly="1"/>
+                                    <field name="quantity_enlevee"   string="Enlevée (T)"     readonly="1"/>
+                                    <field name="quantity_restante"  string="Restante (T)"    readonly="1"/>
                                 </list>
                             </field>
                         </page>
