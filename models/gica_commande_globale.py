@@ -41,13 +41,13 @@ class GicaCommandeGlobaleLine(models.Model):
     )
 
     conditionnement = fields.Selection([
-        ('sac_25kg',           'Sac 25 kg'),
-        ('sac_50kg',           'Sac 50 kg'),
-        ('sac_25kg_fardelise', 'Sac 25 kg Fardelisé'),
-        ('sac_50kg_fardelise', 'Sac 50 kg Fardelisé'),
+        ('sac_25kg',           'Sac 25kg'),
+        ('sac_50kg',           'Sac 50kg'),
+        ('sac_25kg_fardelise', 'Sac 25kg Fardelisé'),
+        ('sac_50kg_fardelise', 'Sac 50kg Fardelisé'),
         ('vrac',               'Vrac'),
-        ('big_bag_client',     'Big-Bag (charge client)'),
-        ('big_bag_scaek',      'Big-Bag (charge SCAEK)'),
+        ('big_bag_client',     'Big Bag Client'),
+        ('big_bag_scaek',      'Big Bag Scaek'),
     ], string='Conditionnement', required=True)
 
     product_id = fields.Many2one(

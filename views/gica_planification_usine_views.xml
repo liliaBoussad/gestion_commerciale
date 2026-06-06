@@ -25,6 +25,11 @@
                             type="object"
                             class="btn-success"
                             invisible="state != 'en_cours'"/>
+                    <button name="action_remettre_en_cours"
+                            string="↩️ Remettre en cours"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'confirmee'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="brouillon,en_cours,confirmee"/>
                 </header>
