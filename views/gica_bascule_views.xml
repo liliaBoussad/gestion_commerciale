@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════
-         Vue Liste Bascule
-    ══════════════════════════════════════════════════ -->
+    <!-- Vue Liste Bascule -->
     <record id="view_gica_bascule_list" model="ir.ui.view">
         <field name="name">gica.bon.circulation.bascule.list</field>
         <field name="model">gica.bon.circulation</field>
@@ -14,20 +12,18 @@
                   decoration-success="state == 'termine'"
                   decoration-muted="state == 'annule'"
                   default_order="name desc">
-                <field name="name" string="N° Bon"/>
-                <field name="sale_order_id" string="Bon de Commande"/>
-                <field name="partner_id" string="Client"/>
-                <field name="product_id" string="Produit"/>
+                <field name="name"           string="N Bon"/>
+                <field name="numero_rotation" string="Rotation"/>
+                <field name="sale_order_id"  string="Bon de Commande"/>
+                <field name="partner_id"     string="Client"/>
+                <field name="product_id"     string="Produit"/>
                 <field name="conditionnement" string="Conditionnement"/>
-                <field name="chauffeur" string="Chauffeur"/>
-                <field name="matricule" string="Matricule"/>
-                <field name="quantite_prevue" string="Qté prévue (T)"/>
-                <field name="tare_p1" string="Tare P1 (T)"
-                       optional="show"/>
-                <field name="poids_brut_p2" string="Poids P2 (T)"
-                       optional="show"/>
-                <field name="poids_net" string="Poids Net (T)"
-                       optional="show"/>
+                <field name="chauffeur"      string="Chauffeur"/>
+                <field name="matricule"      string="Matricule"/>
+                <field name="quantite_prevue" string="Qte prevue (T)"/>
+                <field name="tare_p1"        string="Tare P1 (T)"   optional="show"/>
+                <field name="poids_brut_p2"  string="Poids P2 (T)"  optional="show"/>
+                <field name="poids_net"      string="Poids Net (T)" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'transmis_tare'"
                        decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
@@ -37,85 +33,83 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Vue Formulaire Bascule — Interface agent pesage
-    ══════════════════════════════════════════════════ -->
+    <!-- Vue Formulaire Bascule — Interface agent pesage -->
     <record id="view_gica_bascule_form" model="ir.ui.view">
         <field name="name">gica.bon.circulation.bascule.form</field>
         <field name="model">gica.bon.circulation</field>
         <field name="arch" type="xml">
-            <form string="Bascule — Pesée">
+            <form string="Bascule — Pesee">
                 <header>
                     <!-- Avancer -->
                     <button name="action_transmettre_tare"
-                            string="🚛 Transmettre à la tare"
+                            string="Transmettre a la tare"
                             type="object" class="btn-primary"
                             invisible="state != 'brouillon'"/>
                     <button name="action_pesee_entree"
-                            string="⚖️ Valider Tare P1"
+                            string="Valider Tare P1"
                             type="object" class="btn-primary"
                             invisible="state != 'transmis_tare'"/>
                     <button name="action_chargement"
-                            string="🏭 Démarrer Chargement"
+                            string="Demarrer Chargement"
                             type="object" class="btn-warning"
                             invisible="state != 'pesee_entree'"/>
                     <button name="action_pesee_sortie"
-                            string="⚖️ Valider Poids P2"
+                            string="Valider Poids P2"
                             type="object" class="btn-primary"
                             invisible="state != 'chargement'"/>
                     <button name="action_terminer"
-                            string="✅ Terminer"
+                            string="Terminer"
                             type="object" class="btn-success"
                             invisible="state != 'pesee_sortie' or ecart_type != 'ok'"/>
                     <!-- Surplus -->
                     <button name="action_accepter_surplus"
-                            string="✅ Accepter le surplus"
+                            string="Accepter le surplus"
                             type="object" class="btn-success"
                             invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
                             confirm="Le client accepte de payer le surplus ?"/>
                     <button name="action_decharger_surplus"
-                            string="🔄 Décharger le surplus"
+                            string="Decharger le surplus"
                             type="object" class="btn-warning"
                             invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
-                            confirm="Retour au chargement pour décharger le surplus ?"/>
+                            confirm="Retour au chargement pour decharger le surplus ?"/>
                     <!-- Manque -->
                     <button name="action_recharger_manque"
-                            string="🔄 Recharger"
+                            string="Recharger"
                             type="object" class="btn-warning"
                             invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
-                            confirm="Retour au chargement pour compléter la quantité ?"/>
+                            confirm="Retour au chargement pour completer la quantite ?"/>
                     <button name="action_accepter_manque"
-                            string="✅ Accepter la quantité partielle"
+                            string="Accepter la quantite partielle"
                             type="object" class="btn-success"
                             invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
-                            confirm="Le client accepte la quantité partielle ?"/>
+                            confirm="Le client accepte la quantite partielle ?"/>
                     <button name="%(gestion_commerciale.report_bon_circulation)d"
-                            string="🖨️ Imprimer Bon"
+                            string="Imprimer Bon"
                             type="action"
                             class="btn-secondary"/>
                     <!-- Corriger -->
                     <button name="action_retour_brouillon"
-                            string="↩ Retour Brouillon"
+                            string="Retour Brouillon"
                             type="object" class="btn-secondary"
                             invisible="state != 'transmis_tare'"
                             confirm="Retourner en brouillon ?"/>
                     <button name="action_retour_transmis"
-                            string="↩ Corriger P1"
+                            string="Corriger P1"
                             type="object" class="btn-secondary"
                             invisible="state != 'pesee_entree'"
-                            confirm="Réinitialiser la Tare P1 ?"/>
+                            confirm="Reinitialiser la Tare P1 ?"/>
                     <button name="action_retour_pesee_entree"
-                            string="↩ Retour Pesée Entrée"
+                            string="Retour Pesee Entree"
                             type="object" class="btn-secondary"
                             invisible="state != 'chargement'"
-                            confirm="Retourner à la pesée entrée ?"/>
+                            confirm="Retourner a la pesee entree ?"/>
                     <button name="action_retour_chargement"
-                            string="↩ Corriger P2"
+                            string="Corriger P2"
                             type="object" class="btn-secondary"
                             invisible="state != 'pesee_sortie'"
-                            confirm="Réinitialiser le Poids Brut P2 ?"/>
+                            confirm="Reinitialiser le Poids Brut P2 ?"/>
                     <button name="action_annuler"
-                            string="❌ Annuler"
+                            string="Annuler"
                             type="object" class="btn-danger"
                             invisible="state in ('termine', 'annule')"
                             confirm="Annuler ce bon de circulation ?"/>
@@ -128,68 +122,81 @@
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
 
-                    <!-- Bloc infos principales -->
                     <group>
-                        <group string="📋 Informations Commande">
+                        <!-- Informations Commande -->
+                        <group string="Informations Commande">
                             <field name="sale_order_id"   string="Bon de Commande" readonly="1"/>
-                            <field name="partner_id"       string="Client"          readonly="1"/>
+                            <field name="partner_id"      string="Client"          readonly="1"/>
                             <field name="product_id"      string="Produit"         readonly="1"/>
                             <field name="conditionnement" string="Conditionnement" readonly="1"/>
-                            <field name="quantite_prevue" string="Qté prévue (T)"  readonly="1"/>
+                            <field name="quantite_prevue" string="Qte prevue (T)"  readonly="1"/>
+                            <field name="numero_rotation" string="N Rotation"      readonly="1"/>
                             <field name="nbr_paquets"     string="Nb Paquets"      readonly="1"
                                    invisible="nbr_paquets == 0"/>
                         </group>
-                        <group string="🚛 Logistique Camion">
-                            <field name="chauffeur"      string="Chauffeur"   readonly="1"/>
-                            <field name="matricule"      string="Matricule"   readonly="1"/>
-                            <field name="camion"         string="Camion"      readonly="1"/>
-                            <field name="lieu_livraison" string="Destination" readonly="1"/>
-                            <field name="numero_rotation" string="N° Rotation" readonly="1"/>
+
+                        <!-- Logistique Camion — saisis par l'agent bascule -->
+                        <group string="Logistique Camion">
+                            <!-- Editables seulement quand le camion arrive (transmis_tare) -->
+                            <field name="chauffeur"
+                                   string="Chauffeur"
+                                   readonly="state not in ('transmis_tare')"/>
+                            <field name="matricule"
+                                   string="Matricule"
+                                   readonly="state not in ('transmis_tare')"/>
+                            <field name="camion"
+                                   string="Camion"
+                                   readonly="state not in ('transmis_tare')"/>
+                            <field name="numero_permis"
+                                   string="N Permis"
+                                   readonly="state not in ('transmis_tare')"/>
+                            <field name="remorque"
+                                   string="Remorque"
+                                   readonly="state not in ('transmis_tare')"/>
+                            <field name="lieu_livraison"
+                                   string="Destination"
+                                   readonly="state not in ('transmis_tare')"/>
                         </group>
                     </group>
 
-                    <separator string="⚖️ Pesées"/>
+                    <separator string="Pesees"/>
 
-                    <!-- Bloc pesées -->
+                    <!-- Bloc pesees -->
                     <group>
-                        <group string="Pesée Vide — Tare P1">
+                        <group string="Pesee Vide — Tare P1">
                             <field name="tare_p1"
                                    string="Tare P1 (T)"
-                                   readonly="state not in ('transmis_tare',)"/>
+                                   readonly="state not in ('transmis_tare')"/>
                         </group>
-                        <group string="Pesée Chargée — Poids Brut P2">
+                        <group string="Pesee Chargee — Poids Brut P2">
                             <field name="poids_brut_p2"
                                    string="Poids Brut P2 (T)"
-                                   readonly="state not in ('chargement',)"/>
+                                   readonly="state not in ('chargement')"/>
                         </group>
                     </group>
 
-                    <!-- Résultat Net -->
+                    <!-- Resultat Net -->
                     <group invisible="poids_net == 0">
-                        <group string="✅ Poids Net">
-                            <field name="poids_net"
-                                   string="Poids Net (T)"
-                                   readonly="1"/>
+                        <group string="Poids Net">
+                            <field name="poids_net" string="Poids Net (T)" readonly="1"/>
                         </group>
                     </group>
 
-                    <!-- Alerte Écart -->
-                    <div class="alert alert-warning"   role="alert"
+                    <!-- Alerte Ecart -->
+                    <div class="alert alert-warning" role="alert"
                          invisible="state != 'pesee_sortie' or ecart_type == 'ok'">
-                        <field name="ecart_type" invisible="1"/>
+                        <field name="ecart_type"  invisible="1"/>
                         <field name="ecart_poids" invisible="1"/>
                         <strong invisible="ecart_type != 'surplus'">
-                            ⚠️ Surplus détecté !
-                            Poids net supérieur à la quantité prévue.
+                            Surplus detecte ! Poids net superieur a la quantite prevue.
                         </strong>
                         <strong invisible="ecart_type != 'manque'">
-                            ⚠️ Manque détecté !
-                            Poids net inférieur à la quantité prévue.
+                            Manque detecte ! Poids net inferieur a la quantite prevue.
                         </strong>
                     </div>
 
-                    <!-- Historique des pesées -->
-                    <separator string="📋 Historique des pesées"/>
+                    <!-- Historique des pesees -->
+                    <separator string="Historique des pesees"/>
                     <field name="pesee_ids" readonly="1">
                         <list decoration-info="type_pesee == 'vide'"
                               decoration-success="type_pesee == 'charge'">
@@ -209,44 +216,42 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Vue Recherche Bascule
-    ══════════════════════════════════════════════════ -->
+    <!-- Vue Recherche Bascule -->
     <record id="view_gica_bascule_search" model="ir.ui.view">
         <field name="name">gica.bon.circulation.bascule.search</field>
         <field name="model">gica.bon.circulation</field>
         <field name="arch" type="xml">
             <search string="Rechercher un bon">
-                <field name="name"      string="N° Bon / QR"/>
-                <field name="partner_id" string="Client"/>
-                <field name="chauffeur" string="Chauffeur"/>
-                <field name="matricule" string="Matricule"/>
+                <field name="name"          string="N Bon / QR"/>
+                <field name="partner_id"    string="Client"/>
+                <field name="chauffeur"     string="Chauffeur"/>
+                <field name="matricule"     string="Matricule"/>
                 <field name="sale_order_id" string="Bon de Commande"/>
                 <separator/>
                 <filter name="en_attente"
-                        string="🚛 En attente"
+                        string="En attente"
                         domain="[('state', '=', 'transmis_tare')]"/>
                 <filter name="pesee_entree"
-                        string="⚖️ Pesée P1 faite"
+                        string="Pesee P1 faite"
                         domain="[('state', '=', 'pesee_entree')]"/>
                 <filter name="chargement"
-                        string="🏭 Chargement"
+                        string="Chargement"
                         domain="[('state', '=', 'chargement')]"/>
                 <filter name="pesee_sortie"
-                        string="⚖️ Pesée P2 faite"
+                        string="Pesee P2 faite"
                         domain="[('state', '=', 'pesee_sortie')]"/>
                 <filter name="en_cours"
-                        string="🔄 Tous en cours"
+                        string="Tous en cours"
                         domain="[('state', 'in', ['transmis_tare','pesee_entree','chargement','pesee_sortie'])]"/>
                 <separator/>
                 <filter name="termine"
-                        string="✅ Terminés"
+                        string="Termines"
                         domain="[('state', '=', 'termine')]"/>
                 <filter name="aujourd_hui"
-                        string="📅 Aujourd'hui"
+                        string="Aujourd hui"
                         domain="[('create_date', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <group expand="0" string="Grouper par">
-                    <filter name="group_state"  string="État"
+                    <filter name="group_state"  string="Etat"
                             context="{'group_by': 'state'}"/>
                     <filter name="group_client" string="Client"
                             context="{'group_by': 'partner_id'}"/>
@@ -257,23 +262,21 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Vue Historique des Pesées
-    ══════════════════════════════════════════════════ -->
+    <!-- Vue Historique des Pesees -->
     <record id="view_gica_pesee_list" model="ir.ui.view">
         <field name="name">gica.pesee.list</field>
         <field name="model">gica.pesee</field>
         <field name="arch" type="xml">
-            <list string="Historique des Pesées"
+            <list string="Historique des Pesees"
                   decoration-info="type_pesee == 'vide'"
                   decoration-success="type_pesee == 'charge'">
-                <field name="date_pesee"         string="Date de pesée"/>
+                <field name="date_pesee"         string="Date de pesee"/>
                 <field name="bon_circulation_id" string="Bon de Circulation"/>
                 <field name="sale_order_id"      string="Commande de Vente"/>
-                <field name="partner_id"          string="Client"/>
+                <field name="partner_id"         string="Client"/>
                 <field name="product_id"         string="Produit"/>
                 <field name="conditionnement"    string="Conditionnement"/>
-                <field name="type_pesee"         string="Type de Pesée"
+                <field name="type_pesee"         string="Type de Pesee"
                        widget="badge"
                        decoration-info="type_pesee == 'vide'"
                        decoration-success="type_pesee == 'charge'"/>
@@ -290,40 +293,38 @@
         <field name="model">gica.pesee</field>
         <field name="arch" type="xml">
             <search string="Rechercher">
-                <field name="bon_circulation_id" string="N° Bon"/>
-                <field name="partner_id"          string="Client"/>
+                <field name="bon_circulation_id" string="N Bon"/>
+                <field name="partner_id"         string="Client"/>
                 <field name="chauffeur"          string="Chauffeur"/>
                 <field name="matricule"          string="Matricule"/>
                 <separator/>
                 <filter name="vide"
-                        string="⚖️ Pesée à vide (P1)"
+                        string="Pesee a vide (P1)"
                         domain="[('type_pesee', '=', 'vide')]"/>
                 <filter name="charge"
-                        string="⚖️ Pesée en charge (P2)"
+                        string="Pesee en charge (P2)"
                         domain="[('type_pesee', '=', 'charge')]"/>
                 <separator/>
                 <filter name="aujourd_hui"
-                        string="📅 Aujourd'hui"
+                        string="Aujourd hui"
                         domain="[('date_pesee', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <group expand="0" string="Grouper par">
-                    <filter name="group_client"  string="Client"
+                    <filter name="group_client" string="Client"
                             context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_type"    string="Type de pesée"
+                    <filter name="group_type"   string="Type de pesee"
                             context="{'group_by': 'type_pesee'}"/>
-                    <filter name="group_agent"   string="Agent"
+                    <filter name="group_agent"  string="Agent"
                             context="{'group_by': 'agent_pesage_id'}"/>
-                    <filter name="group_date"    string="Date"
+                    <filter name="group_date"   string="Date"
                             context="{'group_by': 'date_pesee:day'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Actions
-    ══════════════════════════════════════════════════ -->
+    <!-- Actions -->
     <record id="action_gica_bascule" model="ir.actions.act_window">
-        <field name="name">Pesées en cours</field>
+        <field name="name">Pesees en cours</field>
         <field name="res_model">gica.bon.circulation</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('state', 'not in', ['annule'])]</field>
@@ -335,38 +336,36 @@
         <field name="search_view_id" ref="view_gica_bascule_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucun bon en cours</p>
-            <p>Les bons transmis à la tare apparaissent ici automatiquement.</p>
+            <p>Les bons transmis a la tare apparaissent ici automatiquement.</p>
         </field>
     </record>
 
     <record id="action_gica_pesee" model="ir.actions.act_window">
-        <field name="name">Historique des Pesées</field>
+        <field name="name">Historique des Pesees</field>
         <field name="res_model">gica.pesee</field>
         <field name="view_mode">list</field>
         <field name="search_view_id" ref="view_gica_pesee_search"/>
         <field name="context">{'search_default_aujourd_hui': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Aucune pesée enregistrée</p>
-            <p>Les pesées P1 et P2 apparaissent automatiquement après validation.</p>
+            <p class="o_view_nocontent_smiling_face">Aucune pesee enregistree</p>
+            <p>Les pesees P1 et P2 apparaissent automatiquement apres validation.</p>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         Menu principal Bascule
-    ══════════════════════════════════════════════════ -->
+    <!-- Menu principal Bascule -->
     <menuitem id="menu_gica_bascule_root"
               name="Bascule"
               sequence="50"
               web_icon="stock,static/description/icon.png"/>
 
     <menuitem id="menu_gica_bascule_pesees"
-              name="Pesées en cours"
+              name="Pesees en cours"
               parent="menu_gica_bascule_root"
               action="action_gica_bascule"
               sequence="10"/>
 
     <menuitem id="menu_gica_bascule_historique"
-              name="Historique des Pesées"
+              name="Historique des Pesees"
               parent="menu_gica_bascule_root"
               action="action_gica_pesee"
               sequence="20"/>

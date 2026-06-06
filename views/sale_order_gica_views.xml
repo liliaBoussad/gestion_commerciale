@@ -1,53 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Héritage du formulaire sale.order
-    ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_sale_order_gica_form" model="ir.ui.view">
         <field name="name">sale.order.gica.form</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
-            <!-- Ajouter un onglet GICA dans le notebook -->
+            <!-- Bouton stat Bons de Circulation dans le header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_voir_bons_circulation"
+                        string="Voir Bons de Circulation"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="bon_circulation_count == 0"/>
+            </xpath>
+
+            <!-- Onglets GICA dans le notebook -->
             <xpath expr="//notebook" position="inside">
+
+                <!-- Onglet Bons de Circulation -->
+                <page string="Bons de Circulation" name="bons_circulation">
+                    <field name="bon_circulation_ids" nolabel="1" readonly="1">
+                        <list string="Bons de Circulation"
+                              decoration-info="state == 'transmis_tare'"
+                              decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                              decoration-success="state == 'termine'"
+                              decoration-muted="state == 'annule'">
+                            <field name="name"            string="N Bon"/>
+                            <field name="numero_rotation" string="Rotation"/>
+                            <field name="quantite_prevue" string="Qte (T)"/>
+                            <field name="chauffeur"       string="Chauffeur"/>
+                            <field name="matricule"       string="Matricule"/>
+                            <field name="tare_p1"         string="P1 (T)"/>
+                            <field name="poids_brut_p2"   string="P2 (T)"/>
+                            <field name="poids_net"       string="Net (T)"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'transmis_tare'"
+                                   decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                                   decoration-success="state == 'termine'"
+                                   decoration-danger="state == 'annule'"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- Onglet Informations GICA -->
                 <page string="Informations GICA" name="gica_info">
                     <group>
-                        <group string="Références GICA">
+                        <group string="References GICA">
                             <field name="commande_globale_id"
                                    options="{'no_create': True}"
                                    readonly="1"/>
-                            <field name="planification_id" readonly="1"/>
-                            <field name="gica_client_id"   readonly="1"/>
-                            <field name="gica_contrat_id"  readonly="1"/>
+                            <field name="planification_id"    readonly="1"/>
+                            <field name="bon_circulation_count" readonly="1"
+                                   string="Nb Bons de Circulation"/>
+                            <field name="gica_client_id"      readonly="1"/>
+                            <field name="gica_contrat_id"     readonly="1"/>
+                            <field name="source"              readonly="1"/>
                         </group>
-                        <group string="Enlèvement">
+                        <group string="Enlevement">
                             <field name="date_prevue_enlevement" readonly="1"/>
                             <field name="date_reelle_enlevement" readonly="1"/>
-                            <button name="action_marquer_enleve"
-                                    string="Marquer Enlevé"
-                                    type="object"
-                                    class="btn-primary btn-sm"
-                                    invisible="date_reelle_enlevement or state != 'sale'"/>
+                            <field name="quantity_total_tonne"   readonly="1"/>
+                            <field name="numero_bc_papier"/>
                         </group>
                     </group>
-                    <group string="Scan BC Client (Traçabilité)">
+                    <group string="Scan BC Client (Tracabilite)">
                         <field name="scan_bc_client"
                                widget="binary"
                                filename="scan_bc_client_filename"/>
                         <field name="scan_bc_client_filename" invisible="1"/>
                     </group>
                 </page>
+
             </xpath>
 
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Action — Bons de Commande GICA
-         Filtre : uniquement les sale.order liés à un BCG
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Action Bons de Commande GICA -->
     <record id="action_gica_bon_commande" model="ir.actions.act_window">
         <field name="name">Commandes</field>
         <field name="res_model">sale.order</field>
@@ -56,7 +87,7 @@
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucun bon de commande GICA</p>
-            <p>Les bons de commande sont créés depuis une planification validée.</p>
+            <p>Les bons de commande sont crees depuis une planification validee.</p>
         </field>
     </record>
 

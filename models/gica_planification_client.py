@@ -9,7 +9,6 @@ class GicaPlanificationClientLine(models.Model):
     _order       = 'date_enlevement, sequence, id'
     _rec_name    = 'display_name_cal'
 
-    # ── Votre version : nom calendrier ───────────────────────────────────
     display_name_cal = fields.Char(
         string='Nom',
         compute='_compute_display_name_cal',
@@ -19,9 +18,9 @@ class GicaPlanificationClientLine(models.Model):
     @api.depends('client_id', 'product_id', 'quantity_tonne')
     def _compute_display_name_cal(self):
         for rec in self:
-            client  = rec.client_id.display_name if rec.client_id else '—'
-            produit = rec.product_id.name if rec.product_id else '—'
-            rec.display_name_cal = f'{client} — {produit} ({rec.quantity_tonne:.0f}T)'
+            client  = rec.client_id.display_name if rec.client_id else '-'
+            produit = rec.product_id.name if rec.product_id else '-'
+            rec.display_name_cal = f'{client} - {produit} ({rec.quantity_tonne:.0f}T)'
 
     sequence = fields.Integer(default=10)
 
@@ -34,11 +33,10 @@ class GicaPlanificationClientLine(models.Model):
 
     state = fields.Selection([
         ('en_attente', 'En attente'),
-        ('validee',    'Validée'),
-        ('refusee',    'Refusée'),
-    ], string='État', default='en_attente', tracking=True)
+        ('validee',    'Validee'),
+        ('refusee',    'Refusee'),
+    ], string='Etat', default='en_attente')
 
-    # ── Binôme : product_tmpl_id + conditionnement Selection ─────────────
     product_tmpl_id = fields.Many2one(
         'product.template',
         string='Produit',
@@ -49,8 +47,8 @@ class GicaPlanificationClientLine(models.Model):
     conditionnement = fields.Selection([
         ('sac_25kg',           'Sac 25kg'),
         ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelisé'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelisé'),
+        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
+        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
         ('vrac',               'Vrac'),
         ('big_bag_client',     'Big Bag Client'),
         ('big_bag_scaek',      'Big Bag Scaek'),
@@ -63,13 +61,13 @@ class GicaPlanificationClientLine(models.Model):
         store=True,
     )
 
-    date_enlevement = fields.Date(string="Date d'enlèvement", required=True)
+    date_enlevement = fields.Date(string="Date d'enlevement", required=True)
     nbr_paquets     = fields.Integer(string='Nombre de Paquets')
-    quantity_tonne  = fields.Float(string='Quantité (T)', required=True)
+    quantity_tonne  = fields.Float(string='Quantite (T)', required=True)
     rotation        = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
 
     quantity_disponible = fields.Float(
-        string='Qté restante BCG (T)',
+        string='Qte restante BCG (T)',
         compute='_compute_quantity_disponible',
         store=True,
     )
@@ -86,7 +84,20 @@ class GicaPlanificationClientLine(models.Model):
         readonly=True,
     )
 
-    # ── Votre version : res.partner ───────────────────────────────────────
+    # Compteur bons de circulation generes
+    bon_circulation_count = fields.Integer(
+        string='Nb BCs',
+        compute='_compute_bon_circulation_count',
+    )
+
+    @api.depends('sale_order_id.bon_circulation_ids')
+    def _compute_bon_circulation_count(self):
+        for rec in self:
+            if rec.sale_order_id:
+                rec.bon_circulation_count = len(rec.sale_order_id.bon_circulation_ids)
+            else:
+                rec.bon_circulation_count = 0
+
     client_id = fields.Many2one(
         'res.partner',
         related='planification_id.client_id',
@@ -110,20 +121,19 @@ class GicaPlanificationClientLine(models.Model):
     )
     planification_state = fields.Selection(
         related='planification_id.state',
-        string='État planification',
+        string='Etat planification',
         store=True,
         readonly=True,
     )
 
-    # ── Binôme : filtrage conditionnements par produit ────────────────────
     conditionnement_ids = fields.Many2many(
         'gica.commande.globale.line',
         compute='_compute_conditionnement_ids',
     )
     bcg_line_id = fields.Many2one(
-    'gica.commande.globale.line',
-    string='Conditionnement',
-    domain="[('id', 'in', conditionnement_ids)]",
+        'gica.commande.globale.line',
+        string='Conditionnement',
+        domain="[('id', 'in', conditionnement_ids)]",
     )
 
     @api.depends('planification_id.commande_globale_id', 'product_tmpl_id')
@@ -154,7 +164,6 @@ class GicaPlanificationClientLine(models.Model):
     def _onchange_bcg_line_id(self):
         if self.bcg_line_id:
             self.conditionnement = self.bcg_line_id.conditionnement
-            
 
     @api.depends('product_tmpl_id', 'conditionnement')
     def _compute_product_id(self):
@@ -217,16 +226,15 @@ class GicaPlanificationClientLine(models.Model):
                 and l.conditionnement == rec.conditionnement
             ):
                 raise ValidationError(
-                    f'❌ Le produit "{rec.product_tmpl_id.name} - '
+                    f'Le produit "{rec.product_tmpl_id.name} - '
                     f'{rec.conditionnement}" n\'existe pas dans le BCG {bcg.name}.'
                 )
 
-    # ── Binôme : vérification plus précise avec déjà planifié ────────────
     @api.constrains('quantity_tonne', 'product_tmpl_id', 'conditionnement', 'planification_id')
     def _check_quantite_disponible(self):
         for rec in self:
             if rec.quantity_tonne <= 0:
-                raise ValidationError('❌ La quantité doit être supérieure à 0.')
+                raise ValidationError('La quantite doit etre superieure a 0.')
             bcg = rec.planification_id.commande_globale_id
             if not bcg or not rec.product_tmpl_id:
                 continue
@@ -250,18 +258,18 @@ class GicaPlanificationClientLine(models.Model):
             disponible_reel = line[0].quantity_restante - deja_planifiee
             if rec.quantity_tonne > disponible_reel:
                 raise ValidationError(
-                    f'❌ Quantité dépassée pour {rec.product_tmpl_id.name} :\n'
-                    f'  📦 Restant BCG       : {line[0].quantity_restante:.2f} T\n'
-                    f'  📋 Déjà planifié     : {deja_planifiee:.2f} T\n'
-                    f'  ✅ Disponible réel   : {disponible_reel:.2f} T\n'
-                    f'  🛒 Demandé           : {rec.quantity_tonne:.2f} T'
+                    f'Quantite depassee pour {rec.product_tmpl_id.name} :\n'
+                    f'  Restant BCG      : {line[0].quantity_restante:.2f} T\n'
+                    f'  Deja planifie    : {deja_planifiee:.2f} T\n'
+                    f'  Disponible reel  : {disponible_reel:.2f} T\n'
+                    f'  Demande          : {rec.quantity_tonne:.2f} T'
                 )
 
     @api.constrains('rotation')
     def _check_rotation(self):
         for rec in self:
             if rec.rotation <= 0:
-                raise ValidationError('❌ Le nombre de rotations doit être supérieur à 0.')
+                raise ValidationError('Le nombre de rotations doit etre superieur a 0.')
 
     @api.constrains('date_enlevement')
     def _check_date_enlevement(self):
@@ -269,7 +277,7 @@ class GicaPlanificationClientLine(models.Model):
         for rec in self:
             if rec.date_enlevement and rec.date_enlevement < today:
                 raise ValidationError(
-                    '❌ La date d\'enlèvement ne peut pas être dans le passé.'
+                    'La date d\'enlevement ne peut pas etre dans le passe.'
                 )
 
     @api.constrains('date_enlevement')
@@ -284,9 +292,9 @@ class GicaPlanificationClientLine(models.Model):
             ], limit=1)
             if periode:
                 raise ValidationError(
-                    f'❌ La date {rec.date_enlevement} est dans une période verrouillée '
-                    f'({periode.date_debut} → {periode.date_fin}).\n'
-                    f'👉 Veuillez choisir une autre date.'
+                    f'La date {rec.date_enlevement} est dans une periode verrouillee '
+                    f'({periode.date_debut} - {periode.date_fin}).\n'
+                    f'Veuillez choisir une autre date.'
                 )
 
     @api.onchange('date_enlevement')
@@ -297,10 +305,10 @@ class GicaPlanificationClientLine(models.Model):
             jour = "Vendredi" if self.date_enlevement.weekday() == 4 else "Samedi"
             return {
                 'warning': {
-                    'title':   '⛔ Jour non ouvrable',
+                    'title':   'Jour non ouvrable',
                     'message': f'Le {jour} {self.date_enlevement} est un jour de weekend.\n'
-                               f'Les enlèvements ne sont pas autorisés le vendredi et samedi.\n'
-                               f'👉 Veuillez choisir une autre date.',
+                               f'Les enlevements ne sont pas autorises le vendredi et samedi.\n'
+                               f'Veuillez choisir une autre date.',
                 }
             }
         periode = self.env['gica.planification.usine'].search([
@@ -311,10 +319,10 @@ class GicaPlanificationClientLine(models.Model):
         if periode:
             return {
                 'warning': {
-                    'title':   '🔒 Période verrouillée',
-                    'message': f'La date {self.date_enlevement} est dans une période verrouillée :\n'
-                               f'{periode.name} ({periode.date_debut} → {periode.date_fin})\n'
-                               f'👉 Veuillez choisir une autre date.',
+                    'title':   'Periode verrouillee',
+                    'message': f'La date {self.date_enlevement} est dans une periode verrouillee :\n'
+                               f'{periode.name} ({periode.date_debut} - {periode.date_fin})\n'
+                               f'Veuillez choisir une autre date.',
                 }
             }
 
@@ -341,22 +349,44 @@ class GicaPlanificationClientLine(models.Model):
             'res_id':    self.sale_order_id.id,
         }
 
-    # ── Binôme : génération BC avec pricelist ─────────────────────────────
+    def action_voir_bons_circulation(self):
+        """Voir tous les bons de circulation de cette ligne"""
+        self.ensure_one()
+        if not self.sale_order_id:
+            return
+        bc_ids = self.sale_order_id.bon_circulation_ids.ids
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Bons de Circulation',
+            'res_model': 'gica.bon.circulation',
+            'view_mode': 'list,form',
+            'domain':    [('id', 'in', bc_ids)],
+        }
+
     def _generer_bon_commande(self):
+        """
+        Cree 1 BC (sale.order) + N bons de circulation automatiquement.
+        N = self.rotation
+        quantite par BC = self.quantity_tonne / self.rotation
+        FIFO : chaque BC a un numero_rotation pour l'ordre
+        """
         self.ensure_one()
         if self.sale_order_id:
             return
+
         planif    = self.planification_id
         partner   = planif.client_id
         bcg       = planif.commande_globale_id
         pricelist = bcg.pricelist_id if bcg else False
 
+        # 1 — Creer le bon de commande
         order = self.env['sale.order'].with_context(no_recompute=True).create({
             'partner_id':             partner.id if partner else False,
             'pricelist_id':           pricelist.id if pricelist else False,
             'commande_globale_id':    bcg.id if bcg else False,
             'planification_id':       planif.id,
             'date_prevue_enlevement': self.date_enlevement,
+            'source':                 planif.source or 'commercial',
             'order_line': [(0, 0, {
                 'product_id':      self.product_id.id,
                 'product_uom_qty': self.quantity_tonne,
@@ -367,6 +397,37 @@ class GicaPlanificationClientLine(models.Model):
         order.order_line._compute_price_unit()
         self.write({'sale_order_id': order.id})
 
+        # 2 — Creer N bons de circulation (1 par rotation)
+        nbr_rotations = max(1, self.rotation)
+        quantite_par_rotation = round(self.quantity_tonne / nbr_rotations, 3)
+        nbr_paquets_par_rotation = (self.nbr_paquets // nbr_rotations
+                                     if self.nbr_paquets else 0)
+
+        for i in range(nbr_rotations):
+            # Derniere rotation : prend le reste pour eviter les arrondis
+            if i == nbr_rotations - 1:
+                qte = round(
+                    self.quantity_tonne - quantite_par_rotation * (nbr_rotations - 1),
+                    3
+                )
+            else:
+                qte = quantite_par_rotation
+
+            self.env['gica.bon.circulation'].create({
+                'sale_order_id':        order.id,
+                'planification_line_id': self.id,
+                'product_id':           self.product_id.id,
+                'quantite_prevue':      qte,
+                'nbr_paquets':          nbr_paquets_par_rotation,
+                'numero_rotation':      i + 1,
+                # Pas de chauffeur — sera saisi par l'agent bascule
+            })
+
+        order.message_post(
+            body=f'BC genere depuis la planification {planif.name} - '
+                 f'{nbr_rotations} rotation(s) de {quantite_par_rotation:.2f} T chacune.'
+        )
+
 
 class GicaPlanificationClient(models.Model):
     _name        = 'gica.planification.client'
@@ -376,14 +437,13 @@ class GicaPlanificationClient(models.Model):
     _rec_name    = 'name'
 
     name = fields.Char(
-        string='Référence',
+        string='Reference',
         readonly=True,
         copy=False,
         default='Nouveau',
         tracking=True,
     )
 
-    # ── Votre version : res.partner ───────────────────────────────────────
     client_id = fields.Many2one(
         'res.partner',
         string='Client',
@@ -409,7 +469,7 @@ class GicaPlanificationClient(models.Model):
     )
 
     date_enlevement = fields.Date(
-        string="Date min. enlèvement",
+        string="Date min. enlevement",
         compute='_compute_date_enlevement',
         store=True,
         readonly=True,
@@ -424,8 +484,8 @@ class GicaPlanificationClient(models.Model):
     state = fields.Selection([
         ('brouillon', 'Brouillon'),
         ('soumise',   'Soumise'),
-        ('validee',   'Validée'),
-        ('refusee',   'Refusée'),
+        ('validee',   'Validee'),
+        ('refusee',   'Refusee'),
     ], string='Statut', default='brouillon', tracking=True, required=True)
 
     motif_refus            = fields.Text(string='Motif du refus', tracking=True)
@@ -437,13 +497,13 @@ class GicaPlanificationClient(models.Model):
 
     periode_debut = fields.Date(
         related='planification_usine_id.date_debut',
-        string='Date début période',
+        string='Date debut periode',
         store=True,
         readonly=True,
     )
     periode_fin = fields.Date(
         related='planification_usine_id.date_fin',
-        string='Date fin période',
+        string='Date fin periode',
         store=True,
         readonly=True,
     )
@@ -473,7 +533,6 @@ class GicaPlanificationClient(models.Model):
         store=True,
     )
 
-    # ── Binôme : product_tmpl_ids pour filtrer les produits ──────────────
     product_tmpl_ids = fields.Many2many(
         'product.template',
         compute='_compute_product_tmpl_ids',
@@ -505,7 +564,7 @@ class GicaPlanificationClient(models.Model):
     quantity_total_tonne = fields.Float(
         compute='_compute_totaux',
         store=True,
-        string='Quantité totale (T)',
+        string='Quantite totale (T)',
     )
 
     observations = fields.Text(string='Observations')
@@ -538,7 +597,7 @@ class GicaPlanificationClient(models.Model):
                     and rec.client_id
                     and rec.commande_globale_id.client_id != rec.client_id):
                 raise ValidationError(
-                    f'❌ Le BCG {rec.commande_globale_id.name} '
+                    f'Le BCG {rec.commande_globale_id.name} '
                     f'n\'appartient pas au client {rec.client_id.display_name}.'
                 )
 
@@ -567,59 +626,52 @@ class GicaPlanificationClient(models.Model):
             if nb_attente == 0:
                 if nb_refusee == total:
                     rec.write({'state': 'refusee'})
-                    rec.message_post(body='❌ Toutes les lignes ont été refusées.')
+                    rec.message_post(body='Toutes les lignes ont ete refusees.')
                     rec._notifier_client_refus(rec.motif_refus or '')
                 else:
                     rec.write({'state': 'validee'})
-                    rec.message_post(body='✅ Planification traitée — BCs générés.')
+                    rec.message_post(body='Planification traitee - BCs et bons de circulation generes.')
                     rec._notifier_client_validation()
 
     def action_soumettre(self):
         today = fields.Date.today()
         for rec in self:
-            # ── Blocage : Agrément expiré ─────────────────────────────
             agrement = rec.client_id.agrement_actif_id
             if agrement and agrement.date_expiration < today:
                 raise ValidationError(
-                    f'❌ Agrément expiré le {agrement.date_expiration}.\n'
-                    f'👉 Renouvelez l\'agrément avant de soumettre une planification.'
+                    f'Agrement expire le {agrement.date_expiration}.\n'
+                    f'Renouvelez l\'agrement avant de soumettre une planification.'
                 )
-            # ── Blocage : BCG expiré ──────────────────────────────────
             bcg = rec.commande_globale_id
             if bcg and bcg.date_expiration and bcg.date_expiration < today:
                 raise ValidationError(
-                    f'❌ Le BCG {bcg.name} a expiré le {bcg.date_expiration}.\n'
-                    f'👉 Créez un nouveau BCG pour continuer.'
+                    f'Le BCG {bcg.name} a expire le {bcg.date_expiration}.\n'
+                    f'Creez un nouveau BCG pour continuer.'
                 )
-            # ── Blocage : BCG quantité épuisée ───────────────────────
             if bcg and bcg.quantity_restante <= 0:
                 raise ValidationError(
-                    f'❌ Le BCG {bcg.name} est épuisé — quantité restante : 0 T.\n'
-                    f'👉 Créez un nouveau BCG ou un avenant contrat.'
+                    f'Le BCG {bcg.name} est epuise - quantite restante : 0 T.\n'
+                    f'Creez un nouveau BCG ou un avenant contrat.'
                 )
-            # ── Blocage : Weekend ─────────────────────────────────────
             for line in rec.line_ids:
                 if line.date_enlevement and line.date_enlevement.weekday() in (4, 5):
                     jour = "Vendredi" if line.date_enlevement.weekday() == 4 else "Samedi"
                     raise ValidationError(
-                        f'❌ La date {line.date_enlevement} est un {jour} (jour non ouvrable).\n'
-                        f'👉 Choisissez une date du dimanche au jeudi.'
+                        f'La date {line.date_enlevement} est un {jour} (jour non ouvrable).\n'
+                        f'Choisissez une date du dimanche au jeudi.'
                     )
-            # ── Vérifications de base ─────────────────────────────────
             if not rec.line_ids:
-                raise ValidationError('❌ La planification doit contenir au moins une ligne.')
+                raise ValidationError('La planification doit contenir au moins une ligne.')
             if not all(l.date_enlevement for l in rec.line_ids):
-                raise ValidationError('❌ Toutes les lignes doivent avoir une date d\'enlèvement.')
+                raise ValidationError('Toutes les lignes doivent avoir une date d\'enlevement.')
 
             rec.line_ids.write({'state': 'en_attente'})
             rec.write({'state': 'soumise'})
             rec.message_post(
-                body=f'📋 Planification soumise avec {len(rec.line_ids)} ligne(s).'
+                body=f'Planification soumise avec {len(rec.line_ids)} ligne(s).'
             )
-            # ── Binôme : rattachement automatique planning usine ──────
             rec._rattacher_planning_usine()
 
-    # ── Binôme : rattachement automatique ────────────────────────────────
     def _rattacher_planning_usine(self):
         self.ensure_one()
         if self.planification_usine_id:
@@ -664,7 +716,6 @@ class GicaPlanificationClient(models.Model):
                 rec.line_ids.write({'state': 'en_attente'})
                 rec.write({'state': 'brouillon'})
 
-    # ── Binôme : notifications email ─────────────────────────────────────
     def _notifier_client_validation(self):
         self.ensure_one()
         template = self.env.ref(

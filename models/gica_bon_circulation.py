@@ -15,14 +15,14 @@ class GicaBonCirculation(models.Model):
     _rec_name    = 'name'
 
     name = fields.Char(
-        string='Référence',
+        string='Reference',
         readonly=True,
         copy=False,
         default='Nouveau',
         tracking=True,
     )
 
-    # ── Liens ─────────────────────────────────────────────────────────────
+    # Liens
     sale_order_id = fields.Many2one(
         'sale.order',
         string='Commande de Vente',
@@ -38,7 +38,7 @@ class GicaBonCirculation(models.Model):
         readonly=True,
     )
 
-    # ── Infos commande (related) ───────────────────────────────────────────
+    # Infos commande (related)
     partner_id = fields.Many2one(
         'res.partner',
         related='sale_order_id.partner_id',
@@ -53,10 +53,10 @@ class GicaBonCirculation(models.Model):
         tracking=True,
     )
     conditionnement = fields.Char(
-    string='Conditionnement',
-    compute='_compute_conditionnement',
-    store=True,
-    readonly=True,
+        string='Conditionnement',
+        compute='_compute_conditionnement',
+        store=True,
+        readonly=True,
     )
 
     @api.depends('product_id')
@@ -69,9 +69,9 @@ class GicaBonCirculation(models.Model):
                 rec.conditionnement = attr_line[0].name if attr_line else ''
             else:
                 rec.conditionnement = ''
-                
+
     quantite_prevue = fields.Float(
-        string='Quantité Prévue (T)',
+        string='Quantite Prevue (T)',
         readonly=True,
         tracking=True,
     )
@@ -80,39 +80,40 @@ class GicaBonCirculation(models.Model):
         readonly=True,
     )
     numero_rotation = fields.Integer(
-        string='N° Rotation',
+        string='N Rotation',
         readonly=True,
     )
 
-    # ── N° de Chaîne ──────────────────────────────────────────────────────
+    # N de Chaine
     numero_chaine = fields.Char(
-        string='N° de Chaîne',
+        string='N de Chaine',
         readonly=True,
         tracking=True,
     )
 
-    # ── Logistique & Camion ───────────────────────────────────────────────
-    chauffeur       = fields.Char(string='Chauffeur',        tracking=True)
-    matricule       = fields.Char(string='Matricule',        tracking=True)
-    camion          = fields.Char(string='Camion',           tracking=True)
-    remorque        = fields.Char(string='Remorque',         tracking=True)
-    prestataire     = fields.Char(string='Prestataire',      tracking=True)
-    lieu_livraison  = fields.Char(string='Lieu de Livraison', tracking=True)
-    numero_permis   = fields.Char(string='N° Permis',        tracking=True)
+    # Logistique et Camion
+    # Saisis par l'agent bascule quand le camion arrive physiquement
+    chauffeur      = fields.Char(string='Chauffeur',         tracking=True)
+    matricule      = fields.Char(string='Matricule',         tracking=True)
+    camion         = fields.Char(string='Camion',            tracking=True)
+    remorque       = fields.Char(string='Remorque',          tracking=True)
+    prestataire    = fields.Char(string='Prestataire',       tracking=True)
+    lieu_livraison = fields.Char(string='Lieu de Livraison', tracking=True)
+    numero_permis  = fields.Char(string='N Permis',          tracking=True)
 
-    # ── Bascule — Pesées ──────────────────────────────────────────────────
-    tare_p1      = fields.Float(string='Tare P1 (T)',       tracking=True)
+    # Bascule - Pesees
+    tare_p1       = fields.Float(string='Tare P1 (T)',        tracking=True)
     poids_brut_p2 = fields.Float(string='Poids Brut P2 (T)', tracking=True)
-    poids_net    = fields.Float(
+    poids_net     = fields.Float(
         string='Poids Net (T)',
         compute='_compute_poids_net',
         store=True,
         tracking=True,
     )
 
-    # ── Écart pesée ───────────────────────────────────────────────────────
+    # Ecart pesee
     ecart_poids = fields.Float(
-        string='Écart (T)',
+        string='Ecart (T)',
         compute='_compute_ecart_poids',
         store=True,
     )
@@ -120,12 +121,12 @@ class GicaBonCirculation(models.Model):
         ('ok',      'Conforme'),
         ('surplus', 'Surplus'),
         ('manque',  'Manque'),
-    ], string='Type écart', compute='_compute_ecart_poids', store=True)
+    ], string='Type ecart', compute='_compute_ecart_poids', store=True)
 
     pesee_ids = fields.One2many(
         'gica.pesee',
         'bon_circulation_id',
-        string='Historique pesées',
+        string='Historique pesees',
         readonly=True,
     )
 
@@ -143,9 +144,9 @@ class GicaBonCirculation(models.Model):
                     rec.ecart_type = 'manque'
             else:
                 rec.ecart_poids = 0.0
-                rec.ecart_type = 'ok'
+                rec.ecart_type  = 'ok'
 
-    # ── Code QR ───────────────────────────────────────────────────────────
+    # Code QR
     qr_code = fields.Binary(
         string='Code QR',
         compute='_compute_qr_code',
@@ -166,32 +167,51 @@ class GicaBonCirculation(models.Model):
             else:
                 rec.qr_code = False
 
-    # ── Statut ────────────────────────────────────────────────────────────
+    # Statut
     state = fields.Selection([
-        ('brouillon',          'Brouillon'),
-        ('transmis_tare',      'Transmis à la tare'),
-        ('pesee_entree',       'Pesée Entrée'),
-        ('chargement',         'Chargement'),
-        ('pesee_sortie',       'Pesée Sortie'),
-        ('termine',            'Terminé'),
-        ('annule',             'Annulé'),
-    ], string='État', default='brouillon', tracking=True, required=True)
+        ('brouillon',     'Brouillon'),
+        ('transmis_tare', 'Transmis a la tare'),
+        ('pesee_entree',  'Pesee Entree'),
+        ('chargement',    'Chargement'),
+        ('pesee_sortie',  'Pesee Sortie'),
+        ('termine',       'Termine'),
+        ('annule',        'Annule'),
+    ], string='Etat', default='brouillon', tracking=True, required=True)
 
-    # ── Actions workflow ──────────────────────────────────────────────────
+    # ── Workflow ──────────────────────────────────────────────────────────
+
     def action_transmettre_tare(self):
+        """
+        Commercial transmet le BC a la tare.
+        Pas de verification chauffeur/camion ici —
+        c'est l'agent bascule qui les saisit quand le camion arrive.
+        """
         for rec in self:
-            if not rec.chauffeur or not rec.camion:
-                raise ValidationError(
-                    '❌ Veuillez renseigner le chauffeur et le camion avant de transmettre.'
-                )
             rec.write({'state': 'transmis_tare'})
-            rec.message_post(body='🚛 Bon transmis à la tare — en attente du camion.')
+            rec.message_post(
+                body=f'Bon de circulation {rec.name} transmis a la tare.'
+            )
 
     def action_pesee_entree(self):
+        """
+        Agent bascule saisit les infos du camion + tare P1.
+        Chauffeur et matricule sont obligatoires ici —
+        l'agent les voit physiquement avant de peser.
+        """
         for rec in self:
+            # Verification : chauffeur et matricule obligatoires
+            if not rec.chauffeur:
+                raise ValidationError(
+                    'Veuillez saisir le nom du chauffeur avant de valider la pesee.'
+                )
+            if not rec.matricule:
+                raise ValidationError(
+                    'Veuillez saisir le matricule du camion avant de valider la pesee.'
+                )
+            # Verification : tare P1 obligatoire
             if not rec.tare_p1 or rec.tare_p1 <= 0:
                 raise ValidationError(
-                    '❌ Veuillez saisir la Tare P1 avant de valider.'
+                    'Veuillez saisir la Tare P1 avant de valider.'
                 )
             rec.write({'state': 'pesee_entree'})
             self.env['gica.pesee'].create({
@@ -199,38 +219,40 @@ class GicaBonCirculation(models.Model):
                 'type_pesee':         'vide',
                 'poids':              rec.tare_p1,
                 'agent_pesage_id':    self.env.user.id,
-                'note':               'Pesée initiale à vide (Tare)',
+                'note':               'Pesee initiale a vide (Tare)',
             })
-            rec.message_post(body=f'⚖️ Pesée entrée (Tare P1) : {rec.tare_p1} T')
+            rec.message_post(
+                body=f'Pesee entree validee - Tare P1 : {rec.tare_p1} T - '
+                     f'Chauffeur : {rec.chauffeur} - Matricule : {rec.matricule}'
+            )
 
     def action_chargement(self):
         for rec in self:
             if not rec.tare_p1 or rec.tare_p1 <= 0:
                 raise ValidationError(
-                    '❌ La Tare P1 doit être saisie et validée avant le chargement.'
+                    'La Tare P1 doit etre saisie et validee avant le chargement.'
                 )
             rec.write({'state': 'chargement'})
-            rec.message_post(body='🏭 Chargement en cours.')
+            rec.message_post(body='Chargement en cours.')
 
     def action_pesee_sortie(self):
         for rec in self:
             if not rec.poids_brut_p2 or rec.poids_brut_p2 <= 0:
                 raise ValidationError(
-                    '❌ Veuillez saisir le Poids Brut P2 avant de valider.'
+                    'Veuillez saisir le Poids Brut P2 avant de valider.'
                 )
             if rec.poids_brut_p2 <= rec.tare_p1:
                 raise ValidationError(
-                    f'❌ Le Poids Brut P2 ({rec.poids_brut_p2} T) doit être '
-                    f'supérieur à la Tare P1 ({rec.tare_p1} T).'
+                    f'Le Poids Brut P2 ({rec.poids_brut_p2} T) doit etre '
+                    f'superieur a la Tare P1 ({rec.tare_p1} T).'
                 )
-            # Compter le nb de pesées P2 déjà faites
             nb_p2 = self.env['gica.pesee'].search_count([
                 ('bon_circulation_id', '=', rec.id),
-                ('type_pesee', '=', 'charge'),
+                ('type_pesee',         '=', 'charge'),
             ])
-            note = f'Pesée en charge N°{nb_p2+1}'
+            note = f'Pesee en charge N{nb_p2 + 1}'
             if nb_p2 > 0:
-                note += ' (après correction)'
+                note += ' (apres correction)'
             rec.write({'state': 'pesee_sortie'})
             self.env['gica.pesee'].create({
                 'bon_circulation_id': rec.id,
@@ -239,7 +261,9 @@ class GicaBonCirculation(models.Model):
                 'agent_pesage_id':    self.env.user.id,
                 'note':               note,
             })
-            rec.message_post(body=f'⚖️ Pesée sortie (Brut P2) : {rec.poids_brut_p2} T')
+            rec.message_post(
+                body=f'Pesee sortie validee - Poids Brut P2 : {rec.poids_brut_p2} T'
+            )
 
     @api.depends('tare_p1', 'poids_brut_p2')
     def _compute_poids_net(self):
@@ -249,15 +273,23 @@ class GicaBonCirculation(models.Model):
     def action_terminer(self):
         for rec in self:
             if not rec.poids_brut_p2:
-                raise ValidationError('❌ Veuillez saisir le Poids Brut P2 avant de terminer.')
+                raise ValidationError(
+                    'Veuillez saisir le Poids Brut P2 avant de terminer.'
+                )
             rec.write({'state': 'termine'})
+            # Mettre a jour date reelle enlevement sur sale.order
+            if rec.sale_order_id:
+                rec.sale_order_id.write({
+                    'date_reelle_enlevement': fields.Date.today()
+                })
+                if rec.sale_order_id.commande_globale_id:
+                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
             rec.message_post(
-                body=f'✅ Terminé — Poids Net : {rec.poids_net:.2f} T '
+                body=f'Termine - Poids Net : {rec.poids_net:.2f} T '
                      f'(P1={rec.tare_p1}T / P2={rec.poids_brut_p2}T)'
             )
 
     def action_accepter_surplus(self):
-        """Client accepte de payer le surplus → terminer directement"""
         for rec in self:
             rec.env['gica.pesee'].create({
                 'bon_circulation_id': rec.id,
@@ -266,42 +298,51 @@ class GicaBonCirculation(models.Model):
                 'agent_pesage_id':    rec.env.user.id,
             })
             rec.write({'state': 'termine'})
+            if rec.sale_order_id:
+                rec.sale_order_id.write({
+                    'date_reelle_enlevement': fields.Date.today()
+                })
+                if rec.sale_order_id.commande_globale_id:
+                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
             rec.message_post(
-                body=f'✅ Surplus accepté — Poids Net : {rec.poids_net:.2f} T '
-                     f'(prévu {rec.quantite_prevue:.2f} T, écart +{rec.ecart_poids:.2f} T)'
+                body=f'Surplus accepte - Poids Net : {rec.poids_net:.2f} T '
+                     f'(prevu {rec.quantite_prevue:.2f} T, ecart +{rec.ecart_poids:.2f} T)'
             )
 
     def action_decharger_surplus(self):
-        """Client refuse le surplus → retour chargement pour décharger"""
         for rec in self:
-            rec.message_post(
-                body=f'🔄 Déchargement du surplus demandé — '
-                     f'Écart : +{rec.ecart_poids:.2f} T. Retour au chargement.'
-            )
             rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
+            rec.message_post(
+                body=f'Dechargement du surplus - '
+                     f'Ecart : +{rec.ecart_poids:.2f} T. Retour au chargement.'
+            )
 
     def action_recharger_manque(self):
-        """Quantité insuffisante → retour chargement pour compléter"""
         for rec in self:
+            rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
             rec.message_post(
-                body=f'🔄 Rechargement demandé — '
+                body=f'Rechargement demande - '
                      f'Manque : {abs(rec.ecart_poids):.2f} T. Retour au chargement.'
             )
-            rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
 
     def action_accepter_manque(self):
-        """Client accepte la quantité partielle → terminer"""
         for rec in self:
             rec.write({'state': 'termine'})
+            if rec.sale_order_id:
+                rec.sale_order_id.write({
+                    'date_reelle_enlevement': fields.Date.today()
+                })
+                if rec.sale_order_id.commande_globale_id:
+                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
             rec.message_post(
-                body=f'✅ Quantité partielle acceptée — Poids Net : {rec.poids_net:.2f} T '
-                     f'(prévu {rec.quantite_prevue:.2f} T, manque {abs(rec.ecart_poids):.2f} T)'
+                body=f'Quantite partielle acceptee - Poids Net : {rec.poids_net:.2f} T '
+                     f'(prevu {rec.quantite_prevue:.2f} T, manque {abs(rec.ecart_poids):.2f} T)'
             )
 
     def action_annuler(self):
         for rec in self:
             rec.write({'state': 'annule'})
-            rec.message_post(body='❌ Bon de circulation annulé.')
+            rec.message_post(body='Bon de circulation annule.')
 
     def action_voir_bc_from_circ(self):
         self.ensure_one()
@@ -313,32 +354,28 @@ class GicaBonCirculation(models.Model):
             'res_id':    self.sale_order_id.id,
         }
 
-    # ── Retour arrière ────────────────────────────────────────────────────
+    # Retour arriere
     def action_retour_brouillon(self):
-        """Retour de transmis_tare → brouillon"""
         for rec in self:
             rec.write({'state': 'brouillon'})
-            rec.message_post(body='↩️ Retour en brouillon.')
+            rec.message_post(body='Retour en brouillon.')
 
     def action_retour_transmis(self):
-        """Retour de pesee_entree → transmis_tare (corriger P1)"""
         for rec in self:
             rec.write({'state': 'transmis_tare', 'tare_p1': 0.0})
-            rec.message_post(body='↩️ Correction — Tare P1 réinitialisée.')
+            rec.message_post(body='Correction - Tare P1 reinitialisee.')
 
     def action_retour_pesee_entree(self):
-        """Retour de chargement → pesee_entree"""
         for rec in self:
             rec.write({'state': 'pesee_entree'})
-            rec.message_post(body='↩️ Retour à la pesée entrée.')
+            rec.message_post(body='Retour a la pesee entree.')
 
     def action_retour_chargement(self):
-        """Retour de pesee_sortie → chargement (corriger P2)"""
         for rec in self:
             rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
-            rec.message_post(body='↩️ Correction — Poids Brut P2 réinitialisé.')
+            rec.message_post(body='Correction - Poids Brut P2 reinitialise.')
 
-    # ── Création avec séquence ────────────────────────────────────────────
+    # Creation avec sequence
     @api.model_create_multi
     def create(self, vals_list):
         today = date.today()
@@ -347,7 +384,6 @@ class GicaBonCirculation(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'gica.bon.circulation'
                 ) or 'Nouveau'
-            # Générer N° de Chaîne : YYYY/MM/DD/CIM/XXXX
             if not vals.get('numero_chaine'):
                 seq = self.env['ir.sequence'].next_by_code(
                     'gica.bon.circulation.chaine'
