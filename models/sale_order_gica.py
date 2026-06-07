@@ -70,14 +70,32 @@ class GicaSaleOrder(models.Model):
     )
 
     bon_circulation_count = fields.Integer(
-        string='Nb BCs',
-        compute='_compute_bon_circulation_count',
+        string='Nb Rotations',
+        compute='_compute_rotations_stats',
     )
 
-    @api.depends('bon_circulation_ids')
-    def _compute_bon_circulation_count(self):
+    rotations_terminees = fields.Integer(
+        string='Rotations terminees',
+        compute='_compute_rotations_stats',
+    )
+
+    toutes_rotations_terminees = fields.Boolean(
+        string='Toutes rotations terminees',
+        compute='_compute_rotations_stats',
+    )
+
+    @api.depends('bon_circulation_ids', 'bon_circulation_ids.state')
+    def _compute_rotations_stats(self):
         for rec in self:
-            rec.bon_circulation_count = len(rec.bon_circulation_ids)
+            bcs = rec.bon_circulation_ids.filtered(
+                lambda b: b.state != 'annule'
+            )
+            termines = bcs.filtered(lambda b: b.state == 'termine')
+            rec.bon_circulation_count      = len(bcs)
+            rec.rotations_terminees        = len(termines)
+            rec.toutes_rotations_terminees = (
+                len(bcs) > 0 and len(bcs) == len(termines)
+            )
 
     # Client GICA
     gica_client_id = fields.Many2one(
@@ -139,6 +157,13 @@ class GicaSaleOrder(models.Model):
         store=True,
     )
 
+    # Quantite reelle livree (somme des poids nets)
+    quantity_livree = fields.Float(
+        string='Quantite livree (T)',
+        compute='_compute_quantity_livree',
+        store=True,
+    )
+
     @api.depends('order_line.product_uom_qty')
     def _compute_quantity_total_tonne(self):
         for rec in self:
@@ -146,8 +171,16 @@ class GicaSaleOrder(models.Model):
                 rec.order_line.mapped('product_uom_qty')
             )
 
+    @api.depends('bon_circulation_ids.poids_net', 'bon_circulation_ids.state')
+    def _compute_quantity_livree(self):
+        for rec in self:
+            rec.quantity_livree = sum(
+                b.poids_net
+                for b in rec.bon_circulation_ids
+                if b.state == 'termine'
+            )
+
     def action_voir_bons_circulation(self):
-        """Ouvre la liste des bons de circulation lies"""
         self.ensure_one()
         return {
             'type':      'ir.actions.act_window',
@@ -156,3 +189,21 @@ class GicaSaleOrder(models.Model):
             'view_mode': 'list,form',
             'domain':    [('sale_order_id', '=', self.id)],
         }
+
+    def action_creer_facture_groupee(self):
+        """
+        Genere une facture groupee basee sur tous les BLs
+        des rotations terminees.
+        Utilise le mecanisme natif Odoo.
+        """
+        self.ensure_one()
+
+        if not self.toutes_rotations_terminees:
+            raise ValidationError(
+                f'Toutes les rotations ne sont pas encore terminees.\n'
+                f'Terminees : {self.rotations_terminees}/{self.bon_circulation_count}'
+            )
+
+        # Utiliser le mecanisme natif Odoo pour creer la facture
+        # depuis le bon de commande
+        return self._create_invoices()

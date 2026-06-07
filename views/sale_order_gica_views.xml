@@ -7,20 +7,71 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
-            <!-- Bouton stat Bons de Circulation dans le header -->
+            <!-- Boutons dans le header -->
             <xpath expr="//header" position="inside">
+                <!-- Voir tous les BCs -->
                 <button name="action_voir_bons_circulation"
-                        string="Voir Bons de Circulation"
+                        string="Bons de Circulation"
                         type="object"
                         class="btn-secondary"
                         invisible="bon_circulation_count == 0"/>
+                <!-- Generer Facture — seulement quand toutes rotations terminees -->
+                <button name="action_creer_facture_groupee"
+                        string="Generer Facture"
+                        type="object"
+                        class="btn-success"
+                        invisible="not toutes_rotations_terminees"/>
             </xpath>
 
-            <!-- Onglets GICA dans le notebook -->
+            <!-- Onglets GICA -->
             <xpath expr="//notebook" position="inside">
 
                 <!-- Onglet Bons de Circulation -->
                 <page string="Bons de Circulation" name="bons_circulation">
+
+                    <!-- Compteur rotations -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Total rotations</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="bon_circulation_count" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border border-success rounded-3 text-center bg-success bg-opacity-10">
+                                <div class="card-body p-2">
+                                    <p class="text-success small mb-1">Terminees</p>
+                                    <p class="fw-bold mb-0 fs-5 text-success">
+                                        <field name="rotations_terminees" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Quantite livree</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="quantity_livree" readonly="1"/> T
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte toutes rotations terminees -->
+                    <div class="alert alert-success" role="alert"
+                         invisible="not toutes_rotations_terminees">
+                        <field name="toutes_rotations_terminees" invisible="1"/>
+                        Toutes les rotations sont terminees.
+                        Vous pouvez generer la facture.
+                    </div>
+
+                    <!-- Liste des BCs -->
                     <field name="bon_circulation_ids" nolabel="1" readonly="1">
                         <list string="Bons de Circulation"
                               decoration-info="state == 'transmis_tare'"
@@ -29,12 +80,13 @@
                               decoration-muted="state == 'annule'">
                             <field name="name"            string="N Bon"/>
                             <field name="numero_rotation" string="Rotation"/>
-                            <field name="quantite_prevue" string="Qte (T)"/>
+                            <field name="quantite_prevue" string="Qte prevue (T)"/>
                             <field name="chauffeur"       string="Chauffeur"/>
                             <field name="matricule"       string="Matricule"/>
                             <field name="tare_p1"         string="P1 (T)"/>
                             <field name="poids_brut_p2"   string="P2 (T)"/>
                             <field name="poids_net"       string="Net (T)"/>
+                            <field name="picking_id"      string="Bon de Livraison"/>
                             <field name="state" widget="badge"
                                    decoration-info="state == 'transmis_tare'"
                                    decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
@@ -52,8 +104,6 @@
                                    options="{'no_create': True}"
                                    readonly="1"/>
                             <field name="planification_id"    readonly="1"/>
-                            <field name="bon_circulation_count" readonly="1"
-                                   string="Nb Bons de Circulation"/>
                             <field name="gica_client_id"      readonly="1"/>
                             <field name="gica_contrat_id"     readonly="1"/>
                             <field name="source"              readonly="1"/>
@@ -62,10 +112,11 @@
                             <field name="date_prevue_enlevement" readonly="1"/>
                             <field name="date_reelle_enlevement" readonly="1"/>
                             <field name="quantity_total_tonne"   readonly="1"/>
+                            <field name="quantity_livree"        readonly="1"/>
                             <field name="numero_bc_papier"/>
                         </group>
                     </group>
-                    <group string="Scan BC Client (Tracabilite)">
+                    <group string="Scan BC Client">
                         <field name="scan_bc_client"
                                widget="binary"
                                filename="scan_bc_client_filename"/>

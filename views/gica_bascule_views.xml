@@ -10,20 +10,18 @@
                   decoration-info="state == 'transmis_tare'"
                   decoration-warning="state in ('pesee_entree', 'chargement', 'pesee_sortie')"
                   decoration-success="state == 'termine'"
-                  decoration-muted="state == 'annule'"
                   default_order="name desc">
-                <field name="name"           string="N Bon"/>
+                <field name="name"            string="N Bon"/>
                 <field name="numero_rotation" string="Rotation"/>
-                <field name="sale_order_id"  string="Bon de Commande"/>
-                <field name="partner_id"     string="Client"/>
-                <field name="product_id"     string="Produit"/>
+                <field name="partner_id"      string="Client"/>
+                <field name="product_id"      string="Produit"/>
                 <field name="conditionnement" string="Conditionnement"/>
-                <field name="chauffeur"      string="Chauffeur"/>
-                <field name="matricule"      string="Matricule"/>
                 <field name="quantite_prevue" string="Qte prevue (T)"/>
-                <field name="tare_p1"        string="Tare P1 (T)"   optional="show"/>
-                <field name="poids_brut_p2"  string="Poids P2 (T)"  optional="show"/>
-                <field name="poids_net"      string="Poids Net (T)" optional="show"/>
+                <field name="chauffeur"       string="Chauffeur"/>
+                <field name="matricule"       string="Matricule"/>
+                <field name="tare_p1"         string="P1 (T)"  optional="show"/>
+                <field name="poids_brut_p2"   string="P2 (T)"  optional="show"/>
+                <field name="poids_net"       string="Net (T)" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'transmis_tare'"
                        decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
@@ -33,66 +31,70 @@
         </field>
     </record>
 
-    <!-- Vue Formulaire Bascule — Interface agent pesage -->
+    <!-- Vue Kanban Bascule -->
+    <record id="view_gica_bascule_kanban" model="ir.ui.view">
+        <field name="name">gica.bon.circulation.bascule.kanban</field>
+        <field name="model">gica.bon.circulation</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    class="o_kanban_small_column"
+                    records_draggable="0">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="conditionnement"/>
+                <field name="quantite_prevue"/>
+                <field name="chauffeur"/>
+                <field name="matricule"/>
+                <field name="tare_p1"/>
+                <field name="poids_net"/>
+                <field name="ecart_type"/>
+                <field name="numero_rotation"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong><field name="name"/></strong>
+                            <span class="badge bg-secondary">Rot. <field name="numero_rotation"/></span>
+                        </div>
+                        <div class="mb-1">
+                            <i class="fa fa-user me-1" title="Client"/>
+                            <field name="partner_id"/>
+                        </div>
+                        <div class="mb-1">
+                            <i class="fa fa-cube me-1" title="Produit"/>
+                            <field name="product_id"/> — <field name="conditionnement"/>
+                        </div>
+                        <div class="mb-1">
+                            <i class="fa fa-balance-scale me-1" title="Poids prevu"/>
+                            <field name="quantite_prevue"/> T
+                        </div>
+                        <div t-if="record.chauffeur.raw_value" class="mb-1">
+                            <i class="fa fa-truck me-1" title="Chauffeur"/>
+                            <field name="chauffeur"/> — <field name="matricule"/>
+                        </div>
+                        <div t-if="record.poids_net.raw_value" class="mb-1">
+                            <i class="fa fa-check-circle me-1" title="Poids net"/>
+                            Net : <field name="poids_net"/> T
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Bascule -->
     <record id="view_gica_bascule_form" model="ir.ui.view">
         <field name="name">gica.bon.circulation.bascule.form</field>
         <field name="model">gica.bon.circulation</field>
         <field name="arch" type="xml">
             <form string="Bascule — Pesee">
                 <header>
-                    <!-- Avancer -->
-                    <button name="action_transmettre_tare"
-                            string="Transmettre a la tare"
+                    <!-- Imprimer BL — remet au chauffeur pour securite route -->
+                    <button name="action_imprimer_bon_livraison"
+                            string="Imprimer Bon de Livraison"
                             type="object" class="btn-primary"
-                            invisible="state != 'brouillon'"/>
-                    <button name="action_pesee_entree"
-                            string="Valider Tare P1"
-                            type="object" class="btn-primary"
-                            invisible="state != 'transmis_tare'"/>
-                    <button name="action_chargement"
-                            string="Demarrer Chargement"
-                            type="object" class="btn-warning"
-                            invisible="state != 'pesee_entree'"/>
-                    <button name="action_pesee_sortie"
-                            string="Valider Poids P2"
-                            type="object" class="btn-primary"
-                            invisible="state != 'chargement'"/>
-                    <button name="action_terminer"
-                            string="Terminer"
-                            type="object" class="btn-success"
-                            invisible="state != 'pesee_sortie' or ecart_type != 'ok'"/>
-                    <!-- Surplus -->
-                    <button name="action_accepter_surplus"
-                            string="Accepter le surplus"
-                            type="object" class="btn-success"
-                            invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
-                            confirm="Le client accepte de payer le surplus ?"/>
-                    <button name="action_decharger_surplus"
-                            string="Decharger le surplus"
-                            type="object" class="btn-warning"
-                            invisible="state != 'pesee_sortie' or ecart_type != 'surplus'"
-                            confirm="Retour au chargement pour decharger le surplus ?"/>
-                    <!-- Manque -->
-                    <button name="action_recharger_manque"
-                            string="Recharger"
-                            type="object" class="btn-warning"
-                            invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
-                            confirm="Retour au chargement pour completer la quantite ?"/>
-                    <button name="action_accepter_manque"
-                            string="Accepter la quantite partielle"
-                            type="object" class="btn-success"
-                            invisible="state != 'pesee_sortie' or ecart_type != 'manque'"
-                            confirm="Le client accepte la quantite partielle ?"/>
-                    <button name="%(gestion_commerciale.report_bon_circulation)d"
-                            string="Imprimer Bon"
-                            type="action"
-                            class="btn-secondary"/>
-                    <!-- Corriger -->
-                    <button name="action_retour_brouillon"
-                            string="Retour Brouillon"
-                            type="object" class="btn-secondary"
-                            invisible="state != 'transmis_tare'"
-                            confirm="Retourner en brouillon ?"/>
+                            invisible="state != 'termine' or not picking_id"/>
                     <button name="action_retour_transmis"
                             string="Corriger P1"
                             type="object" class="btn-secondary"
@@ -108,94 +110,287 @@
                             type="object" class="btn-secondary"
                             invisible="state != 'pesee_sortie'"
                             confirm="Reinitialiser le Poids Brut P2 ?"/>
-                    <button name="action_annuler"
-                            string="Annuler"
-                            type="object" class="btn-danger"
-                            invisible="state in ('termine', 'annule')"
-                            confirm="Annuler ce bon de circulation ?"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="brouillon,transmis_tare,pesee_entree,chargement,pesee_sortie,termine"/>
+                           statusbar_visible="transmis_tare,pesee_entree,chargement,pesee_sortie,termine"/>
                 </header>
 
                 <sheet>
+                    <!-- Bouton stat Bon de Livraison -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_bon_livraison"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                invisible="not picking_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Bon de Livraison</span>
+                            </div>
+                        </button>
+                        <button name="action_voir_bc_from_circ"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text"
+                                invisible="not sale_order_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Bon de Commande</span>
+                            </div>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
 
-                    <group>
-                        <!-- Informations Commande -->
-                        <group string="Informations Commande">
-                            <field name="sale_order_id"   string="Bon de Commande" readonly="1"/>
-                            <field name="partner_id"      string="Client"          readonly="1"/>
-                            <field name="product_id"      string="Produit"         readonly="1"/>
-                            <field name="conditionnement" string="Conditionnement" readonly="1"/>
-                            <field name="quantite_prevue" string="Qte prevue (T)"  readonly="1"/>
-                            <field name="numero_rotation" string="N Rotation"      readonly="1"/>
-                            <field name="nbr_paquets"     string="Nb Paquets"      readonly="1"
-                                   invisible="nbr_paquets == 0"/>
-                        </group>
+                    <!-- 3 cards infos cles -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="card border rounded-3 h-100">
+                                <div class="card-body">
+                                    <p class="text-muted small text-uppercase mb-1">Client</p>
+                                    <p class="fw-bold mb-0 fs-6">
+                                        <field name="partner_id" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border rounded-3 h-100">
+                                <div class="card-body">
+                                    <p class="text-muted small text-uppercase mb-1">Produit</p>
+                                    <p class="fw-bold mb-0 fs-6">
+                                        <field name="product_id" readonly="1"/>
+                                    </p>
+                                    <p class="text-muted small mb-0">
+                                        <field name="conditionnement" readonly="1"/>
+                                        — Rot. <field name="numero_rotation" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border rounded-3 h-100">
+                                <div class="card-body">
+                                    <p class="text-muted small text-uppercase mb-1">Quantite prevue</p>
+                                    <p class="fw-bold mb-0" style="font-size:1.5rem;">
+                                        <field name="quantite_prevue" readonly="1"/>
+                                        <span class="text-muted fs-6"> T</span>
+                                    </p>
+                                    <p class="text-muted small mb-0" invisible="nbr_paquets == 0">
+                                        <field name="nbr_paquets" readonly="1"/> paquets
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                        <!-- Logistique Camion — saisis par l'agent bascule -->
-                        <group string="Logistique Camion">
-                            <!-- Editables seulement quand le camion arrive (transmis_tare) -->
-                            <field name="chauffeur"
-                                   string="Chauffeur"
-                                   readonly="state not in ('transmis_tare')"/>
-                            <field name="matricule"
-                                   string="Matricule"
-                                   readonly="state not in ('transmis_tare')"/>
-                            <field name="camion"
-                                   string="Camion"
-                                   readonly="state not in ('transmis_tare')"/>
-                            <field name="numero_permis"
-                                   string="N Permis"
-                                   readonly="state not in ('transmis_tare')"/>
-                            <field name="remorque"
-                                   string="Remorque"
-                                   readonly="state not in ('transmis_tare')"/>
-                            <field name="lieu_livraison"
-                                   string="Destination"
-                                   readonly="state not in ('transmis_tare')"/>
-                        </group>
-                    </group>
+                    <!-- Camion + Pesees cote a cote -->
+                    <div class="row mb-3">
 
-                    <separator string="Pesees"/>
+                        <!-- Card Camion -->
+                        <div class="col-6">
+                            <div class="card border rounded-3 h-100">
+                                <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                                    <i class="fa fa-truck text-muted" title="Camion"/>
+                                    <span class="fw-bold">Informations camion</span>
+                                    <span class="text-muted small ms-auto">a remplir a l'arrivee</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="o_form_label text-muted small">Chauffeur</div>
+                                            <field name="chauffeur"
+                                                   readonly="state != 'transmis_tare'"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="o_form_label text-muted small">Matricule</div>
+                                            <field name="matricule"
+                                                   readonly="state != 'transmis_tare'"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="o_form_label text-muted small">Camion</div>
+                                            <field name="camion"
+                                                   readonly="state != 'transmis_tare'"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="o_form_label text-muted small">N Permis</div>
+                                            <field name="numero_permis"
+                                                   readonly="state != 'transmis_tare'"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="o_form_label text-muted small">Remorque</div>
+                                            <field name="remorque"
+                                                   readonly="state != 'transmis_tare'"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Bloc pesees -->
-                    <group>
-                        <group string="Pesee Vide — Tare P1">
-                            <field name="tare_p1"
-                                   string="Tare P1 (T)"
-                                   readonly="state not in ('transmis_tare')"/>
-                        </group>
-                        <group string="Pesee Chargee — Poids Brut P2">
-                            <field name="poids_brut_p2"
-                                   string="Poids Brut P2 (T)"
-                                   readonly="state not in ('chargement')"/>
-                        </group>
-                    </group>
+                        <!-- Card Pesees -->
+                        <div class="col-6">
+                            <div class="card border rounded-3 h-100">
+                                <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                                    <i class="fa fa-balance-scale text-muted" title="Pesees"/>
+                                    <span class="fw-bold">Pesees</span>
+                                </div>
+                                <div class="card-body">
 
-                    <!-- Resultat Net -->
-                    <group invisible="poids_net == 0">
-                        <group string="Poids Net">
-                            <field name="poids_net" string="Poids Net (T)" readonly="1"/>
-                        </group>
-                    </group>
+                                    <!-- P1 valide -->
+                                    <div class="alert alert-success d-flex align-items-center gap-2 py-2"
+                                         role="alert"
+                                         invisible="state == 'transmis_tare' or state == 'brouillon'">
+                                        <i class="fa fa-check-circle" title="Valide"/>
+                                        <div>
+                                            <div class="small">Tare P1 validee</div>
+                                            <strong><field name="tare_p1" readonly="1"/> T</strong>
+                                        </div>
+                                    </div>
 
-                    <!-- Alerte Ecart -->
+                                    <!-- P1 a saisir -->
+                                    <div invisible="state != 'transmis_tare'" class="mb-3">
+                                        <div class="o_form_label text-muted small">Tare P1 (T)</div>
+                                        <field name="tare_p1"
+                                               readonly="state != 'transmis_tare'"
+                                               style="font-size:1.2rem; font-weight:500;"/>
+                                        <button name="action_pesee_entree"
+                                                string="Valider Tare P1"
+                                                type="object"
+                                                class="btn btn-primary w-100 mt-2"/>
+                                    </div>
+
+                                    <!-- Chargement -->
+                                    <div invisible="state != 'pesee_entree'" class="mb-3 text-center">
+                                        <div class="badge bg-warning text-dark px-3 py-2 mb-2">
+                                            <i class="fa fa-cog fa-spin me-1" title="En cours"/>
+                                            Chargement en cours
+                                        </div>
+                                        <button name="action_chargement"
+                                                string="Demarrer Chargement"
+                                                type="object"
+                                                class="btn btn-warning w-100"/>
+                                    </div>
+
+                                    <!-- P2 a saisir -->
+                                    <div invisible="state != 'chargement'" class="mb-3">
+                                        <div class="o_form_label text-muted small">Poids Brut P2 (T)</div>
+                                        <field name="poids_brut_p2"
+                                               readonly="state != 'chargement'"
+                                               style="font-size:1.2rem; font-weight:500;"/>
+                                        <button name="action_pesee_sortie"
+                                                string="Valider Poids P2"
+                                                type="object"
+                                                class="btn btn-primary w-100 mt-2"/>
+                                    </div>
+
+                                    <!-- P2 valide -->
+                                    <div class="alert alert-info d-flex align-items-center gap-2 py-2"
+                                         role="alert"
+                                         invisible="state not in ('pesee_sortie', 'termine')">
+                                        <i class="fa fa-check-circle" title="Valide"/>
+                                        <div>
+                                            <div class="small">Poids Brut P2 valide</div>
+                                            <strong><field name="poids_brut_p2" readonly="1"/> T</strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3 mini-cards resultat -->
+                                    <div class="row g-2 mt-2" invisible="poids_net == 0">
+                                        <div class="col-4">
+                                            <div class="card border rounded-3 text-center">
+                                                <div class="card-body p-2">
+                                                    <p class="text-muted small mb-1">Tare P1</p>
+                                                    <p class="fw-bold mb-0">
+                                                        <field name="tare_p1" readonly="1"/> T
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="card border border-success rounded-3 text-center bg-success bg-opacity-10">
+                                                <div class="card-body p-2">
+                                                    <p class="text-success small mb-1">Poids net</p>
+                                                    <p class="fw-bold mb-0 text-success" style="font-size:1.1rem;">
+                                                        <field name="poids_net" readonly="1"/> T
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="card border rounded-3 text-center">
+                                                <div class="card-body p-2">
+                                                    <p class="text-muted small mb-1">Ecart</p>
+                                                    <p class="fw-bold mb-0">
+                                                        <field name="ecart_poids" readonly="1"/> T
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Boutons de cloture -->
+                                    <div class="mt-3" invisible="state != 'pesee_sortie'">
+                                        <field name="ecart_type" invisible="1"/>
+                                        <button name="action_terminer"
+                                                string="Terminer"
+                                                type="object"
+                                                class="btn btn-success w-100 mb-2"
+                                                invisible="ecart_type != 'ok'"/>
+                                        <button name="action_accepter_surplus"
+                                                string="Accepter le surplus"
+                                                type="object"
+                                                class="btn btn-success w-100 mb-2"
+                                                invisible="ecart_type != 'surplus'"
+                                                confirm="Le client accepte de payer le surplus ?"/>
+                                        <button name="action_decharger_surplus"
+                                                string="Decharger le surplus"
+                                                type="object"
+                                                class="btn btn-warning w-100 mb-2"
+                                                invisible="ecart_type != 'surplus'"
+                                                confirm="Retour au chargement pour decharger le surplus ?"/>
+                                        <button name="action_recharger_manque"
+                                                string="Recharger"
+                                                type="object"
+                                                class="btn btn-warning w-100 mb-2"
+                                                invisible="ecart_type != 'manque'"
+                                                confirm="Retour au chargement pour completer la quantite ?"/>
+                                        <button name="action_accepter_manque"
+                                                string="Accepter quantite partielle"
+                                                type="object"
+                                                class="btn btn-success w-100"
+                                                invisible="ecart_type != 'manque'"
+                                                confirm="Le client accepte la quantite partielle ?"/>
+                                    </div>
+
+                                    <!-- BL cree apres terminaison -->
+                                    <div class="alert alert-success d-flex align-items-center gap-2 py-2 mt-3"
+                                         role="alert"
+                                         invisible="not picking_id">
+                                        <i class="fa fa-truck" title="BL"/>
+                                        <div>
+                                            <div class="small">Bon de Livraison cree</div>
+                                            <field name="picking_id" readonly="1"/>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte ecart -->
                     <div class="alert alert-warning" role="alert"
                          invisible="state != 'pesee_sortie' or ecart_type == 'ok'">
                         <field name="ecart_type"  invisible="1"/>
                         <field name="ecart_poids" invisible="1"/>
                         <strong invisible="ecart_type != 'surplus'">
-                            Surplus detecte ! Poids net superieur a la quantite prevue.
+                            Surplus detecte — Poids net superieur a la quantite prevue.
                         </strong>
                         <strong invisible="ecart_type != 'manque'">
-                            Manque detecte ! Poids net inferieur a la quantite prevue.
+                            Manque detecte — Poids net inferieur a la quantite prevue.
                         </strong>
                     </div>
 
-                    <!-- Historique des pesees -->
+                    <!-- Historique pesees -->
                     <separator string="Historique des pesees"/>
                     <field name="pesee_ids" readonly="1">
                         <list decoration-info="type_pesee == 'vide'"
@@ -222,41 +417,29 @@
         <field name="model">gica.bon.circulation</field>
         <field name="arch" type="xml">
             <search string="Rechercher un bon">
-                <field name="name"          string="N Bon / QR"/>
-                <field name="partner_id"    string="Client"/>
-                <field name="chauffeur"     string="Chauffeur"/>
-                <field name="matricule"     string="Matricule"/>
-                <field name="sale_order_id" string="Bon de Commande"/>
+                <field name="name"       string="N Bon"/>
+                <field name="partner_id" string="Client"/>
+                <field name="chauffeur"  string="Chauffeur"/>
+                <field name="matricule"  string="Matricule"/>
                 <separator/>
                 <filter name="en_attente"
                         string="En attente"
                         domain="[('state', '=', 'transmis_tare')]"/>
-                <filter name="pesee_entree"
-                        string="Pesee P1 faite"
-                        domain="[('state', '=', 'pesee_entree')]"/>
-                <filter name="chargement"
-                        string="Chargement"
-                        domain="[('state', '=', 'chargement')]"/>
-                <filter name="pesee_sortie"
-                        string="Pesee P2 faite"
-                        domain="[('state', '=', 'pesee_sortie')]"/>
                 <filter name="en_cours"
-                        string="Tous en cours"
-                        domain="[('state', 'in', ['transmis_tare','pesee_entree','chargement','pesee_sortie'])]"/>
-                <separator/>
+                        string="En cours"
+                        domain="[('state', 'in', ['pesee_entree','chargement','pesee_sortie'])]"/>
                 <filter name="termine"
-                        string="Termines"
-                        domain="[('state', '=', 'termine')]"/>
+                        string="Termines aujourd'hui"
+                        domain="[('state', '=', 'termine'),
+                                 ('create_date', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <filter name="aujourd_hui"
-                        string="Aujourd hui"
+                        string="Tous aujourd'hui"
                         domain="[('create_date', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_state"  string="Etat"
                             context="{'group_by': 'state'}"/>
                     <filter name="group_client" string="Client"
                             context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_date"   string="Date"
-                            context="{'group_by': 'create_date:day'}"/>
                 </group>
             </search>
         </field>
@@ -272,18 +455,16 @@
                   decoration-success="type_pesee == 'charge'">
                 <field name="date_pesee"         string="Date de pesee"/>
                 <field name="bon_circulation_id" string="Bon de Circulation"/>
-                <field name="sale_order_id"      string="Commande de Vente"/>
                 <field name="partner_id"         string="Client"/>
                 <field name="product_id"         string="Produit"/>
-                <field name="conditionnement"    string="Conditionnement"/>
                 <field name="type_pesee"         string="Type de Pesee"
                        widget="badge"
                        decoration-info="type_pesee == 'vide'"
                        decoration-success="type_pesee == 'charge'"/>
                 <field name="poids"              string="Poids (T)"/>
                 <field name="agent_pesage_id"    string="Agent Pesage"/>
-                <field name="matricule"          string="Matricule"/>
                 <field name="chauffeur"          string="Chauffeur"/>
+                <field name="matricule"          string="Matricule"/>
             </list>
         </field>
     </record>
@@ -304,14 +485,13 @@
                 <filter name="charge"
                         string="Pesee en charge (P2)"
                         domain="[('type_pesee', '=', 'charge')]"/>
-                <separator/>
                 <filter name="aujourd_hui"
                         string="Aujourd hui"
                         domain="[('date_pesee', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_client" string="Client"
                             context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_type"   string="Type de pesee"
+                    <filter name="group_type"   string="Type"
                             context="{'group_by': 'type_pesee'}"/>
                     <filter name="group_agent"  string="Agent"
                             context="{'group_by': 'agent_pesage_id'}"/>
@@ -322,21 +502,22 @@
         </field>
     </record>
 
-    <!-- Actions -->
+    <!-- Action Bascule -->
     <record id="action_gica_bascule" model="ir.actions.act_window">
         <field name="name">Pesees en cours</field>
         <field name="res_model">gica.bon.circulation</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('state', 'not in', ['annule'])]</field>
-        <field name="context">{'search_default_en_cours': 1}</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('state', 'in', ['transmis_tare','pesee_entree','chargement','pesee_sortie','termine'])]</field>
+        <field name="context">{'search_default_en_attente': 1}</field>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'list', 'view_id': ref('view_gica_bascule_list')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('view_gica_bascule_form')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_gica_bascule_kanban')}),
+            (0, 0, {'view_mode': 'list',   'view_id': ref('view_gica_bascule_list')}),
+            (0, 0, {'view_mode': 'form',   'view_id': ref('view_gica_bascule_form')}),
         ]"/>
         <field name="search_view_id" ref="view_gica_bascule_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Aucun bon en cours</p>
-            <p>Les bons transmis a la tare apparaissent ici automatiquement.</p>
+            <p class="o_view_nocontent_smiling_face">Aucun bon en attente</p>
+            <p>Les bons transmis par le commercial apparaissent ici.</p>
         </field>
     </record>
 
@@ -352,7 +533,7 @@
         </field>
     </record>
 
-    <!-- Menu principal Bascule -->
+    <!-- Menu Bascule -->
     <menuitem id="menu_gica_bascule_root"
               name="Bascule"
               sequence="50"

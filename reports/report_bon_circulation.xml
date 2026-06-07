@@ -4,14 +4,17 @@
     <template id="report_bon_circulation_template">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="doc.sale_order_id.company_id or env.company"/>
                 <div class="page" style="font-family: Arial, sans-serif; font-size: 11px; color: #222; padding: 0; margin: 0;">
 
                     <!-- EN-TETE GICA -->
-                    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #333; margin-bottom: 6px;">
+                    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #1a3a5c; margin-bottom: 8px;">
                         <tr>
                             <td style="width: 140px; vertical-align: middle; padding: 4px;">
-                                <img src="/gestion_commerciale/static/img/logo_gica.png"
-                                     style="width: 130px; height: auto;"/>
+                                <t t-if="company.logo">
+                                    <img t-att-src="image_data_uri(company.logo)"
+                                         style="width: 130px; height: auto;"/>
+                                </t>
                             </td>
                             <td style="vertical-align: middle; text-align: center; padding: 4px;">
                                 <div style="font-size: 16px; font-weight: bold; color: #1a3a5c;">
@@ -21,186 +24,130 @@
                                     SOCIETE DES CIMENTS D'AIN EL KEBIRA
                                 </div>
                                 <div style="font-size: 12px; font-weight: bold;">&#171; S.C.A.E.K &#187;</div>
-                                <div style="font-size: 8px; color: #555; margin-top: 3px; font-weight: bold;">
-                                    E.P.E/S.P.A au Capital Social de : 2 200 000 000,00 DA
-                                </div>
-                                <div style="font-size: 8px; color: #555;">
-                                    NN°#176; identification fiscale : 099819008236319 / NN°#176; Article d'imposition : 1902.20.10.011 / NN°#176; RC : 98 B 0082363
-                                </div>
                             </td>
-                        </tr>
-                    </table>
-
-                    <!-- DATE + TITRE + N -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
-                        <tr>
-                            <td style="padding: 5px 10px; width: 28%; font-weight: bold; font-size: 11px; border-right: 1px solid #999;">
-                                Date : <t t-esc="doc.create_date.strftime('%d/%m/%Y') if doc.create_date else ''"/>
-                            </td>
-                            <td style="padding: 5px 10px; text-align: center; font-size: 18px; font-weight: bold; border-right: 1px solid #999;">
-                                Bon de Circulation
-                            </td>
-                            <td style="padding: 5px 10px; text-align: right; font-weight: bold; font-size: 11px; width: 28%;">
-                                NN°#176; <t t-esc="doc.name"/>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <!-- INFORMATIONS DU CLIENT -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
-                        <tr>
-                            <td colspan="2" style="background: #dde4ed; padding: 4px 10px; font-weight: bold; text-align: center; border-bottom: 1px solid #999; font-size: 11px; letter-spacing: 1px;">
-                                INFORMATIONS DU CLIENT
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 10px; width: 50%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Commande de Vente :</b> <t t-esc="doc.sale_order_id.name or ''"/>
-                            </td>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>BCG :</b> <t t-esc="doc.sale_order_id.commande_globale_id.name if doc.sale_order_id.commande_globale_id else ''"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Code Client :</b> <t t-esc="doc.sale_order_id.partner_id.ref or ''"/>
-                            </td>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>Contrat :</b> <t t-esc="doc.sale_order_id.gica_contrat_id.name if doc.sale_order_id.gica_contrat_id else ''"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Raison Sociale :</b> <t t-esc="doc.sale_order_id.partner_id.name or ''"/>
-                            </td>
-                            <td style="padding: 3px 10px; border-bottom: 1px solid #eee;">
-                                <b>Planification :</b> <t t-esc="doc.planification_line_id.planification_id.name if doc.planification_line_id else ''"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 10px; border-right: 1px solid #eee;">
-                                <b>Activite :</b>
-                            </td>
-                            <td style="padding: 3px 10px;"></td>
-                        </tr>
-                    </table>
-
-                    <!-- TABLEAU PRODUIT -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
-                        <tr style="background: #dde4ed;">
-                            <th style="padding: 5px 10px; border: 1px solid #999; text-align: center; font-size: 11px; width: 50%;">Produit</th>
-                            <th style="padding: 5px 10px; border: 1px solid #999; text-align: center; font-size: 11px; width: 25%;">Nombre de Paquets</th>
-                            <th style="padding: 5px 10px; border: 1px solid #999; text-align: center; font-size: 11px; width: 25%;">Quantite demandee (Tonnes)</th>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 10px; border: 1px solid #999; text-align: center; font-weight: bold;">
-                                <t t-esc="doc.product_id.display_name or ''"/>
-                                <t t-if="doc.conditionnement">
-                                    &#8212; <t t-esc="dict([('sac_25kg','Sac 25 kg'),('sac_50kg','Sac 50 kg'),('sac_25kg_fardelise','Sac 25 kg Fardelise'),('sac_50kg_fardelise','Sac 50 kg Fardelise'),('vrac','VRAC'),('big_bag_client','Big-Bag client'),('big_bag_scaek','Big-Bag SCAEK')]).get(doc.conditionnement, doc.conditionnement)"/>
+                            <!-- QR Code -->
+                            <td style="width: 90px; vertical-align: middle; text-align: center; padding: 4px;">
+                                <t t-if="doc.qr_code">
+                                    <img t-att-src="image_data_uri(doc.qr_code)"
+                                         style="width: 80px; height: 80px;"/>
                                 </t>
                             </td>
-                            <td style="padding: 8px 10px; border: 1px solid #999; text-align: center;">
+                        </tr>
+                    </table>
+
+                    <!-- TITRE + NUMERO + DATE -->
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid #1a3a5c; margin-bottom: 10px;">
+                        <tr>
+                            <td style="padding: 6px 12px; width: 30%; border-right: 1px solid #999; font-size: 11px;">
+                                <b>Date :</b>
+                                <t t-esc="doc.create_date.strftime('%d/%m/%Y') if doc.create_date else ''"/>
+                            </td>
+                            <td style="padding: 6px 12px; text-align: center; font-size: 20px; font-weight: bold; color: #1a3a5c; letter-spacing: 1px; border-right: 1px solid #999;">
+                                BON DE CIRCULATION
+                            </td>
+                            <td style="padding: 6px 12px; text-align: right; font-size: 13px; font-weight: bold; width: 30%; color: #1a3a5c;">
+                                N&#176; <t t-esc="doc.name"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- CLIENT -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 8px;">
+                        <tr>
+                            <td colspan="2" style="background: #1a3a5c; color: white; padding: 4px 10px; font-weight: bold; text-align: center; font-size: 11px; letter-spacing: 1px;">
+                                CLIENT
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 12px; width: 50%; border-right: 1px solid #eee;">
+                                <b>Client :</b>
+                                <t t-esc="doc.sale_order_id.partner_id.name or ''"/>
+                            </td>
+                            <td style="padding: 6px 12px;">
+                                <b>N&#176; Chaine :</b>
+                                <span style="font-size: 13px; font-weight: bold; color: #1a3a5c;">
+                                    <t t-esc="doc.numero_chaine or ''"/>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- PRODUIT -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 10px;">
+                        <tr>
+                            <td colspan="3" style="background: #1a3a5c; color: white; padding: 4px 10px; font-weight: bold; text-align: center; font-size: 11px; letter-spacing: 1px;">
+                                PRODUIT
+                            </td>
+                        </tr>
+                        <tr style="background: #f5f7fa;">
+                            <th style="padding: 5px 10px; border: 1px solid #ccc; text-align: center; font-size: 11px; width: 45%;">Designation</th>
+                            <th style="padding: 5px 10px; border: 1px solid #ccc; text-align: center; font-size: 11px; width: 20%;">Nb Paquets</th>
+                            <th style="padding: 5px 10px; border: 1px solid #ccc; text-align: center; font-size: 11px; width: 35%;">Quantite (Tonnes)</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ccc; text-align: center; font-weight: bold; font-size: 13px;">
+                                <t t-esc="doc.product_id.display_name or ''"/>
+                                <t t-if="doc.conditionnement">
+                                    <br/>
+                                    <span style="font-size: 11px; color: #555;">
+                                        <t t-esc="doc.conditionnement or ''"/>
+                                    </span>
+                                </t>
+                            </td>
+                            <td style="padding: 10px; border: 1px solid #ccc; text-align: center; font-size: 13px;">
                                 <t t-esc="doc.nbr_paquets or 0"/>
                             </td>
-                            <td style="padding: 8px 10px; border: 1px solid #999; text-align: center; font-weight: bold; font-size: 13px;">
-                                <t t-esc="'%.1f' % doc.quantite_prevue"/>
+                            <td style="padding: 10px; border: 1px solid #ccc; text-align: center; font-weight: bold; font-size: 24px; color: #1a3a5c;">
+                                <t t-esc="'%.3f' % doc.quantite_prevue"/>
+                                <span style="font-size: 12px; color: #555;"> T</span>
                             </td>
                         </tr>
                     </table>
 
-                    <!-- INFORMATIONS DE LIVRAISON -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
+                    <!-- ROTATION -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 14px;">
                         <tr>
-                            <td colspan="4" style="background: #dde4ed; padding: 4px 10px; font-weight: bold; text-align: center; border-bottom: 1px solid #999; font-size: 11px; letter-spacing: 1px;">
-                                INFORMATIONS DE LIVRAISON
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Chauffeur :</b> <t t-esc="doc.chauffeur or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Lieu de Livraison :</b> <t t-esc="doc.lieu_livraison or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px; width: 25%; border-bottom: 1px solid #eee; border-right: 1px solid #eee;">
-                                <b>Prestataire :</b> <t t-esc="doc.prestataire or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px; border-bottom: 1px solid #eee;">
-                                <b>NN°#176; Chaine :</b><br/><t t-esc="doc.numero_chaine or ''"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
-                                <b>NN°#176; Permis :</b> <t t-esc="doc.numero_permis or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
-                                <b>Camion :</b> <t t-esc="doc.camion or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px; border-right: 1px solid #eee;">
-                                <b>Remorque :</b> <t t-esc="doc.remorque or ''"/>
-                            </td>
-                            <td style="padding: 3px 8px;"></td>
-                        </tr>
-                    </table>
-
-                    <!-- ETABLI PAR -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
-                        <tr>
-                            <td style="padding: 4px 10px; width: 35%; border-right: 1px solid #999;">
-                                <b>Etablie Par :</b> <t t-esc="doc.create_uid.name or ''"/>
-                            </td>
-                            <td style="padding: 4px 10px; width: 35%; border-right: 1px solid #999;">
-                                <b>Le :</b> <t t-esc="doc.create_date.strftime('%Y-%m-%d %H:%M:%S') if doc.create_date else ''"/>
-                            </td>
-                            <td style="padding: 4px 10px; width: 30%;">
-                                <b>Sur :</b>
+                            <td style="padding: 6px 12px; text-align: center; font-size: 12px;">
+                                <b>Rotation N&#176; :</b>
+                                <span style="font-size: 18px; font-weight: bold; color: #1a3a5c; margin-left: 8px;">
+                                    <t t-esc="doc.numero_rotation or 1"/>
+                                </span>
                             </td>
                         </tr>
                     </table>
 
-                    <!-- SIGNATURE + POSTE DE CHARGEMENT -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 6px;">
+                    <!-- 3 SIGNATURES -->
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 10px;">
+                        <tr style="background: #1a3a5c;">
+                            <th style="padding: 5px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%; color: white;">
+                                Poste de Securite
+                            </th>
+                            <th style="padding: 5px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%; color: white;">
+                                Poste de Chargement
+                            </th>
+                            <th style="padding: 5px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%; color: white;">
+                                Bascule
+                            </th>
+                        </tr>
                         <tr>
-                            <td style="width: 22%; padding: 8px 10px; border-right: 1px solid #999; vertical-align: middle; text-align: center; font-size: 10px; color: #555; height: 55px;">
+                            <td style="height: 60px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #aaa;">
                                 Signature et cachet
                             </td>
-                            <td style="vertical-align: middle; text-align: center; padding: 8px 10px;">
-                                <div style="font-size: 11px; color: #555; margin-bottom: 3px; font-weight: bold;">Poste de chargement</div>
-                                <div style="font-size: 24px; font-weight: bold; color: #1a3a5c; letter-spacing: 1px;">
-                                    <t t-if="doc.camion"><t t-esc="doc.camion"/></t>
-                                    <t t-else="">VRAC</t>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <!-- 3 POSTES SIGNATURE -->
-                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #999; margin-bottom: 8px;">
-                        <tr style="background: #dde4ed;">
-                            <th style="padding: 4px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%;">Poste de Securite</th>
-                            <th style="padding: 4px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%;">Poste de Chargement</th>
-                            <th style="padding: 4px; border: 1px solid #999; text-align: center; font-size: 10px; width: 33%;">Poste de Facturation</th>
-                        </tr>
-                        <tr>
-                            <td style="height: 45px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #777;">
+                            <td style="height: 60px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #aaa;">
                                 Signature et cachet
                             </td>
-                            <td style="height: 45px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #777;">
-                                Signature et cachet
-                            </td>
-                            <td style="height: 45px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #777;">
+                            <td style="height: 60px; border: 1px solid #999; padding: 4px; text-align: center; vertical-align: bottom; font-size: 10px; color: #aaa;">
                                 Signature et cachet
                             </td>
                         </tr>
                     </table>
 
                     <!-- PIED DE PAGE -->
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table style="width: 100%; border-collapse: collapse; border-top: 1px solid #ccc;">
                         <tr>
-                            <td style="vertical-align: middle; text-align: center; font-size: 8px; color: #555; line-height: 1.5;">
+                            <td style="text-align: center; font-size: 8px; color: #777; line-height: 1.6; padding-top: 4px;">
                                 <b>SIEGE SOCIAL : OULED ADOUANE BP 01 - AIN EL KEBIRA (W.SETIF) ALGERIE</b><br/>
-                                DIRECTION GENERALE : TEL : +(213)36 82 83 39 / +(213)36 82 83 41 - FAX : +(213) 36 82 83 46<br/>
-                                UNITE CIMENTERIE : TEL : +(213) 36 60 80 80 / +(213) 36 60 82 82 / +(213) 36 60 83 83 - FAX : +(213) 36 60 81 81<br/>
+                                TEL : +(213)36 82 83 39 / +(213)36 82 83 41 — FAX : +(213) 36 82 83 46<br/>
                                 SITE WEB : HTTP://WWW.SCAEK.DZ
                             </td>
                         </tr>

@@ -22,7 +22,6 @@ class GicaBonCirculation(models.Model):
         tracking=True,
     )
 
-    # Liens
     sale_order_id = fields.Many2one(
         'sale.order',
         string='Commande de Vente',
@@ -38,7 +37,13 @@ class GicaBonCirculation(models.Model):
         readonly=True,
     )
 
-    # Infos commande (related)
+    picking_id = fields.Many2one(
+        'stock.picking',
+        string='Bon de Livraison',
+        readonly=True,
+        tracking=True,
+    )
+
     partner_id = fields.Many2one(
         'res.partner',
         related='sale_order_id.partner_id',
@@ -70,29 +75,11 @@ class GicaBonCirculation(models.Model):
             else:
                 rec.conditionnement = ''
 
-    quantite_prevue = fields.Float(
-        string='Quantite Prevue (T)',
-        readonly=True,
-        tracking=True,
-    )
-    nbr_paquets = fields.Integer(
-        string='Nombre de Paquets',
-        readonly=True,
-    )
-    numero_rotation = fields.Integer(
-        string='N Rotation',
-        readonly=True,
-    )
+    quantite_prevue = fields.Float(string='Quantite Prevue (T)', readonly=True, tracking=True)
+    nbr_paquets     = fields.Integer(string='Nombre de Paquets', readonly=True)
+    numero_rotation = fields.Integer(string='N Rotation', readonly=True)
+    numero_chaine   = fields.Char(string='N de Chaine', readonly=True, tracking=True)
 
-    # N de Chaine
-    numero_chaine = fields.Char(
-        string='N de Chaine',
-        readonly=True,
-        tracking=True,
-    )
-
-    # Logistique et Camion
-    # Saisis par l'agent bascule quand le camion arrive physiquement
     chauffeur      = fields.Char(string='Chauffeur',         tracking=True)
     matricule      = fields.Char(string='Matricule',         tracking=True)
     camion         = fields.Char(string='Camion',            tracking=True)
@@ -101,7 +88,6 @@ class GicaBonCirculation(models.Model):
     lieu_livraison = fields.Char(string='Lieu de Livraison', tracking=True)
     numero_permis  = fields.Char(string='N Permis',          tracking=True)
 
-    # Bascule - Pesees
     tare_p1       = fields.Float(string='Tare P1 (T)',        tracking=True)
     poids_brut_p2 = fields.Float(string='Poids Brut P2 (T)', tracking=True)
     poids_net     = fields.Float(
@@ -111,24 +97,14 @@ class GicaBonCirculation(models.Model):
         tracking=True,
     )
 
-    # Ecart pesee
-    ecart_poids = fields.Float(
-        string='Ecart (T)',
-        compute='_compute_ecart_poids',
-        store=True,
-    )
-    ecart_type = fields.Selection([
+    ecart_poids = fields.Float(string='Ecart (T)', compute='_compute_ecart_poids', store=True)
+    ecart_type  = fields.Selection([
         ('ok',      'Conforme'),
         ('surplus', 'Surplus'),
         ('manque',  'Manque'),
     ], string='Type ecart', compute='_compute_ecart_poids', store=True)
 
-    pesee_ids = fields.One2many(
-        'gica.pesee',
-        'bon_circulation_id',
-        string='Historique pesees',
-        readonly=True,
-    )
+    pesee_ids = fields.One2many('gica.pesee', 'bon_circulation_id', string='Historique pesees', readonly=True)
 
     @api.depends('poids_net', 'quantite_prevue')
     def _compute_ecart_poids(self):
@@ -146,12 +122,7 @@ class GicaBonCirculation(models.Model):
                 rec.ecart_poids = 0.0
                 rec.ecart_type  = 'ok'
 
-    # Code QR
-    qr_code = fields.Binary(
-        string='Code QR',
-        compute='_compute_qr_code',
-        store=True,
-    )
+    qr_code = fields.Binary(string='Code QR', compute='_compute_qr_code', store=True)
 
     @api.depends('name')
     def _compute_qr_code(self):
@@ -167,7 +138,6 @@ class GicaBonCirculation(models.Model):
             else:
                 rec.qr_code = False
 
-    # Statut
     state = fields.Selection([
         ('brouillon',     'Brouillon'),
         ('transmis_tare', 'Transmis a la tare'),
@@ -178,41 +148,19 @@ class GicaBonCirculation(models.Model):
         ('annule',        'Annule'),
     ], string='Etat', default='brouillon', tracking=True, required=True)
 
-    # ── Workflow ──────────────────────────────────────────────────────────
-
     def action_transmettre_tare(self):
-        """
-        Commercial transmet le BC a la tare.
-        Pas de verification chauffeur/camion ici —
-        c'est l'agent bascule qui les saisit quand le camion arrive.
-        """
         for rec in self:
             rec.write({'state': 'transmis_tare'})
-            rec.message_post(
-                body=f'Bon de circulation {rec.name} transmis a la tare.'
-            )
+            rec.message_post(body=f'Bon de circulation {rec.name} transmis a la tare.')
 
     def action_pesee_entree(self):
-        """
-        Agent bascule saisit les infos du camion + tare P1.
-        Chauffeur et matricule sont obligatoires ici —
-        l'agent les voit physiquement avant de peser.
-        """
         for rec in self:
-            # Verification : chauffeur et matricule obligatoires
             if not rec.chauffeur:
-                raise ValidationError(
-                    'Veuillez saisir le nom du chauffeur avant de valider la pesee.'
-                )
+                raise ValidationError('Veuillez saisir le nom du chauffeur avant de valider la pesee.')
             if not rec.matricule:
-                raise ValidationError(
-                    'Veuillez saisir le matricule du camion avant de valider la pesee.'
-                )
-            # Verification : tare P1 obligatoire
+                raise ValidationError('Veuillez saisir le matricule du camion avant de valider la pesee.')
             if not rec.tare_p1 or rec.tare_p1 <= 0:
-                raise ValidationError(
-                    'Veuillez saisir la Tare P1 avant de valider.'
-                )
+                raise ValidationError('Veuillez saisir la Tare P1 avant de valider.')
             rec.write({'state': 'pesee_entree'})
             self.env['gica.pesee'].create({
                 'bon_circulation_id': rec.id,
@@ -229,18 +177,14 @@ class GicaBonCirculation(models.Model):
     def action_chargement(self):
         for rec in self:
             if not rec.tare_p1 or rec.tare_p1 <= 0:
-                raise ValidationError(
-                    'La Tare P1 doit etre saisie et validee avant le chargement.'
-                )
+                raise ValidationError('La Tare P1 doit etre saisie et validee avant le chargement.')
             rec.write({'state': 'chargement'})
             rec.message_post(body='Chargement en cours.')
 
     def action_pesee_sortie(self):
         for rec in self:
             if not rec.poids_brut_p2 or rec.poids_brut_p2 <= 0:
-                raise ValidationError(
-                    'Veuillez saisir le Poids Brut P2 avant de valider.'
-                )
+                raise ValidationError('Veuillez saisir le Poids Brut P2 avant de valider.')
             if rec.poids_brut_p2 <= rec.tare_p1:
                 raise ValidationError(
                     f'Le Poids Brut P2 ({rec.poids_brut_p2} T) doit etre '
@@ -248,7 +192,7 @@ class GicaBonCirculation(models.Model):
                 )
             nb_p2 = self.env['gica.pesee'].search_count([
                 ('bon_circulation_id', '=', rec.id),
-                ('type_pesee',         '=', 'charge'),
+                ('type_pesee', '=', 'charge'),
             ])
             note = f'Pesee en charge N{nb_p2 + 1}'
             if nb_p2 > 0:
@@ -261,29 +205,111 @@ class GicaBonCirculation(models.Model):
                 'agent_pesage_id':    self.env.user.id,
                 'note':               note,
             })
-            rec.message_post(
-                body=f'Pesee sortie validee - Poids Brut P2 : {rec.poids_brut_p2} T'
-            )
+            rec.message_post(body=f'Pesee sortie validee - Poids Brut P2 : {rec.poids_brut_p2} T')
 
     @api.depends('tare_p1', 'poids_brut_p2')
     def _compute_poids_net(self):
         for rec in self:
             rec.poids_net = max(0.0, rec.poids_brut_p2 - rec.tare_p1)
 
+    def _creer_bon_livraison(self):
+        """
+        Cree un BL Odoo (stock.picking) automatiquement
+        1 pesee terminee = 1 BL
+        Corrections Odoo 18 : quantity au lieu de qty_done
+        """
+        self.ensure_one()
+        if self.picking_id:
+            return
+        if not self.product_id or not self.poids_net:
+            return
+
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'outgoing'),
+            ('warehouse_id.company_id', '=', self.env.company.id),
+        ], limit=1)
+
+        if not picking_type:
+            return
+
+        location_src  = picking_type.default_location_src_id
+        location_dest = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
+
+        if not location_src or not location_dest:
+            return
+
+        uom = self.product_id.uom_id
+
+        picking = self.env['stock.picking'].create({
+            'partner_id':       self.partner_id.id,
+            'picking_type_id':  picking_type.id,
+            'location_id':      location_src.id,
+            'location_dest_id': location_dest.id,
+            'origin':           self.name,
+            'sale_id':          self.sale_order_id.id if self.sale_order_id else False,
+            'note':             f'BC : {self.name} | Chauffeur : {self.chauffeur or ""} | Matricule : {self.matricule or ""}',
+            'move_ids': [(0, 0, {
+                'name':            self.product_id.display_name,
+                'product_id':      self.product_id.id,
+                'product_uom_qty': self.poids_net,
+                'product_uom':     uom.id,
+                'location_id':     location_src.id,
+                'location_dest_id': location_dest.id,
+            })],
+        })
+
+        picking.action_confirm()
+        picking.action_assign()
+
+        # Correction Odoo 18 : quantity au lieu de qty_done
+        for move_line in picking.move_line_ids:
+            move_line.quantity = self.poids_net
+
+        # immediate_transfer=True pour contourner la verification de stock
+        picking.with_context(
+            skip_backorder=True,
+            immediate_transfer=True,
+        ).button_validate()
+
+        self.write({'picking_id': picking.id})
+        self.message_post(
+            body=f'Bon de Livraison cree : {picking.name} - Quantite : {self.poids_net:.3f} T'
+        )
+
+    def _notifier_commercial(self):
+        """Notifie le commercial via le chatter du bon de commande"""
+        self.ensure_one()
+        if not self.sale_order_id:
+            return
+        bcs      = self.sale_order_id.bon_circulation_ids
+        total    = len(bcs)
+        termines = len(bcs.filtered(lambda b: b.state == 'termine'))
+        msg = (
+            f'Rotation {self.numero_rotation}/{total} terminee — '
+            f'Poids net : {self.poids_net:.3f} T | '
+            f'BL : {self.picking_id.name if self.picking_id else "N/A"} | '
+            f'Rotations terminees : {termines}/{total}'
+        )
+        if termines == total:
+            msg += ' — TOUTES LES ROTATIONS SONT TERMINEES. Vous pouvez generer la facture.'
+        self.sale_order_id.message_post(body=msg)
+
+    def _finaliser_terminer(self):
+        """Actions communes apres terminaison"""
+        self.ensure_one()
+        if self.sale_order_id:
+            self.sale_order_id.write({'date_reelle_enlevement': fields.Date.today()})
+            if self.sale_order_id.commande_globale_id:
+                self.sale_order_id.commande_globale_id._check_cloture_automatique()
+        self._creer_bon_livraison()
+        self._notifier_commercial()
+
     def action_terminer(self):
         for rec in self:
             if not rec.poids_brut_p2:
-                raise ValidationError(
-                    'Veuillez saisir le Poids Brut P2 avant de terminer.'
-                )
+                raise ValidationError('Veuillez saisir le Poids Brut P2 avant de terminer.')
             rec.write({'state': 'termine'})
-            # Mettre a jour date reelle enlevement sur sale.order
-            if rec.sale_order_id:
-                rec.sale_order_id.write({
-                    'date_reelle_enlevement': fields.Date.today()
-                })
-                if rec.sale_order_id.commande_globale_id:
-                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
+            rec._finaliser_terminer()
             rec.message_post(
                 body=f'Termine - Poids Net : {rec.poids_net:.2f} T '
                      f'(P1={rec.tare_p1}T / P2={rec.poids_brut_p2}T)'
@@ -298,12 +324,7 @@ class GicaBonCirculation(models.Model):
                 'agent_pesage_id':    rec.env.user.id,
             })
             rec.write({'state': 'termine'})
-            if rec.sale_order_id:
-                rec.sale_order_id.write({
-                    'date_reelle_enlevement': fields.Date.today()
-                })
-                if rec.sale_order_id.commande_globale_id:
-                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
+            rec._finaliser_terminer()
             rec.message_post(
                 body=f'Surplus accepte - Poids Net : {rec.poids_net:.2f} T '
                      f'(prevu {rec.quantite_prevue:.2f} T, ecart +{rec.ecart_poids:.2f} T)'
@@ -312,28 +333,17 @@ class GicaBonCirculation(models.Model):
     def action_decharger_surplus(self):
         for rec in self:
             rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
-            rec.message_post(
-                body=f'Dechargement du surplus - '
-                     f'Ecart : +{rec.ecart_poids:.2f} T. Retour au chargement.'
-            )
+            rec.message_post(body=f'Dechargement du surplus - Ecart : +{rec.ecart_poids:.2f} T. Retour au chargement.')
 
     def action_recharger_manque(self):
         for rec in self:
             rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
-            rec.message_post(
-                body=f'Rechargement demande - '
-                     f'Manque : {abs(rec.ecart_poids):.2f} T. Retour au chargement.'
-            )
+            rec.message_post(body=f'Rechargement demande - Manque : {abs(rec.ecart_poids):.2f} T. Retour au chargement.')
 
     def action_accepter_manque(self):
         for rec in self:
             rec.write({'state': 'termine'})
-            if rec.sale_order_id:
-                rec.sale_order_id.write({
-                    'date_reelle_enlevement': fields.Date.today()
-                })
-                if rec.sale_order_id.commande_globale_id:
-                    rec.sale_order_id.commande_globale_id._check_cloture_automatique()
+            rec._finaliser_terminer()
             rec.message_post(
                 body=f'Quantite partielle acceptee - Poids Net : {rec.poids_net:.2f} T '
                      f'(prevu {rec.quantite_prevue:.2f} T, manque {abs(rec.ecart_poids):.2f} T)'
@@ -354,7 +364,25 @@ class GicaBonCirculation(models.Model):
             'res_id':    self.sale_order_id.id,
         }
 
-    # Retour arriere
+    def action_voir_bon_livraison(self):
+        self.ensure_one()
+        if not self.picking_id:
+            return
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Bon de Livraison',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id':    self.picking_id.id,
+        }
+
+    def action_imprimer_bon_livraison(self):
+        """Imprime le BL Odoo natif depuis la bascule"""
+        self.ensure_one()
+        if not self.picking_id:
+            raise ValidationError('Aucun bon de livraison genere pour ce bon de circulation.')
+        return self.env.ref('stock.action_report_delivery').report_action(self.picking_id)
+
     def action_retour_brouillon(self):
         for rec in self:
             rec.write({'state': 'brouillon'})
@@ -375,20 +403,13 @@ class GicaBonCirculation(models.Model):
             rec.write({'state': 'chargement', 'poids_brut_p2': 0.0})
             rec.message_post(body='Correction - Poids Brut P2 reinitialise.')
 
-    # Creation avec sequence
     @api.model_create_multi
     def create(self, vals_list):
         today = date.today()
         for vals in vals_list:
             if vals.get('name', 'Nouveau') == 'Nouveau':
-                vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'gica.bon.circulation'
-                ) or 'Nouveau'
+                vals['name'] = self.env['ir.sequence'].next_by_code('gica.bon.circulation') or 'Nouveau'
             if not vals.get('numero_chaine'):
-                seq = self.env['ir.sequence'].next_by_code(
-                    'gica.bon.circulation.chaine'
-                ) or '0000'
-                vals['numero_chaine'] = (
-                    f"{today.year}/{today.month:02d}/{today.day:02d}/CIM/{seq}"
-                )
+                seq = self.env['ir.sequence'].next_by_code('gica.bon.circulation.chaine') or '0000'
+                vals['numero_chaine'] = f"{today.year}/{today.month:02d}/{today.day:02d}/CIM/{seq}"
         return super().create(vals_list)
