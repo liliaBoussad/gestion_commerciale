@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
 
-    <!-- Attribut Conditionnement -->
+    <!-- ══════════════════════════════════════════════
+         ATTRIBUT CONDITIONNEMENT
+         ══════════════════════════════════════════════ -->
     <record id="product_attribute_conditionnement" model="product.attribute">
         <field name="name">Conditionnement</field>
         <field name="display_type">radio</field>
@@ -9,6 +11,7 @@
         <field name="sequence">20</field>
     </record>
 
+    <!-- Valeurs conditionnement -->
     <record id="attr_val_sac_25kg" model="product.attribute.value">
         <field name="name">Sac 25kg</field>
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
@@ -18,11 +21,11 @@
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
     </record>
     <record id="attr_val_sac_25kg_fardelise" model="product.attribute.value">
-        <field name="name">Sac 25kg Fardelisé</field>
+        <field name="name">Sac 25kg Fardelise</field>
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
     </record>
     <record id="attr_val_sac_50kg_fardelise" model="product.attribute.value">
-        <field name="name">Sac 50kg Fardelisé</field>
+        <field name="name">Sac 50kg Fardelise</field>
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
     </record>
     <record id="attr_val_vrac" model="product.attribute.value">
@@ -37,6 +40,10 @@
         <field name="name">Big Bag Scaek</field>
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
     </record>
+
+    <!-- ══════════════════════════════════════════════
+         PRODUITS GICA
+         ══════════════════════════════════════════════ -->
 
     <!-- CEM I 42.5 N-LH/SR5 -->
     <record id="product_tmpl_cem_i_425" model="product.template">
@@ -54,7 +61,7 @@
         <field name="value_ids" eval="[(6, 0, [
             ref('attr_val_sac_50kg'),
             ref('attr_val_sac_50kg_fardelise'),
-            ref('attr_val_vrac')
+            ref('attr_val_vrac'),
         ])]"/>
     </record>
 
@@ -74,7 +81,8 @@
         <field name="value_ids" eval="[(6, 0, [
             ref('attr_val_sac_50kg'),
             ref('attr_val_sac_50kg_fardelise'),
-            ref('attr_val_vrac')
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
         ])]"/>
     </record>
 
@@ -94,7 +102,8 @@
         <field name="value_ids" eval="[(6, 0, [
             ref('attr_val_sac_25kg'),
             ref('attr_val_sac_25kg_fardelise'),
-            ref('attr_val_vrac')
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
         ])]"/>
     </record>
 
@@ -113,8 +122,34 @@
         <field name="attribute_id" ref="product_attribute_conditionnement"/>
         <field name="value_ids" eval="[(6, 0, [
             ref('attr_val_sac_25kg'),
+            ref('attr_val_sac_25kg_fardelise'),
+            ref('attr_val_sac_50kg'),
             ref('attr_val_sac_50kg_fardelise'),
-            ref('attr_val_vrac')
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
+        ])]"/>
+    </record>
+
+    <!-- CEM II/A-L 42.5 R -->
+    <record id="product_tmpl_cem_ii_425r" model="product.template">
+        <field name="name">CEM II/A-L 42.5 R</field>
+        <field name="is_gica_product">True</field>
+        <field name="type_ciment">cem_ii_425_r</field>
+        <field name="type">consu</field>
+        <field name="uom_id" ref="uom.product_uom_ton"/>
+        <field name="uom_po_id" ref="uom.product_uom_ton"/>
+        <field name="default_code">CEM_II_425R</field>
+    </record>
+    <record id="product_tmpl_cem_ii_425r_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_ii_425r"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_25kg'),
+            ref('attr_val_sac_25kg_fardelise'),
+            ref('attr_val_sac_50kg'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
         ])]"/>
     </record>
 
@@ -134,7 +169,7 @@
         <field name="value_ids" eval="[(6, 0, [
             ref('attr_val_vrac'),
             ref('attr_val_big_bag_client'),
-            ref('attr_val_big_bag_scaek')
+            ref('attr_val_big_bag_scaek'),
         ])]"/>
     </record>
 

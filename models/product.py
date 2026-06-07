@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields
 
 
 class ProductTemplate(models.Model):
@@ -14,10 +14,10 @@ class ProductTemplate(models.Model):
     type_ciment = fields.Selection([
         ('cem_i_425_crs', 'CEM I 42.5 N-LH/SR5 (GICA MOUDHAD CRS)'),
         ('cem_i_525',     'CEM I 52.5 N-SR5 (GICA MOUDHAD)'),
-        ('cem_ii_325',    'CEM II/A-L 32.5 N (GICA BÉTON)'),
-        ('cem_ii_425_n',  'CEM II/A-L 42.5 N (GICA BÉTON)'),
-        ('cem_ii_425_r',  'CEM II/A-L 42.5 R (GICA BÉTON)'),
-        ('well_cement_g', 'Well Cement Class G HSR (GICA PÉTROLE)'),
+        ('cem_ii_325',    'CEM II/A-L 32.5 N (GICA BETON)'),
+        ('cem_ii_425_n',  'CEM II/A-L 42.5 N (GICA BETON)'),
+        ('cem_ii_425_r',  'CEM II/A-L 42.5 R (GICA BETON)'),
+        ('well_cement_g', 'Well Cement Class G HSR (GICA PETROLE)'),
         ('clinker',       'Clinker'),
     ], string='Famille ciment', tracking=True)
 

@@ -13,7 +13,7 @@
         # Data
         'data/gica_client_nature_data.xml',
         'data/products_data.xml',
-        #'data/pricelists_data.xml',
+        'data/pricelists_data.xml',
         'data/gica_scoring_category_data.xml',
         'data/gica_classification_data.xml',
         'data/gica_commandes_data.xml',
