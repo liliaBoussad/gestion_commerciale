@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Formulaire BCG -->
     <record id="view_gica_commande_globale_form" model="ir.ui.view">
         <field name="name">gica.commande.globale.form</field>
         <field name="model">gica.commande.globale</field>
@@ -22,9 +21,7 @@
                         <button class="oe_stat_button" icon="fa-calendar"
                                 type="object" name="action_voir_planifications">
                             <div class="o_stat_info">
-                                <span class="o_stat_value">
-                                    <field name="planification_count"/>
-                                </span>
+                                <span class="o_stat_value"><field name="planification_count"/></span>
                                 <span class="o_stat_text">Planifications</span>
                             </div>
                         </button>
@@ -32,9 +29,7 @@
                                 type="object" name="action_voir_planifications"
                                 invisible="planification_en_attente_count == 0">
                             <div class="o_stat_info">
-                                <span class="o_stat_value">
-                                    <field name="planification_en_attente_count"/>
-                                </span>
+                                <span class="o_stat_value"><field name="planification_en_attente_count"/></span>
                                 <span class="o_stat_text">En attente</span>
                             </div>
                         </button>
@@ -42,9 +37,7 @@
                                 type="object" name="action_voir_bons_commande"
                                 invisible="bon_commande_count == 0">
                             <div class="o_stat_info">
-                                <span class="o_stat_value">
-                                    <field name="bon_commande_count"/>
-                                </span>
+                                <span class="o_stat_value"><field name="bon_commande_count"/></span>
                                 <span class="o_stat_text">Bons de Commande</span>
                             </div>
                         </button>
@@ -61,30 +54,29 @@
                             <field name="date_commande"/>
                             <field name="date_expiration"/>
                         </group>
-                        
                     </group>
 
                     <notebook>
                         <page string="Produits">
-                            <field name="line_ids"
-                                readonly="state in ('cloturee', 'annulee')">
+                            <field name="line_ids" readonly="state in ('cloturee', 'annulee')">
                                 <list editable="bottom">
                                     <field name="sequence"           widget="handle"/>
                                     <field name="product_tmpl_id"
-                                        domain="[('is_gica_product','=',True)]"
-                                        string="Produit"/>
+                                           domain="[('is_gica_product','=',True)]"
+                                           string="Produit"/>
                                     <field name="conditionnement"/>
                                     <field name="product_id"         invisible="1"/>
                                     <field name="quantity_tonne"     string="Qté totale (T)"/>
                                     <field name="prix_unitaire"      string="Prix unitaire (DA)"/>
-                                    <field name="montant_total"      string="Montant (DA)"    readonly="1"/>
-                                    <field name="quantity_planifiee" string="Planifiée (T)"   readonly="1"/>
-                                    <field name="quantity_enlevee"   string="Enlevée (T)"     readonly="1"/>
-                                    <field name="quantity_restante"  string="Restante (T)"    readonly="1"/>
+                                    <field name="montant_total"      string="Montant (DA)" readonly="1"/>
+                                    <field name="quantity_planifiee" string="Planifiée (T)" readonly="1"/>
+                                    <field name="quantity_enlevee"   string="Enlevée (T)"  readonly="1"/>
+                                    <field name="quantity_restante"  string="Restante (T)" readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
+                        <!-- planification_ids → modele gica.planification.client -->
                         <page string="Planifications proposées">
                             <field name="planification_ids" nolabel="1">
                                 <list decoration-success="state == 'validee'"
@@ -117,13 +109,14 @@
                             </field>
                         </page>
 
+                        <!-- bon_commande_ids → modele sale.order -->
                         <page string="Bons de Commande">
                             <field name="bon_commande_ids" nolabel="1">
                                 <list>
                                     <field name="name"/>
                                     <field name="date_prevue_enlevement"/>
-                                    <field name="quantity_total_tonne" string="Qté (T)"/>
-                                    <field name="amount_total"         string="Montant (DA)"/>
+                                    <field name="quantity_livree"  string="Qté livrée (T)"/>
+                                    <field name="amount_total"     string="Montant (DA)"/>
                                     <field name="state" widget="badge"/>
                                 </list>
                             </field>
