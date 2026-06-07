@@ -105,7 +105,7 @@
                                     <field name="client_id" string="Client"/>
                                     <field name="commande_globale_id" string="BCG"/>
                                     <field name="product_id" string="Produit"/>
-                                    <field name="conditionnement" string="Conditionnement"/>
+                                    <field name="conditionnement_id" string="Conditionnement"/>
                                     <field name="nbr_paquets" string="Qté paquets"/>
                                     <field name="rotation" string="Rotations"/>
                                     <field name="quantity_tonne"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
 
     <!-- Séquence Planification Client : PC/YYYY/XXXX -->
     <record id="seq_gica_planification_client" model="ir.sequence">
@@ -20,5 +20,42 @@
         <field name="number_increment">1</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <!-- CONFIGURATION PAR DEFAUT -->
+    <record id="gica_planification_config_default" model="gica.planification.config">
+        <field name="name">Configuration Planification</field>
+        <field name="heure_cron">18</field>
+        <field name="actif">True</field>
+        <field name="nb_jours_periode">14</field>
+    </record>
+
+    <!-- CRON JOB -->
+    <record id="ir_cron_gica_planification_recuperation" model="ir.cron">
+        <field name="name">GICA — Récupération automatique des planifications</field>
+        <field name="model_id" ref="model_gica_planification_usine"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_recuperer_planifications()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+    
+
+    <!-- MENU CONFIGURATION PLANIFICATION -->
+    <menuitem id="menu_ventes_gica_planification_config"
+              name="Configuration Planification"
+              parent="sale.sale_order_menu"
+              action="action_gica_planification_config"
+              sequence="9"/>
+   
+   <record id="seq_gica_avenant" model="ir.sequence">
+       <field name="name">Avenant GICA</field>
+        <field name="code">gica.avenant</field>
+       <field name="prefix">AVN/%(year)s/</field>
+       <field name="padding">4</field>
+       <field name="number_increment">1</field>
+       <field name="company_id" eval="False"/>
+   </record>
 
 </odoo>

@@ -11,13 +11,15 @@
 
         # Data
         'data/gica_client_nature_data.xml',
-        'data/products_data.xml',
+        
         'data/gica_scoring_category_data.xml',
         'data/gica_classification_data.xml',
         'data/gica_commandes_data.xml',
         'data/gica_planification_sequences.xml',
+       
         'data/gica_document_type_data.xml',
         'data/gica_client_category_data.xml',
+        'data/gica_pricelists_data.xml',
 
         # Views — ordre important !
         'views/gica_client_nature_views.xml',       
@@ -35,9 +37,15 @@
         'views/gica_commande_globale_views.xml',
         'views/gica_planification_client_views.xml',
         'views/gica_planification_usine_views.xml',
+        'views/gica_planification_config_views.xml',
         'views/sale_order_gica_views.xml',
+        'views/gica_avenant_views.xml',
+        'views/gica_pricelist_config_views.xml',
+       
 
         'views/menu.xml',
+         # Portail
+        'templates/portail_gica.xml',
     ],
     'installable': True,
     'application': True,

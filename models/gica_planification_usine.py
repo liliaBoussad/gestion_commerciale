@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from datetime import timedelta
+from datetime import timedelta, date
 
 
 class GicaPlanificationConsolidation(models.Model):
@@ -15,25 +15,37 @@ class GicaPlanificationConsolidation(models.Model):
         required=True,
         ondelete='cascade',
     )
-    date_enlevement  = fields.Date(string='Date enlèvement', readonly=True)
-    product_id       = fields.Many2one('product.product', string='Produit', readonly=True)
-    conditionnement  = fields.Selection(
-        related='product_id.conditionnement_gica',
+    date_enlevement = fields.Date(string='Date enlèvement', readonly=True)
+    product_id      = fields.Many2one('product.product', string='Produit', readonly=True)
+    conditionnement = fields.Char(
         string='Conditionnement',
-        readonly=True,
+        compute='_compute_conditionnement',
         store=True,
+        readonly=True,
     )
-    nb_lignes       = fields.Integer(string='Nb clients',    readonly=True)
-    nb_rotations    = fields.Integer(string='Rotations',     readonly=True)
-    quantity_tonne  = fields.Float(string='Qté totale (T)',  readonly=True)
-
+    nb_lignes      = fields.Integer(string='Nb clients',   readonly=True)
+    nb_rotations   = fields.Integer(string='Rotations',    readonly=True)
+    quantity_tonne = fields.Float(string='Qté totale (T)', readonly=True)
+    
+    @api.depends('product_id')
+    def _compute_conditionnement(self):
+        for rec in self:
+            if rec.product_id:
+                attr_line = rec.product_id.product_template_attribute_value_ids.filtered(
+                    lambda v: v.attribute_id.name == 'Conditionnement'
+                )
+                rec.conditionnement = attr_line[0].name if attr_line else ''
+            else:
+                rec.conditionnement = ''
+    
+ 
 
 class GicaPlanificationUsine(models.Model):
-    _name = 'gica.planification.usine'
+    _name        = 'gica.planification.usine'
     _description = 'Planification Usine GICA'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'date_debut desc'
-    _rec_name = 'name'
+    _inherit     = ['mail.thread', 'mail.activity.mixin']
+    _order       = 'date_debut desc'
+    _rec_name    = 'name'
 
     name = fields.Char(
         string='Référence',
@@ -53,9 +65,9 @@ class GicaPlanificationUsine(models.Model):
     )
 
     state = fields.Selection([
-        ('brouillon',  'Brouillon'),
-        ('en_cours',   'En cours'),
-        ('confirmee',  'Confirmée'),
+        ('brouillon', 'Brouillon'),
+        ('en_cours',  'En cours'),
+        ('confirmee', 'Confirmée'),
     ], string='Statut', default='brouillon', tracking=True, required=True)
 
     planification_ids = fields.One2many(
@@ -63,15 +75,11 @@ class GicaPlanificationUsine(models.Model):
         'planification_usine_id',
         string='Planifications Clients',
     )
-
-    # ── Lignes produits directes ──────────────────────────────────────────
     planification_line_ids = fields.One2many(
         'gica.planification.client.line',
         'planification_usine_id',
         string='Lignes produits',
     )
-
-    # ── Consolidation ─────────────────────────────────────────────────────
     consolidation_ids = fields.One2many(
         'gica.planification.consolidation',
         'planification_usine_id',
@@ -81,7 +89,6 @@ class GicaPlanificationUsine(models.Model):
 
     observations = fields.Text(string='Observations')
 
-    # ── Compteurs ─────────────────────────────────────────────────────────
     planification_count = fields.Integer(
         compute='_compute_counts',
         string='Total',
@@ -98,8 +105,6 @@ class GicaPlanificationUsine(models.Model):
         compute='_compute_counts',
         string='En attente',
     )
-
-    # ── Totaux quantités ──────────────────────────────────────────────────
     quantity_total_demandee = fields.Float(
         compute='_compute_quantities',
         store=True,
@@ -120,11 +125,11 @@ class GicaPlanificationUsine(models.Model):
                  'planification_line_ids.state')
     def _compute_counts(self):
         for rec in self:
-            rec.planification_count = len(rec.planification_ids)
-            rec.planification_validee_count = len(
+            rec.planification_count            = len(rec.planification_ids)
+            rec.planification_validee_count    = len(
                 rec.planification_ids.filtered(lambda p: p.state == 'validee')
             )
-            rec.planification_refusee_count = len(
+            rec.planification_refusee_count    = len(
                 rec.planification_ids.filtered(lambda p: p.state == 'refusee')
             )
             rec.planification_en_attente_count = len(
@@ -163,7 +168,7 @@ class GicaPlanificationUsine(models.Model):
         for rec in self:
             if rec.date_debut and rec.date_debut < today:
                 raise ValidationError(
-                    '❌ La date de début ne peut pas être dans le passé.'
+                    'La date de début ne peut pas être dans le passé.'
                 )
 
     @api.constrains('date_debut')
@@ -172,52 +177,51 @@ class GicaPlanificationUsine(models.Model):
             if not rec.date_debut:
                 continue
             date_fin = rec.date_debut + timedelta(days=14)
-            overlap = self.search([
-                ('state', '=', 'confirmee'),
-                ('id', '!=', rec.id),
+            overlap  = self.search([
+                ('state',      '=',  'confirmee'),
+                ('id',         '!=', rec.id),
                 ('date_debut', '<=', date_fin),
-                ('date_fin', '>=', rec.date_debut),
+                ('date_fin',   '>=', rec.date_debut),
             ])
             if overlap:
                 raise ValidationError(
-                    f'❌ Cette période chevauche une période déjà confirmée : '
+                    f'Cette période chevauche une période déjà confirmée : '
                     f'{overlap[0].name} ({overlap[0].date_debut} → {overlap[0].date_fin})'
                 )
 
     def action_recuperer_planifications(self):
         self.ensure_one()
         if not self.date_debut or not self.date_fin:
-            raise ValidationError('❌ Veuillez définir une date de début.')
+            raise ValidationError('Veuillez définir une date de début.')
 
-        # Chercher via les lignes directement
         lignes = self.env['gica.planification.client.line'].search([
-            ('date_enlevement', '>=', self.date_debut),
-            ('date_enlevement', '<=', self.date_fin),
-            ('planification_id.state', '=', 'soumise'),
-            ('planification_id.planification_usine_id', '=', False),
+            ('date_enlevement',                         '>=', self.date_debut),
+            ('date_enlevement',                         '<=', self.date_fin),
+            ('planification_id.state',                  '=',  'soumise'),
+            ('planification_id.planification_usine_id', '=',  False),
         ])
 
         planifications = lignes.mapped('planification_id')
 
         if not planifications:
             raise ValidationError(
-                f'⚠️ Aucune planification cliente soumise pour la période '
+                f'Aucune planification cliente soumise pour la période '
                 f'{self.date_debut} → {self.date_fin}.'
             )
 
         planifications.write({'planification_usine_id': self.id})
         self.write({'state': 'en_cours'})
         self.message_post(
-            body=f'📋 {len(planifications)} planification(s) récupérée(s) '
+            body=f'{len(planifications)} planification(s) récupérée(s) '
                  f'pour la période {self.date_debut} → {self.date_fin}.'
         )
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
+            'tag':  'display_notification',
             'params': {
-                'title': 'Planifications récupérées',
+                'title':   'Planifications récupérées',
                 'message': f'{len(planifications)} planification(s) récupérée(s).',
-                'type': 'success',
+                'type':    'success',
             }
         }
 
@@ -228,12 +232,12 @@ class GicaPlanificationUsine(models.Model):
             )
             if en_attente:
                 raise ValidationError(
-                    f'❌ Il reste {len(en_attente)} ligne(s) en attente de traitement.'
+                    f'Il reste {len(en_attente)} ligne(s) en attente de traitement.'
                 )
             rec.write({'state': 'confirmee'})
             rec._calculer_consolidation()
             rec.message_post(
-                body=f'🔒 Période confirmée et verrouillée : '
+                body=f'Période confirmée et verrouillée : '
                      f'{rec.date_debut} → {rec.date_fin}'
             )
 
@@ -255,10 +259,10 @@ class GicaPlanificationUsine(models.Model):
             data[key]['nb_rotations']   += line.rotation
             data[key]['quantity_tonne'] += line.quantity_tonne
 
-        for (date, product_id, conditionnement), vals in data.items():
+        for (date_enl, product_id, conditionnement), vals in data.items():
             self.env['gica.planification.consolidation'].create({
                 'planification_usine_id': self.id,
-                'date_enlevement':        date,
+                'date_enlevement':        date_enl,
                 'product_id':             product_id,
                 'conditionnement':        conditionnement,
                 'nb_lignes':              vals['nb_lignes'],
@@ -267,7 +271,7 @@ class GicaPlanificationUsine(models.Model):
             })
 
         self.message_post(
-            body=f'📊 Consolidation calculée — {len(data)} ligne(s).'
+            body=f'Consolidation calculée — {len(data)} ligne(s).'
         )
 
     def action_calculer_consolidation(self):
@@ -275,11 +279,11 @@ class GicaPlanificationUsine(models.Model):
         self._calculer_consolidation()
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
+            'tag':  'display_notification',
             'params': {
-                'title': 'Consolidation',
+                'title':   'Consolidation',
                 'message': 'Consolidation recalculée avec succès.',
-                'type': 'success',
+                'type':    'success',
             }
         }
 
@@ -287,23 +291,102 @@ class GicaPlanificationUsine(models.Model):
         self.ensure_one()
         planification = self.env['gica.planification.client'].browse(planification_id)
         if planification.planification_usine_id != self:
-            raise ValidationError('❌ Cette planification n\'appartient pas à cette période.')
+            raise ValidationError("Cette planification n'appartient pas à cette période.")
         planification.action_valider()
 
     def action_refuser_planification(self, planification_id, motif):
         self.ensure_one()
         planification = self.env['gica.planification.client'].browse(planification_id)
         if planification.planification_usine_id != self:
-            raise ValidationError('❌ Cette planification n\'appartient pas à cette période.')
+            raise ValidationError("Cette planification n'appartient pas à cette période.")
         planification.action_refuser(motif)
 
     def action_voir_planifications(self):
         self.ensure_one()
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Planifications Clients',
+            'type':      'ir.actions.act_window',
+            'name':      'Planifications Clients',
             'res_model': 'gica.planification.client',
             'view_mode': 'list,form',
-            'domain': [('planification_usine_id', '=', self.id)],
-            'context': {'default_planification_usine_id': self.id},
+            'domain':    [('planification_usine_id', '=', self.id)],
+            'context':   {'default_planification_usine_id': self.id},
         }
+
+    # ── Cron job ──────────────────────────────────────────────────────────
+    @api.model
+    def _cron_recuperer_planifications(self):
+        """Crée automatiquement la prochaine période de 15 jours."""
+        config = self.env['gica.planification.config'].get_config()
+        if not config.actif:
+            return
+
+        # Trouver la dernière période confirmée
+        derniere = self.search([
+            ('state', '=', 'confirmee'),
+        ], order='date_fin desc', limit=1)
+
+        if derniere:
+            date_debut = derniere.date_fin + timedelta(days=1)
+        else:
+            date_debut = date.today() + timedelta(days=1)
+
+        # Vérifier qu'une période n'existe pas déjà pour cette date
+        existante = self.search([
+            ('date_debut', '=', date_debut),
+        ], limit=1)
+
+        if not existante:
+            nouveau = self.create({'date_debut': date_debut})
+            nouveau.message_post(
+                body=f'Période créée automatiquement : '
+                     f'{date_debut} → {date_debut + timedelta(days=14)}'
+            )
+
+        # Rattacher toutes les planifications soumises non liées de la période
+        date_fin = date_debut + timedelta(days=14)
+        planning = self.search([
+            ('date_debut', '=', date_debut),
+        ], limit=1)
+
+        if planning:
+            planifications_orphelines = self.env['gica.planification.client'].search([
+                ('state',                  '=',  'soumise'),
+                ('planification_usine_id', '=',  False),
+                ('date_enlevement',        '>=', date_debut),
+                ('date_enlevement',        '<=', date_fin),
+            ])
+            if planifications_orphelines:
+                planifications_orphelines.write({'planification_usine_id': planning.id})
+                planning.write({'state': 'en_cours'})
+                planning.message_post(
+                    body=f'{len(planifications_orphelines)} planification(s) '
+                         f'rattachée(s) automatiquement.'
+                )
+
+    def _get_or_create_periode_for_date(self, date_enlevement):
+        config = self.env['gica.planification.config'].get_config()
+        if not config.actif:
+            return False
+
+        derniere = self.search([
+            ('state', '=', 'confirmee')
+        ], order='date_fin desc', limit=1)
+
+        if derniere:
+            date_debut = derniere.date_fin + timedelta(days=1)
+        else:
+            date_debut = date.today() + timedelta(days=1)
+
+        date_fin = date_debut + timedelta(days=14)
+
+        if not (date_debut <= date_enlevement <= date_fin):
+            return False
+
+        planning = self.search([
+            ('date_debut', '=', date_debut)
+        ], limit=1)
+
+        if not planning:
+            planning = self.create({'date_debut': date_debut})
+
+        return planning

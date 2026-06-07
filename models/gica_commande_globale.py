@@ -17,29 +17,36 @@ class GicaCommandeGlobaleLine(models.Model):
         ondelete='cascade',
     )
 
+    product_tmpl_id = fields.Many2one(
+        'product.template',
+        string='Produit',
+        required=True,
+        domain="[('is_gica_product', '=', True)]",
+    )
+
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string='Conditionnement',
+        domain="[('attribute_id', '=', 4)]",
+        required=True,
+    )
+
     product_id = fields.Many2one(
         'product.product',
-        string='Produit ',
-        required=True,
-        domain="[('product_tmpl_id.is_gica_product', '=', True)]",
+        string='Variante',
+        compute='_compute_product_id',
+        store=True,
     )
 
     product_name = fields.Char(
-        related='product_id.product_tmpl_id.name',
+        related='product_tmpl_id.name',
         string='Produit',
         readonly=True,
         store=True,
     )
 
-    conditionnement = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
-        store=True,
-        readonly=True,
-    )
-
-    quantity_tonne    = fields.Float(string='Quantité (T)',        required=True)
-    prix_unitaire     = fields.Float(string='Prix unitaire (DA)',  required=True)
+    quantity_tonne = fields.Float(string='Quantité (T)', required=True)
+    prix_unitaire = fields.Float(string='Prix unitaire (DA)', default=0.0)
 
     montant_total = fields.Float(
         string='Montant total (DA)',
@@ -65,27 +72,47 @@ class GicaCommandeGlobaleLine(models.Model):
         store=True,
     )
 
+    @api.depends('product_tmpl_id', 'conditionnement_id')
+    def _compute_product_id(self):
+        for rec in self:
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                variant = rec.product_tmpl_id.product_variant_ids.filtered(
+                    lambda v: any(
+                        a.attribute_id.name == 'Conditionnement' and
+                        a.product_attribute_value_id == rec.conditionnement_id
+                        for a in v.product_template_attribute_value_ids
+                    )
+                )
+                rec.product_id = variant[0] if variant else False
+            else:
+                rec.product_id = False
+
     @api.depends('quantity_tonne', 'prix_unitaire')
     def _compute_montant_total(self):
         for rec in self:
             rec.montant_total = rec.quantity_tonne * rec.prix_unitaire
 
     @api.depends(
+        'quantity_tonne',
         'commande_id.bon_commande_ids.order_line.product_uom_qty',
         'commande_id.bon_commande_ids.date_reelle_enlevement',
     )
     def _compute_quantity_enlevee(self):
         for rec in self:
-            bc_enleves = rec.commande_id.bon_commande_ids.filtered(
-                lambda bc: bc.date_reelle_enlevement
-            )
-            enlevee = sum(
-                line.product_uom_qty
-                for bc in bc_enleves
-                for line in bc.order_line
-                if line.product_id == rec.product_id
-            )
-            rec.quantity_enlevee  = enlevee
+            enlevee = 0.0
+            if rec.commande_id and rec.product_tmpl_id and rec.conditionnement_id:
+                bc_enleves = rec.commande_id.bon_commande_ids.filtered(
+                    lambda bc: bc.date_reelle_enlevement
+                )
+                for bc in bc_enleves:
+                    for line in bc.order_line:
+                        if (line.product_id.product_tmpl_id == rec.product_tmpl_id
+                                and line.product_id.product_template_attribute_value_ids.filtered(
+                                    lambda a: a.attribute_id.name == 'Conditionnement'
+                                    and a.product_attribute_value_id == rec.conditionnement_id
+                                )):
+                            enlevee += line.product_uom_qty
+            rec.quantity_enlevee = enlevee
             rec.quantity_restante = rec.quantity_tonne - enlevee
 
     @api.depends(
@@ -94,7 +121,6 @@ class GicaCommandeGlobaleLine(models.Model):
     )
     def _compute_quantity_planifiee(self):
         for rec in self:
-            # Planifications soumises ou validées (pas refusées)
             planifs = rec.commande_id.planification_ids.filtered(
                 lambda p: p.state in ('soumise', 'validee')
             )
@@ -128,6 +154,7 @@ class GicaCommandeGlobale(models.Model):
         required=True,
         tracking=True,
     )
+
     contrat_id = fields.Many2one(
         'gica.client.contract',
         string='Contrat',
@@ -142,6 +169,7 @@ class GicaCommandeGlobale(models.Model):
         default=fields.Date.today,
         tracking=True,
     )
+
     date_expiration = fields.Date(
         string="Date d'expiration",
         related='contrat_id.date_end',
@@ -162,43 +190,84 @@ class GicaCommandeGlobale(models.Model):
         string='Lignes produits',
     )
 
-    # ── Produits disponibles (pour domaine planification) ────────────────
     product_ids = fields.Many2many(
         'product.product',
         compute='_compute_product_ids',
         string='Produits disponibles',
     )
 
+    product_tmpl_contrat_ids = fields.Many2many(
+        'product.template',
+        compute='_compute_product_tmpl_contrat_ids',
+        string='Produits du contrat',
+    )
+
+    @api.depends('contrat_id.line_ids.product_tmpl_id')
+    def _compute_product_tmpl_contrat_ids(self):
+        for rec in self:
+            rec.product_tmpl_contrat_ids = (
+                rec.contrat_id.line_ids.mapped('product_tmpl_id')
+                if rec.contrat_id else False
+            )
+
     @api.depends('line_ids.product_id')
     def _compute_product_ids(self):
         for rec in self:
             rec.product_ids = rec.line_ids.mapped('product_id')
 
-    # ── Lien vers Planifications ──────────────────────────────────────────
     planification_ids = fields.One2many(
         'gica.planification.client',
         'commande_globale_id',
         string='Planifications',
     )
+
     planification_count = fields.Integer(
         compute='_compute_planification_count',
         string='Nb Planifications',
     )
+
     planification_en_attente_count = fields.Integer(
         compute='_compute_planification_count',
         string='En attente',
     )
 
-    # ── Lien vers BC (sale.order) ─────────────────────────────────────────
     bon_commande_ids = fields.One2many(
         'sale.order',
         'commande_globale_id',
         string='Bons de Commande',
     )
+
     bon_commande_count = fields.Integer(
         compute='_compute_bon_commande_count',
         string='Nb BC',
     )
+    # Ajouter ces champs dans GicaCommandeGlobale après bon_commande_count :
+
+    avenant_ids = fields.One2many(
+        'gica.avenant',
+        'commande_globale_id',
+        string='Avenants',
+    )
+
+    avenant_count = fields.Integer(
+        compute='_compute_avenant_count',
+        string='Nb Avenants',
+    )
+
+    @api.depends('avenant_ids')
+    def _compute_avenant_count(self):
+        for rec in self:
+            rec.avenant_count = len(rec.avenant_ids)
+    def action_voir_avenants(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Avenants',
+            'res_model': 'gica.avenant',
+            'view_mode': 'list,form',
+            'domain': [('commande_globale_id', '=', self.id)],
+            'context': {'default_commande_globale_id': self.id},
+        }
 
     montant_total        = fields.Float(compute='_compute_totaux', store=True)
     quantity_total_tonne = fields.Float(compute='_compute_totaux', store=True)
@@ -210,7 +279,14 @@ class GicaCommandeGlobale(models.Model):
     mode_paiement     = fields.Selection(related='contrat_id.mode_paiement',     readonly=True)
     modalite_paiement = fields.Selection(related='contrat_id.modalite_paiement', readonly=True)
     devise            = fields.Char(default='DZD', readonly=True)
-    observations      = fields.Text(string='Observations')
+
+    pricelist_id = fields.Many2one(
+        'product.pricelist',
+        string='Liste de prix',
+        tracking=True,
+    )
+
+    observations = fields.Text(string='Observations')
 
     @api.depends('planification_ids', 'planification_ids.state')
     def _compute_planification_count(self):
@@ -258,9 +334,10 @@ class GicaCommandeGlobale(models.Model):
             lines = []
             for line in self.contrat_id.line_ids:
                 lines.append((0, 0, {
-                    'product_id':     line.product_id.id,
-                    'quantity_tonne': line.quantity_tonne,
-                    'prix_unitaire':  line.prix_unitaire,
+                    'product_tmpl_id':    line.product_tmpl_id.id,
+                    'conditionnement_id': line.conditionnement_id.id,
+                    'quantity_tonne':     line.quantity_tonne,
+                    'prix_unitaire':      line.prix_unitaire,
                 }))
             self.line_ids = lines
 

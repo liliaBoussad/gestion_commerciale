@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
 
 # Natures possibles par catégorie
@@ -17,6 +18,8 @@ NATURE_PAR_TYPE = {
     'auto_const':     ['physique'],
     'autres':         ['morale', 'physique'],
 }
+
+AGREMENT_TYPES = ['distributeur', 'conditionneur', 'rev_agree']
 
 
 class ResPartner(models.Model):
@@ -54,7 +57,9 @@ class ResPartner(models.Model):
     )
 
     commercial_id = fields.Many2one(
-        'res.users', string='Commercial', tracking=True,
+        'res.users',
+        string='Commercial',
+        tracking=True,
     )
 
     sale_type = fields.Selection([
@@ -69,10 +74,10 @@ class ResPartner(models.Model):
     )
 
     # ── Agrément ──────────────────────────────────────────────────────────
-    AGREMENT_TYPES = ['distributeur', 'conditionneur', 'rev_agree']
-
     agrement_ids = fields.One2many(
-        'gica.client.agrement', 'partner_id', string='Agréments',
+        'gica.client.agrement',
+        'partner_id',
+        string='Agréments',
     )
     agrement_actif_id = fields.Many2one(
         'gica.client.agrement',
@@ -81,19 +86,28 @@ class ResPartner(models.Model):
         store=True,
     )
     agrement_numero = fields.Char(
-        related='agrement_actif_id.name', string='N° Agrément', readonly=True,
+        related='agrement_actif_id.name',
+        string='N° Agrément',
+        readonly=True,
     )
     agrement_expiration = fields.Date(
-        related='agrement_actif_id.date_expiration', string='Expiration', readonly=True,
+        related='agrement_actif_id.date_expiration',
+        string='Expiration',
+        readonly=True,
     )
     agrement_statut = fields.Selection(
-        related='agrement_actif_id.state', string='Statut agrément', readonly=True,
+        related='agrement_actif_id.state',
+        string='Statut agrément',
+        readonly=True,
     )
     agrement_count = fields.Integer(
-        compute='_compute_agrement_count', string="Nombre d'agréments",
+        compute='_compute_agrement_count',
+        string="Nombre d'agréments",
     )
     need_agrement = fields.Boolean(
-        compute='_compute_need_agrement', store=True, string='Agrément manquant',
+        compute='_compute_need_agrement',
+        store=True,
+        string='Agrément manquant',
     )
 
     @api.depends('agrement_ids.state')
@@ -113,29 +127,35 @@ class ResPartner(models.Model):
     def _compute_need_agrement(self):
         for rec in self:
             rec.need_agrement = (
-                rec.client_type in self.AGREMENT_TYPES
+                rec.client_type in AGREMENT_TYPES
                 and not rec.agrement_actif_id
             )
 
     # ── Documents ─────────────────────────────────────────────────────────
     document_ids = fields.One2many(
-        'gica.client.document', 'partner_id', string='Documents du dossier',
+        'gica.client.document',
+        'partner_id',
+        string='Documents du dossier',
     )
     document_admin_ids = fields.One2many(
-        'gica.client.document', 'partner_id',
+        'gica.client.document',
+        'partner_id',
         string='Documents administratifs',
         domain=[('section', '=', 'admin')],
     )
     document_tech_ids = fields.One2many(
-        'gica.client.document', 'partner_id',
+        'gica.client.document',
+        'partner_id',
         string='Documents techniques',
         domain=[('section', '=', 'tech')],
     )
-    doc_total      = fields.Integer(compute='_compute_doc_stats', store=True, string='Total')
-    doc_fournis    = fields.Integer(compute='_compute_doc_stats', store=True, string='Fournis')
-    doc_manquants  = fields.Integer(compute='_compute_doc_stats', store=True, string='Manquants')
+    doc_total     = fields.Integer(compute='_compute_doc_stats', store=True, string='Total')
+    doc_fournis   = fields.Integer(compute='_compute_doc_stats', store=True, string='Fournis')
+    doc_manquants = fields.Integer(compute='_compute_doc_stats', store=True, string='Manquants')
     dossier_valide = fields.Boolean(
-        string='Dossier validé', default=False, tracking=True,
+        string='Dossier validé',
+        default=False,
+        tracking=True,
     )
 
     @api.depends('document_ids.state')
@@ -149,7 +169,9 @@ class ResPartner(models.Model):
 
     # ── Classification ────────────────────────────────────────────────────
     exclusivite_gica = fields.Boolean(
-        string='Exclusivité GICA', default=False, tracking=True,
+        string='Exclusivité GICA',
+        default=False,
+        tracking=True,
         help='Le client achète exclusivement des produits GICA (+10 pts).',
     )
     classification_actuelle = fields.Selection([
@@ -160,13 +182,17 @@ class ResPartner(models.Model):
     ], string='Classification Actuelle', readonly=True, tracking=True)
 
     score_actuel = fields.Float(
-        string='Score Actuel (/100)', readonly=True, tracking=True,
+        string='Score Actuel (/100)',
+        readonly=True,
+        tracking=True,
     )
     date_derniere_classification = fields.Date(
-        string='Dernière Classification', readonly=True,
+        string='Dernière Classification',
+        readonly=True,
     )
     classification_ids = fields.One2many(
-        'gica.client.classification', 'partner_id',
+        'gica.client.classification',
+        'partner_id',
         string='Historique Classifications',
     )
     delai_paiement = fields.Integer(
@@ -183,6 +209,19 @@ class ResPartner(models.Model):
             partner.delai_paiement = DELAIS.get(
                 partner.classification_actuelle or '', 0
             )
+
+    # ── Informations fiscales ─────────────────────────────────────────────
+    nrc        = fields.Char(string='N° RC')
+    nif        = fields.Char(string='N.I.F')
+    nis        = fields.Char(string='N.I.S')
+    ai         = fields.Char(string='A.I')
+    fax        = fields.Char(string='Fax')
+    rib        = fields.Char(string='RIB/RIP')
+    swift      = fields.Char(string='SWIFT')
+    nrc_valide = fields.Boolean(string='NRC Validé', default=False)
+    nif_valide = fields.Boolean(string='NIF Validé', default=False)
+    nis_valide = fields.Boolean(string='NIS Validé', default=False)
+    nin        = fields.Char(string='N° Identification Nationale (NIN)')
 
     # ── Computed ──────────────────────────────────────────────────────────
     @api.depends('client_type')
@@ -206,7 +245,7 @@ class ResPartner(models.Model):
     @api.onchange('client_type')
     def _onchange_client_type(self):
         self.nature_client = False
-        self.nature_id = False
+        self.nature_id     = False
         if self.client_type:
             natures = NATURE_PAR_TYPE.get(self.client_type, [])
             if len(natures) == 1:
@@ -214,7 +253,6 @@ class ResPartner(models.Model):
 
     @api.onchange('nature_id')
     def _onchange_nature_id(self):
-        """Synchronise nature_client depuis nature_id."""
         if self.nature_id:
             if 'physique' in self.nature_id.name.lower():
                 self.nature_client = 'physique'
@@ -225,12 +263,72 @@ class ResPartner(models.Model):
 
     @api.onchange('nature_client')
     def _onchange_nature_client(self):
-        """Rien — les documents sont générés via bouton ou au create."""
         pass
+
+    # ── Validation métier ─────────────────────────────────────────────────
+    def _verifier_dossier_client(self):
+        for rec in self:
+            if not rec.client_type:
+                continue
+            erreurs = []
+            if rec.nature_client == 'morale':
+                if not rec.nrc:
+                    erreurs.append('N° RC manquant')
+                elif not rec.nrc_valide:
+                    erreurs.append('N° RC non validé')
+                if not rec.nif:
+                    erreurs.append('N.I.F manquant')
+                elif not rec.nif_valide:
+                    erreurs.append('N.I.F non validé')
+                if not rec.nis:
+                    erreurs.append('N.I.S manquant')
+                elif not rec.nis_valide:
+                    erreurs.append('N.I.S non validé')
+            elif rec.nature_client == 'physique':
+                if not rec.nin:
+                    erreurs.append('N° Identification Nationale (NIN) manquant')
+            if rec.document_ids:
+                manquants = rec.document_ids.filtered(lambda d: d.state != 'fourni')
+                if manquants:
+                    erreurs.append(
+                        f'{len(manquants)} document(s) non fourni(s) : '
+                        + ', '.join(manquants.mapped('name'))
+                    )
+            if rec.client_type in AGREMENT_TYPES and not rec.agrement_actif_id:
+                erreurs.append('Agrément actif obligatoire pour ce type de client')
+            if erreurs:
+                raise ValidationError(
+                    'Impossible de sauvegarder ce client :\n\n'
+                    + '\n'.join(f'• {e}' for e in erreurs)
+                )
+
+    @api.constrains('nrc_valide', 'nif_valide', 'nis_valide', 'dossier_valide')
+    def _check_fiscal_avant_validation(self):
+        for rec in self:
+            if rec.dossier_valide and rec.nature_client == 'morale':
+                if not rec.nrc_valide:
+                    raise ValidationError('N° RC doit être vérifié avant de valider le dossier.')
+                if not rec.nif_valide:
+                    raise ValidationError('N.I.F doit être vérifié avant de valider le dossier.')
+                if not rec.nis_valide:
+                    raise ValidationError('N.I.S doit être vérifié avant de valider le dossier.')
+
+    def write(self, vals):
+        result = super().write(vals)
+        champs_sensibles = {
+            'nrc', 'nif', 'nis', 'nin',
+            'nrc_valide', 'nif_valide', 'nis_valide',
+            'document_ids', 'agrement_ids',
+            'dossier_valide', 'client_type', 'nature_client',
+        }
+        if champs_sensibles & set(vals.keys()):
+            for rec in self:
+                if rec.client_type:
+                    rec._verifier_dossier_client()
+        return result
 
     # ── Génération documents ──────────────────────────────────────────────
     def _generer_documents_templates(self):
-        """Génère les documents (onchange) depuis gica.document.template."""
         if not self.client_type or not self.nature_client:
             return
         Tmpl = self.env['gica.document.template']
@@ -251,7 +349,6 @@ class ResPartner(models.Model):
         self.document_ids = new_lines
 
     def _generate_documents(self):
-        """Génère et sauvegarde les documents en base (appelé au create)."""
         self.ensure_one()
         Tmpl = self.env['gica.document.template']
         Tmpl._load_default_templates()
@@ -274,8 +371,19 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('client_type') and not vals.get('ref'):
+                vals['ref'] = (
+                    self.env['ir.sequence'].next_by_code('gica.client') or '/'
+                )
         records = super().create(vals_list)
         for rec in records:
+            if rec.client_type:
+                existing = self.env['gica.client'].search(
+                    [('partner_id', '=', rec.id)], limit=1
+                )
+                if not existing:
+                    self.env['gica.client'].create({'partner_id': rec.id})
             if rec.client_type and rec.nature_client:
                 rec._generate_documents()
         return records
@@ -287,6 +395,29 @@ class ResPartner(models.Model):
 
     def action_valider_dossier(self):
         self.ensure_one()
+        if self.nature_client == 'morale':
+            manquants   = []
+            non_valides = []
+            if not self.nrc:
+                manquants.append('N° RC')
+            elif not self.nrc_valide:
+                non_valides.append('N° RC')
+            if not self.nif:
+                manquants.append('N.I.F')
+            elif not self.nif_valide:
+                non_valides.append('N.I.F')
+            if not self.nis:
+                manquants.append('N.I.S')
+            elif not self.nis_valide:
+                non_valides.append('N.I.S')
+            if manquants:
+                raise ValidationError(
+                    f'Champs obligatoires manquants : {", ".join(manquants)}'
+                )
+            if non_valides:
+                raise ValidationError(
+                    f'Validez d\'abord ces champs fiscaux : {", ".join(non_valides)}'
+                )
         self.dossier_valide = True
 
     def action_reinitialiser_dossier(self):
@@ -335,3 +466,72 @@ class ResPartner(models.Model):
             'view_mode': 'form',
             'res_id':    record.id,
         }
+
+    def action_verifier_nrc(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://sidjilcom.cnrc.dz/group/sidjilcom/repertoire-des-commercants',
+            'target': 'new',
+        }
+
+    def action_verifier_nif(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://www.mfdgi.gov.dz/',
+            'target': 'new',
+        }
+
+    def action_verifier_nis(self):
+        self.ensure_one()
+        return {
+            'type':   'ir.actions.act_url',
+            'url':    'https://www.ons.dz/',
+            'target': 'new',
+        }
+
+    def action_creer_contrat(self):
+        self.ensure_one()
+        gica_client = self.env['gica.client'].search(
+            [('partner_id', '=', self.id)], limit=1
+        )
+        if not gica_client:
+            raise ValidationError(
+                "Ce partenaire n'est pas enregistré comme client GICA."
+            )
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Créer un contrat',
+            'res_model': 'gica.client.contract',
+            'view_mode': 'form',
+            'target':    'current',
+            'context':   {'default_client_id': gica_client.id},
+        }
+
+    @api.constrains(
+        'client_type', 'nature_client',
+        'nrc', 'nif', 'nis', 'nin',
+    )
+    def _check_required_fields_gica(self):
+        for rec in self:
+            if not rec.client_type:
+                continue
+            erreurs = []
+            if not rec.nature_client:
+                erreurs.append("Nature client obligatoire")
+            if rec.nature_client == 'morale':
+                if not rec.nrc:
+                    erreurs.append("N° RC obligatoire")
+                if not rec.nif:
+                    erreurs.append("NIF obligatoire")
+                if not rec.nis:
+                    erreurs.append("NIS obligatoire")
+            if rec.nature_client == 'physique':
+                if not rec.nin:
+                    erreurs.append("NIN obligatoire")
+            if erreurs:
+                raise ValidationError(
+                    "Impossible d'enregistrer :\n\n" +
+                    "\n".join(f"• {e}" for e in erreurs)
+                )

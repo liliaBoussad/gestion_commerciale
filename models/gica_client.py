@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
 
 
@@ -19,25 +20,18 @@ class GicaClient(models.Model):
         auto_join=True,
     )
 
-    # ── Projets ───────────────────────────────────────────────────────────
     project_id = fields.One2many(
         'gica.project', 'client_id', string='Projets',
     )
 
-    # ── Nature domain ─────────────────────────────────────────────────────
     nature_domain = fields.Char(
         compute='_compute_nature_domain',
     )
 
-    # ── Classification display ────────────────────────────────────────────
     classification_actuelle_display = fields.Char(
         string='Classification',
         compute='_compute_classification_display',
     )
-
-    # ─────────────────────────────────────────────────────────────────────
-    # COMPUTED
-    # ─────────────────────────────────────────────────────────────────────
 
     @api.depends('partner_id.client_type')
     def _compute_nature_domain(self):
@@ -69,10 +63,6 @@ class GicaClient(models.Model):
                 rec.partner_id.classification_actuelle, 'N/A'
             )
 
-    # ─────────────────────────────────────────────────────────────────────
-    # ACTIONS
-    # ─────────────────────────────────────────────────────────────────────
-
     def action_calculer_classification(self):
         self.ensure_one()
         today        = fields.Date.today()
@@ -88,3 +78,5 @@ class GicaClient(models.Model):
             'view_mode': 'form',
             'res_id':    record.id,
         }
+
+    

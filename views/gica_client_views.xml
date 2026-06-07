@@ -9,54 +9,38 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <list string="Clients GICA">
-                <field name="name"             string="Nom"/>
-                <field name="client_type"      string="Type client"/>
-                <field name="nature_client"    string="Nature"/>
-                <field name="sale_type"        string="Type de vente"/>
-                <field name="commercial_id"    string="Commercial"/>
-                <field name="phone"            string="Téléphone"/>
-                <field name="email"            string="E-mail"/>
-                <field name="city"             string="Ville"/>
+                <field name="ref"           string="Code Client"/>
+                <field name="name"          string="Nom"/>
+                <field name="client_type"   string="Type client"/>
+                <field name="nature_client" string="Nature"/>
+                <field name="sale_type"     string="Type de vente"/>
+                <field name="commercial_id" string="Commercial"/>
+                <field name="phone"         string="Téléphone"/>
+                <field name="email"         string="E-mail"/>
+                <field name="city"          string="Ville"/>
             </list>
         </field>
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════════
-         FORMULAIRE — gica.client
+         HÉRITAGE base.view_partner_form — ajout bouton + champs GICA
     ══════════════════════════════════════════════════════════════════════════ -->
-    <record id="view_gica_client_form" model="ir.ui.view">
-        <field name="name">gica.client.form</field>
+    <record id="view_gica_client_form_inherit" model="ir.ui.view">
+        <field name="name">gica.client.form.inherit</field>
         <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <form string="Client GICA">
-                <sheet>
 
-                    <div class="oe_title">
-                        <label for="name"/>
-                        <h1><field name="name" placeholder="Nom du client"/></h1>
-                    </div>
+            <!-- Bouton "Créer un contrat" dans la barre de boutons stat -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_creer_contrat"
+                        type="object"
+                        string="Créer un contrat"
+                        class="oe_stat_button"
+                        icon="fa-file-text-o"
+                        invisible="not is_gica_client"/>
+            </xpath>
 
-                    <group>
-                        <group string="Informations client">
-                            <field name="client_type"/>
-                            <field name="nature_client"/>
-                            <field name="sale_type"/>
-                            <field name="commercial_id"/>
-                        </group>
-                        <group string="Coordonnées">
-                            <field name="phone"/>
-                            <field name="mobile"/>
-                            <field name="email"/>
-                            <field name="street"/>
-                            <field name="city"/>
-                            <field name="country_id"/>
-                        </group>
-                    </group>
-
-                   
-                </sheet>
-                <chatter/>
-            </form>
         </field>
     </record>
 

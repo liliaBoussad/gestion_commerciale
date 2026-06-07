@@ -13,8 +13,7 @@
                 <field name="is_gica_product" widget="boolean_toggle"/>
                 <field name="type_ciment"
                        invisible="not is_gica_product"/>
-                <field name="conditionnement_gica"
-                       invisible="not is_gica_product"/>
+              
             </xpath>
         </field>
     </record>

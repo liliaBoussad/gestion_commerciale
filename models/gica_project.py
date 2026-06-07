@@ -7,7 +7,8 @@ class GicaProject(models.Model):
     client_id = fields.Many2one(
         'gica.client',
         string="Client",
-        ondelete='cascade'
+        ondelete='cascade',
+        required=True,
     )
 
     name = fields.Char(
@@ -21,24 +22,20 @@ class GicaProject(models.Model):
         string="Produits du projet"
     )
 
-    
-
-
-
 
 class GicaProjectLine(models.Model):
     _name = 'gica.project.line'
     _description = 'Produit du projet'
 
     client_id = fields.Many2one(
-    related='project_id.client_id',
-    store=True
+        related='project_id.client_id',
+        store=True
     )
 
     project_name = fields.Char(
-    related='project_id.name',
-    string="Nom du projet",
-    store=True
+        related='project_id.name',
+        string="Nom du projet",
+        store=True
     )
 
     project_id = fields.Many2one(

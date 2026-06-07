@@ -48,6 +48,16 @@
                                 <span class="o_stat_text">Bons de Commande</span>
                             </div>
                         </button>
+                        <button class="oe_stat_button" icon="fa-edit"
+                                type="object" name="action_voir_avenants"
+                                invisible="avenant_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="avenant_count"/>
+                                </span>
+                                <span class="o_stat_text">Avenants</span>
+                            </div>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -61,7 +71,11 @@
                             <field name="date_commande"/>
                             <field name="date_expiration"/>
                         </group>
-                        
+                        <group string="Tarification">
+                            <field name="pricelist_id"
+                                   options="{'no_create': True}"
+                                   readonly="state in ('cloturee', 'annulee')"/>
+                        </group>
                     </group>
 
                     <notebook>
@@ -69,13 +83,42 @@
                             <field name="line_ids"
                                    readonly="state in ('cloturee', 'annulee')">
                                 <list editable="bottom">
-                                    <field name="sequence"           widget="handle"/>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_tmpl_id"
+                                           string="Produit"
+                                           domain="[('is_gica_product', '=', True)]"/>
                                     <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="quantity_tonne"     string="Qté totale (T)"/>
+                                           string="Variante"
+                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"
+                                           column_invisible="1"/>
+                                    <field name="conditionnement_id"
+                                           options="{'no_create': True}"
+                                           context="{'show_attribute': False}"/>
+                                    <field name="quantity_tonne" string="Qté totale (T)"/>
                                     <field name="quantity_planifiee" string="Planifiée (T)" readonly="1"/>
-                                    <field name="quantity_enlevee"   string="Enlevée (T)"   readonly="1"/>
-                                    <field name="quantity_restante"  string="Restante (T)"  readonly="1"/>
+                                    <field name="quantity_enlevee"  string="Enlevée (T)"   readonly="1"/>
+                                    <field name="quantity_restante" string="Restante (T)"  readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Avenants">
+                            <field name="avenant_ids" nolabel="1">
+                                <list decoration-success="state == 'valide'"
+                                    decoration-warning="state == 'brouillon'">
+                                    <field name="name" string="Numéro"/>
+                                    <field name="type_avenant" string="Type" widget="badge"
+                                        decoration-success="type_avenant == 'addition'"
+                                        decoration-danger="type_avenant == 'reduction'"/>
+                                    <field name="product_id" string="Produit"/>
+                                    <field name="conditionnement_id" string="Conditionnement"
+                                        context="{'show_attribute': False}"/>
+                                    <field name="quantite" string="Quantité (T)"/>
+                                  
+                                    <field name="date" string="Date"/>
+                                    <field name="state" widget="badge"
+                                        decoration-success="state == 'valide'"
+                                        decoration-warning="state == 'brouillon'"/>
                                 </list>
                             </field>
                         </page>
@@ -118,7 +161,6 @@
                                     <field name="name"/>
                                     <field name="date_prevue_enlevement"/>
                                     <field name="quantity_total_tonne" string="Qté (T)"/>
-                                    <field name="amount_total"         string="Montant (DA)"/>
                                     <field name="state" widget="badge"/>
                                 </list>
                             </field>
@@ -146,6 +188,7 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="contrat_id"/>
+                <field name="pricelist_id" string="Liste de prix"/>
                 <field name="date_commande"/>
                 <field name="date_expiration"/>
                 <field name="quantity_total_tonne" string="Qté totale (T)"/>
@@ -154,6 +197,7 @@
                 <field name="quantity_restante"    string="Restante (T)"/>
                 <field name="planification_count"  string="Planifs"/>
                 <field name="bon_commande_count"   string="BC"/>
+                <field name="avenant_count"        string="Avenants"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'cloturee'"
                        decoration-info="state == 'en_cours'"
@@ -172,14 +216,16 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="contrat_id"/>
+                <field name="pricelist_id"/>
                 <filter string="Nouveau"  name="nouveau"  domain="[('state','=','nouveau')]"/>
                 <filter string="En cours" name="en_cours" domain="[('state','=','en_cours')]"/>
                 <filter string="Clôturée" name="cloturee" domain="[('state','=','cloturee')]"/>
                 <filter string="Annulée"  name="annulee"  domain="[('state','=','annulee')]"/>
                 <group expand="0" string="Grouper par">
-                    <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
-                    <filter string="Statut" name="group_state"  context="{'group_by': 'state'}"/>
-                    <filter string="Mois"   name="group_date"   context="{'group_by': 'date_commande:month'}"/>
+                    <filter string="Client"        name="group_client"    context="{'group_by': 'client_id'}"/>
+                    <filter string="Liste de prix" name="group_pricelist" context="{'group_by': 'pricelist_id'}"/>
+                    <filter string="Statut"        name="group_state"     context="{'group_by': 'state'}"/>
+                    <filter string="Mois"          name="group_date"      context="{'group_by': 'date_commande:month'}"/>
                 </group>
             </search>
         </field>

@@ -63,6 +63,12 @@
                   action="action_gica_planification_usine"
                   sequence="25"/>
 
+        <menuitem id="menu_ventes_gica_avenant"
+                  name="Avenants"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_avenant"
+                  sequence="30"/>
+
         <!-- ── Documents GICA ── -->
         <menuitem id="menu_ventes_gica_documents_root"
                   name="Documents GICA"
@@ -105,5 +111,11 @@
                   action="action_gica_scoring_category"
                   sequence="40"/>
 
+        <menuitem id="menu_ventes_gica_planification_config"
+                  name="Configuration Planification"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_planification_config"
+                  sequence="9"/>
+        
     </data>
 </odoo>

@@ -17,23 +17,30 @@ class GicaClientContractLine(models.Model):
         ondelete='cascade',
     )
 
-    product_id = fields.Many2one(
-        'product.product',
+    product_tmpl_id = fields.Many2one(
+        'product.template',
         string='Produit',
         required=True,
-        domain="[('product_tmpl_id.is_gica_product', '=', True)]",
+        domain="[('is_gica_product', '=', True)]",
+    )
+
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string='Conditionnement',
+        domain="[('attribute_id', '=', 4)]",
+        required=True,
+    )
+
+    product_id = fields.Many2one(
+        'product.product',
+        string='Variante',
+        compute='_compute_product_id',
+        store=True,
     )
 
     type_ciment = fields.Selection(
-        related='product_id.product_tmpl_id.type_ciment',
+        related='product_tmpl_id.type_ciment',
         string='Famille ciment',
-        store=True,
-        readonly=True,
-    )
-
-    conditionnement = fields.Selection(
-        related='product_id.conditionnement_gica',
-        string='Conditionnement',
         store=True,
         readonly=True,
     )
@@ -70,15 +77,31 @@ class GicaClientContractLine(models.Model):
         store=True,
     )
 
-    @api.depends('quantity', 'uom', 'conditionnement')
+    @api.depends('product_tmpl_id', 'conditionnement_id')
+    def _compute_product_id(self):
+        for rec in self:
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                variant = rec.product_tmpl_id.product_variant_ids.filtered(
+                    lambda v: any(
+                        a.attribute_id.name == 'Conditionnement' and
+                        a.product_attribute_value_id == rec.conditionnement_id
+                        for a in v.product_template_attribute_value_ids
+                    )
+                )
+                rec.product_id = variant[0] if variant else False
+            else:
+                rec.product_id = False
+
+    @api.depends('quantity', 'uom', 'conditionnement_id')
     def _compute_quantity_tonne(self):
         for rec in self:
             if rec.uom == 'tonne':
                 rec.quantity_tonne = rec.quantity
             elif rec.uom == 'sac':
-                if rec.conditionnement == 'sac_50kg':
+                name = rec.conditionnement_id.name if rec.conditionnement_id else ''
+                if 'Sac 50' in name:
                     rec.quantity_tonne = rec.quantity * 0.05
-                elif rec.conditionnement in ('sac_25kg', 'sac_25kg_fardelise'):
+                elif 'Sac 25' in name:
                     rec.quantity_tonne = rec.quantity * 0.025
                 else:
                     rec.quantity_tonne = rec.quantity
@@ -96,10 +119,15 @@ class GicaClientContractLine(models.Model):
             rec.quantity_livree   = 0.0
             rec.quantity_restante = rec.quantity
 
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        if self.product_id:
-            self.prix_unitaire = self.product_id.lst_price
+    @api.onchange('product_tmpl_id')
+    def _onchange_product_tmpl_id(self):
+        self.conditionnement_id = False
+        self.prix_unitaire = 0.0
+
+    @api.onchange('product_tmpl_id', 'conditionnement_id')
+    def _onchange_product_conditionnement(self):
+        if self.product_tmpl_id and self.conditionnement_id:
+            self.prix_unitaire = self.product_tmpl_id.list_price
 
 
 class GicaClientContract(models.Model):
@@ -120,6 +148,36 @@ class GicaClientContract(models.Model):
         'gica.client',
         string='Client',
         required=True,
+        tracking=True,
+    )
+
+    client_type = fields.Selection([
+        ('realisation',    'Entreprise de réalisation'),
+        ('investisseur',   'Investisseur'),
+        ('promoteur',      'Promoteur immobilier'),
+        ('transformateur', 'Transformateur'),
+        ('broyage',        'Centre de broyage'),
+        ('revendeur',      'Revendeur'),
+        ('rev_agree',      'Revendeur agréé'),
+        ('distributeur',   'Distributeur officiel'),
+        ('conditionneur',  'Conditionneur'),
+        ('exportateur',    'Exportateur'),
+        ('auto_const',     'Auto-constructeur'),
+        ('autres',         'Autres'),
+    ], string='Type client', compute='_compute_client_type', store=True, readonly=True)
+
+    @api.depends('client_id', 'client_id.partner_id', 'client_id.partner_id.client_type')
+    def _compute_client_type(self):
+        for rec in self:
+            if rec.client_id and rec.client_id.partner_id:
+                rec.client_type = rec.client_id.partner_id.client_type
+            else:
+                rec.client_type = False
+
+    project_id = fields.Many2one(
+        'gica.project',
+        string='Projet associé',
+        domain="[('client_id', '=', client_id)]",
         tracking=True,
     )
 
@@ -185,6 +243,14 @@ class GicaClientContract(models.Model):
     motif_suspension = fields.Text(string='Motif de suspension / résiliation', tracking=True)
     observations     = fields.Text(string='Observations')
 
+    @api.onchange('client_id')
+    def _onchange_client_id(self):
+        self.project_id = False
+        if self.client_id and self.client_id.partner_id:
+            self.client_type = self.client_id.partner_id.client_type
+        else:
+            self.client_type = False
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -239,8 +305,11 @@ class GicaClientContract(models.Model):
     @api.constrains('line_ids')
     def _check_no_duplicate_product(self):
         for rec in self:
-            products = [l.product_id.id for l in rec.line_ids]
-            if len(products) != len(set(products)):
+            combinations = [
+                (l.product_tmpl_id.id, l.conditionnement_id.id)
+                for l in rec.line_ids
+            ]
+            if len(combinations) != len(set(combinations)):
                 raise ValidationError(
                     'Un même produit/conditionnement ne peut pas apparaître deux fois.'
                 )

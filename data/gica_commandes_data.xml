@@ -1,44 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
+    <data>
 
-    <!-- Séquence BCG : CG/YYYY/XXXX -->
-    <record id="seq_gica_commande_globale" model="ir.sequence">
-        <field name="name">Commande Globale GICA</field>
-        <field name="code">gica.commande.globale</field>
-        <field name="prefix">CG/%(year)s/</field>
-        <field name="padding">4</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Séquence BCG : CG/YYYY/XXXX -->
+        <record id="seq_gica_commande_globale" model="ir.sequence">
+            <field name="name">Commande Globale GICA</field>
+            <field name="code">gica.commande.globale</field>
+            <field name="prefix">CG/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
-    <!-- Séquence BC : BC/YYYY/XXXX -->
-    <record id="seq_gica_bon_commande" model="ir.sequence">
-        <field name="name">Bon de Commande GICA</field>
-        <field name="code">gica.bon.commande</field>
-        <field name="prefix">BC/%(year)s/</field>
-        <field name="padding">4</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Séquence BC : BC/YYYY/XXXX -->
+        <record id="seq_gica_bon_commande" model="ir.sequence">
+            <field name="name">Bon de Commande GICA</field>
+            <field name="code">gica.bon.commande</field>
+            <field name="prefix">BC/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
+        <!-- Séquence Contrat : CT/YYYY/XXXX -->
+        <record id="seq_gica_client_contract" model="ir.sequence">
+            <field name="name">Contrat Client GICA</field>
+            <field name="code">gica.client.contract</field>
+            <field name="prefix">CT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
-    <!-- Séquence Contrat : CT/YYYY/XXXX -->
-    <record id="seq_gica_client_contract" model="ir.sequence">
-        <field name="name">Contrat Client GICA</field>
-        <field name="code">gica.client.contract</field>
-        <field name="prefix">CT/%(year)s/</field>
-        <field name="padding">4</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+        <!-- Séquence Agrément : AGR/YYYY/XXXX -->
+        <record id="seq_gica_client_agrement" model="ir.sequence">
+            <field name="name">Agrément Client GICA</field>
+            <field name="code">gica.client.agrement</field>
+            <field name="prefix">AGR/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
 
-    <!-- Séquence Agrément : AGR/YYYY/XXXX -->
-    <record id="seq_gica_client_agrement" model="ir.sequence">
-        <field name="name">Agrément Client GICA</field>
-        <field name="code">gica.client.agrement</field>
-        <field name="prefix">AGR/%(year)s/</field>
-        <field name="padding">4</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
+      <!-- Séquence Client : CLI/YYYY/XXXX -->
+    <record id="seq_gica_client" model="ir.sequence">
+       <field name="name">Client GICA</field>
+       <field name="code">gica.client</field>
+       <field name="prefix">CLI/%(year)s/</field>
+      <field name="padding">4</field>
+      <field name="number_increment">1</field>
+      <field name="number_next">1</field>
+      <field name="company_id" eval="False"/>
+     </record>
+
+    </data>
 </odoo>

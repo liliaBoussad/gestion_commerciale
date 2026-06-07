@@ -15,7 +15,7 @@
                         <h1><field name="name" placeholder="Nom du projet"/></h1>
                     </div>
                     <group>
-                        <field name="client_id" readonly="1"/>
+                        <field name="client_id"/>
                     </group>
 
                     <separator string="Produits du projet"/>

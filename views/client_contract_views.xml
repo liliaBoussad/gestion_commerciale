@@ -14,6 +14,7 @@
                   decoration-primary="state == 'draft'">
                 <field name="name"/>
                 <field name="client_id"/>
+                <field name="project_id" optional="show"/>
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="state" widget="badge"
@@ -50,14 +51,25 @@
                         <h1><field name="name"/></h1>
                     </div>
 
+                    <field name="client_type" invisible="1"/>
+
                     <group string="Client">
                         <field name="client_id"/>
+                        <field name="project_id"
+                               invisible="client_type != 'realisation'"
+                               domain="[('client_id', '=', client_id)]"
+                               options="{'no_create': True}"/>
                     </group>
 
                     <group string="Période du contrat">
                         <group>
                             <field name="date_start"/>
                             <field name="date_end"/>
+                        </group>
+                        <group>
+                            <field name="mode_paiement"/>
+                            <field name="modalite_paiement"/>
+                            <field name="delai_paiement"/>
                         </group>
                     </group>
 
@@ -70,9 +82,12 @@
                             <field name="line_ids" readonly="state in ('expire','resilie')">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="quantity" string="Quantité (T)"/>
+                                    <field name="product_tmpl_id"
+                                           domain="[('is_gica_product','=',True)]"
+                                           string="Produit"/>
+                                    
+                                    <field name="quantity" string="Quantité"/>
+                                    <field name="uom" string="Unité"/>
                                 </list>
                             </field>
                         </page>
@@ -94,22 +109,12 @@
             <search string="Rechercher un contrat">
                 <field name="name"      string="N° Contrat"/>
                 <field name="client_id" string="Client"/>
-                <field name="line_ids"  string="Produit"/>
                 <separator/>
                 <filter name="actif"    string="Actifs"    domain="[('state','=','actif')]"/>
                 <filter name="en_cours" string="En cours"  domain="[('state','=','en_cours')]"/>
                 <filter name="suspendu" string="Suspendus" domain="[('state','=','suspendu')]"/>
                 <filter name="expire"   string="Expirés"   domain="[('state','=','expire')]"/>
                 <filter name="resilie"  string="Résiliés"  domain="[('state','=','resilie')]"/>
-                <separator/>
-                <filter name="beton"   string="GICA BÉTON"
-                        domain="[('line_ids.type_ciment','in',['cem_ii_325','cem_ii_425_n','cem_ii_425_r'])]"/>
-                <filter name="moudhad" string="GICA MOUDHAD"
-                        domain="[('line_ids.type_ciment','in',['cem_i_425_crs','cem_i_525'])]"/>
-                <filter name="petrole" string="GICA PÉTROLE"
-                        domain="[('line_ids.type_ciment','=','well_cement_g')]"/>
-                <filter name="clinker" string="Clinker"
-                        domain="[('line_ids.type_ciment','=','clinker')]"/>
                 <group expand="0" string="Regrouper par">
                     <filter name="group_client" string="Client" context="{'group_by':'client_id'}"/>
                     <filter name="group_state"  string="Statut" context="{'group_by':'state'}"/>

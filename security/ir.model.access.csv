@@ -27,3 +27,5 @@ access_gica_planification_client_line_user,gica.planification.client.line user,m
 access_gica_planification_usine_manager,gica.planification.usine manager,model_gica_planification_usine,base.group_system,1,1,1,1
 access_gica_planification_usine_user,gica.planification.usine user,model_gica_planification_usine,base.group_user,1,1,0,0
 access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1
+access_gica_planification_config,gica.planification.config,model_gica_planification_config,base.group_user,1,1,1,1
+access_gica_avenant,gica.avenant,model_gica_avenant,base.group_user,1,1,1,1
