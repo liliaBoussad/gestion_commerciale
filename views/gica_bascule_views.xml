@@ -110,6 +110,7 @@
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <!-- BL -->
                         <button name="action_voir_bon_livraison"
                                 type="object" class="oe_stat_button"
                                 icon="fa-truck"
@@ -118,6 +119,16 @@
                                 <span class="o_stat_text">Bon de Livraison</span>
                             </div>
                         </button>
+                        <!-- Facture immediate (mode comptant) -->
+                        <button name="action_voir_facture"
+                                type="object" class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="not invoice_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Facture</span>
+                            </div>
+                        </button>
+                        <!-- BC de vente -->
                         <button name="action_voir_bc_from_circ"
                                 type="object" class="oe_stat_button"
                                 icon="fa-file-text">
@@ -344,6 +355,17 @@
                                         <div>
                                             <div class="small">Bon de Livraison cree</div>
                                             <field name="picking_id" readonly="1"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- Facture immediate (mode comptant) -->
+                                    <div class="alert alert-primary d-flex align-items-center gap-2 py-2 mt-2"
+                                         role="alert"
+                                         invisible="not invoice_id">
+                                        <i class="fa fa-file-text-o"/>
+                                        <div>
+                                            <div class="small">Facture creee (paiement comptant)</div>
+                                            <field name="invoice_id" readonly="1"/>
                                         </div>
                                     </div>
 

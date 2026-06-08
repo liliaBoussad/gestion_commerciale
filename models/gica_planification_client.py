@@ -84,7 +84,6 @@ class GicaPlanificationClientLine(models.Model):
         readonly=True,
     )
 
-    # Compteur bons de circulation generes
     bon_circulation_count = fields.Integer(
         string='Nb BCs',
         compute='_compute_bon_circulation_count',
@@ -350,7 +349,6 @@ class GicaPlanificationClientLine(models.Model):
         }
 
     def action_voir_bons_circulation(self):
-        """Voir tous les bons de circulation de cette ligne"""
         self.ensure_one()
         if not self.sale_order_id:
             return
@@ -368,7 +366,6 @@ class GicaPlanificationClientLine(models.Model):
         Cree 1 BC (sale.order) + N bons de circulation automatiquement.
         N = self.rotation
         quantite par BC = self.quantity_tonne / self.rotation
-        FIFO : chaque BC a un numero_rotation pour l'ordre
         """
         self.ensure_one()
         if self.sale_order_id:
@@ -379,14 +376,13 @@ class GicaPlanificationClientLine(models.Model):
         bcg       = planif.commande_globale_id
         pricelist = bcg.pricelist_id if bcg else False
 
-        # 1 — Creer le bon de commande
+        # Creer le bon de commande
         order = self.env['sale.order'].with_context(no_recompute=True).create({
             'partner_id':             partner.id if partner else False,
             'pricelist_id':           pricelist.id if pricelist else False,
             'commande_globale_id':    bcg.id if bcg else False,
             'planification_id':       planif.id,
             'date_prevue_enlevement': self.date_enlevement,
-            'source':                 planif.source or 'commercial',
             'order_line': [(0, 0, {
                 'product_id':      self.product_id.id,
                 'product_uom_qty': self.quantity_tonne,
@@ -397,30 +393,26 @@ class GicaPlanificationClientLine(models.Model):
         order.order_line._compute_price_unit()
         self.write({'sale_order_id': order.id})
 
-        # 2 — Creer N bons de circulation (1 par rotation)
-        nbr_rotations = max(1, self.rotation)
+        # Creer N bons de circulation (1 par rotation)
+        nbr_rotations         = max(1, self.rotation)
         quantite_par_rotation = round(self.quantity_tonne / nbr_rotations, 3)
-        nbr_paquets_par_rotation = (self.nbr_paquets // nbr_rotations
-                                     if self.nbr_paquets else 0)
+        nbr_paquets_par_rotation = (self.nbr_paquets // nbr_rotations if self.nbr_paquets else 0)
 
         for i in range(nbr_rotations):
-            # Derniere rotation : prend le reste pour eviter les arrondis
             if i == nbr_rotations - 1:
                 qte = round(
-                    self.quantity_tonne - quantite_par_rotation * (nbr_rotations - 1),
-                    3
+                    self.quantity_tonne - quantite_par_rotation * (nbr_rotations - 1), 3
                 )
             else:
                 qte = quantite_par_rotation
 
             self.env['gica.bon.circulation'].create({
-                'sale_order_id':        order.id,
+                'sale_order_id':         order.id,
                 'planification_line_id': self.id,
-                'product_id':           self.product_id.id,
-                'quantite_prevue':      qte,
-                'nbr_paquets':          nbr_paquets_par_rotation,
-                'numero_rotation':      i + 1,
-                # Pas de chauffeur — sera saisi par l'agent bascule
+                'product_id':            self.product_id.id,
+                'quantite_prevue':       qte,
+                'nbr_paquets':           nbr_paquets_par_rotation,
+                'numero_rotation':       i + 1,
             })
 
         order.message_post(
@@ -438,41 +430,33 @@ class GicaPlanificationClient(models.Model):
 
     name = fields.Char(
         string='Reference',
-        readonly=True,
-        copy=False,
-        default='Nouveau',
-        tracking=True,
+        readonly=True, copy=False,
+        default='Nouveau', tracking=True,
     )
 
     client_id = fields.Many2one(
-        'res.partner',
-        string='Client',
-        required=True,
-        tracking=True,
+        'res.partner', string='Client',
+        required=True, tracking=True,
         domain="[('is_gica_client', '=', True)]",
     )
 
     commande_globale_id = fields.Many2one(
         'gica.commande.globale',
         string='Commande Globale (BCG)',
-        required=True,
-        tracking=True,
+        required=True, tracking=True,
         domain="[('client_id', '=', client_id), ('state', 'in', ['nouveau', 'en_cours'])]",
     )
 
     contrat_id = fields.Many2one(
         'gica.client.contract',
         related='commande_globale_id.contrat_id',
-        store=True,
-        readonly=True,
-        string='Contrat',
+        store=True, readonly=True, string='Contrat',
     )
 
     date_enlevement = fields.Date(
         string="Date min. enlevement",
         compute='_compute_date_enlevement',
-        store=True,
-        readonly=True,
+        store=True, readonly=True,
     )
 
     @api.depends('line_ids.date_enlevement')
@@ -489,48 +473,28 @@ class GicaPlanificationClient(models.Model):
     ], string='Statut', default='brouillon', tracking=True, required=True)
 
     motif_refus            = fields.Text(string='Motif du refus', tracking=True)
-    planification_usine_id = fields.Many2one(
-        'gica.planification.usine',
-        readonly=True,
-        tracking=True,
-    )
+    planification_usine_id = fields.Many2one('gica.planification.usine', readonly=True, tracking=True)
 
-    periode_debut = fields.Date(
-        related='planification_usine_id.date_debut',
-        string='Date debut periode',
-        store=True,
-        readonly=True,
-    )
-    periode_fin = fields.Date(
-        related='planification_usine_id.date_fin',
-        string='Date fin periode',
-        store=True,
-        readonly=True,
-    )
+    periode_debut = fields.Date(related='planification_usine_id.date_debut', store=True, readonly=True)
+    periode_fin   = fields.Date(related='planification_usine_id.date_fin',   store=True, readonly=True)
 
     line_ids = fields.One2many(
-        'gica.planification.client.line',
-        'planification_id',
+        'gica.planification.client.line', 'planification_id',
         string='Lignes produits',
     )
 
     planification_line_ids = fields.One2many(
-        'gica.planification.client.line',
-        'planification_usine_id',
+        'gica.planification.client.line', 'planification_usine_id',
         string='Lignes produits (usine)',
     )
 
     bcg_quantity_restante = fields.Float(
         related='commande_globale_id.quantity_restante',
-        string='Dispo BCG (T)',
-        readonly=True,
-        store=True,
+        string='Dispo BCG (T)', readonly=True, store=True,
     )
     bcg_date_expiration = fields.Date(
         related='commande_globale_id.date_expiration',
-        string='Expiration BCG',
-        readonly=True,
-        store=True,
+        string='Expiration BCG', readonly=True, store=True,
     )
 
     product_tmpl_ids = fields.Many2many(
@@ -562,8 +526,7 @@ class GicaPlanificationClient(models.Model):
             )
 
     quantity_total_tonne = fields.Float(
-        compute='_compute_totaux',
-        store=True,
+        compute='_compute_totaux', store=True,
         string='Quantite totale (T)',
     )
 
@@ -617,7 +580,7 @@ class GicaPlanificationClient(models.Model):
         for rec in self:
             if rec.state not in ('soumise',):
                 continue
-            lignes     = rec.line_ids
+            lignes = rec.line_ids
             if not lignes:
                 continue
             nb_attente = len(lignes.filtered(lambda l: l.state == 'en_attente'))
@@ -667,9 +630,7 @@ class GicaPlanificationClient(models.Model):
 
             rec.line_ids.write({'state': 'en_attente'})
             rec.write({'state': 'soumise'})
-            rec.message_post(
-                body=f'Planification soumise avec {len(rec.line_ids)} ligne(s).'
-            )
+            rec.message_post(body=f'Planification soumise avec {len(rec.line_ids)} ligne(s).')
             rec._rattacher_planning_usine()
 
     def _rattacher_planning_usine(self):

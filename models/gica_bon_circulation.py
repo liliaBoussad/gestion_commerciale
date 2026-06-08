@@ -44,6 +44,14 @@ class GicaBonCirculation(models.Model):
         tracking=True,
     )
 
+    # Lien vers la facture immediate (mode comptant)
+    invoice_id = fields.Many2one(
+        'account.move',
+        string='Facture',
+        readonly=True,
+        tracking=True,
+    )
+
     partner_id = fields.Many2one(
         'res.partner',
         related='sale_order_id.partner_id',
@@ -148,6 +156,8 @@ class GicaBonCirculation(models.Model):
         ('annule',        'Annule'),
     ], string='Etat', default='brouillon', tracking=True, required=True)
 
+    # ── Workflow ──────────────────────────────────────────────────────────
+
     def action_transmettre_tare(self):
         for rec in self:
             rec.write({'state': 'transmis_tare'})
@@ -216,7 +226,6 @@ class GicaBonCirculation(models.Model):
         """
         Cree un BL Odoo (stock.picking) automatiquement
         1 pesee terminee = 1 BL
-        Corrections Odoo 18 : quantity au lieu de qty_done
         """
         self.ensure_one()
         if self.picking_id:
@@ -249,11 +258,11 @@ class GicaBonCirculation(models.Model):
             'sale_id':          self.sale_order_id.id if self.sale_order_id else False,
             'note':             f'BC : {self.name} | Chauffeur : {self.chauffeur or ""} | Matricule : {self.matricule or ""}',
             'move_ids': [(0, 0, {
-                'name':            self.product_id.display_name,
-                'product_id':      self.product_id.id,
-                'product_uom_qty': self.poids_net,
-                'product_uom':     uom.id,
-                'location_id':     location_src.id,
+                'name':             self.product_id.display_name,
+                'product_id':       self.product_id.id,
+                'product_uom_qty':  self.poids_net,
+                'product_uom':      uom.id,
+                'location_id':      location_src.id,
                 'location_dest_id': location_dest.id,
             })],
         })
@@ -261,11 +270,9 @@ class GicaBonCirculation(models.Model):
         picking.action_confirm()
         picking.action_assign()
 
-        # Correction Odoo 18 : quantity au lieu de qty_done
         for move_line in picking.move_line_ids:
             move_line.quantity = self.poids_net
 
-        # immediate_transfer=True pour contourner la verification de stock
         picking.with_context(
             skip_backorder=True,
             immediate_transfer=True,
@@ -276,6 +283,69 @@ class GicaBonCirculation(models.Model):
             body=f'Bon de Livraison cree : {picking.name} - Quantite : {self.poids_net:.3f} T'
         )
 
+    def _creer_facture_immediate(self):
+        """
+        Cree une facture immediate apres chaque pesee terminee.
+        Utilise uniquement pour le mode de paiement COMPTANT.
+        1 rotation terminee = 1 facture basee sur le poids net reel.
+        """
+        self.ensure_one()
+        if self.invoice_id:
+            return
+        if not self.sale_order_id or not self.poids_net:
+            return
+
+        # Recuperer le journal de vente
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+
+        if not journal:
+            return
+
+        # Recuperer le compte produit
+        account = (
+            self.product_id.property_account_income_id
+            or self.product_id.categ_id.property_account_income_categ_id
+        )
+
+        if not account:
+            return
+
+        # Prix unitaire depuis la ligne du BC de vente
+        prix_unit = 0.0
+        if self.sale_order_id.order_line:
+            prix_unit = self.sale_order_id.order_line[0].price_unit
+
+        invoice = self.env['account.move'].create({
+            'move_type':         'out_invoice',
+            'partner_id':        self.partner_id.id,
+            'journal_id':        journal.id,
+            'invoice_origin':    f'{self.sale_order_id.name} / {self.name}',
+            'invoice_line_ids': [(0, 0, {
+                'product_id':  self.product_id.id,
+                'name':        f'{self.product_id.display_name} — Rotation {self.numero_rotation} — {self.name}',
+                'quantity':    self.poids_net,
+                'price_unit':  prix_unit,
+                'account_id':  account.id,
+            })],
+        })
+
+        self.write({'invoice_id': invoice.id})
+        self.message_post(
+            body=f'Facture immediate creee : {invoice.name} - '
+                 f'Quantite : {self.poids_net:.3f} T - '
+                 f'Montant : {invoice.amount_total:.2f} DA'
+        )
+
+        # Notifier dans le BC de vente
+        if self.sale_order_id:
+            self.sale_order_id.message_post(
+                body=f'Facture immediate creee pour rotation {self.numero_rotation} : '
+                     f'{invoice.name} - {self.poids_net:.3f} T'
+            )
+
     def _notifier_commercial(self):
         """Notifie le commercial via le chatter du bon de commande"""
         self.ensure_one()
@@ -284,24 +354,53 @@ class GicaBonCirculation(models.Model):
         bcs      = self.sale_order_id.bon_circulation_ids
         total    = len(bcs)
         termines = len(bcs.filtered(lambda b: b.state == 'termine'))
+
+        # Message selon le mode de paiement
+        mode = ''
+        contrat = self.sale_order_id.commande_globale_id.contrat_id
+        if contrat:
+            mode = contrat.mode_paiement
+
         msg = (
             f'Rotation {self.numero_rotation}/{total} terminee — '
             f'Poids net : {self.poids_net:.3f} T | '
             f'BL : {self.picking_id.name if self.picking_id else "N/A"} | '
             f'Rotations terminees : {termines}/{total}'
         )
-        if termines == total:
-            msg += ' — TOUTES LES ROTATIONS SONT TERMINEES. Vous pouvez generer la facture.'
+
+        if mode == 'comptant' and self.invoice_id:
+            msg += f' | Facture : {self.invoice_id.name}'
+        elif termines == total and mode == 'terme':
+            msg += ' — TOUTES LES ROTATIONS TERMINEES. Vous pouvez generer la facture globale.'
+
         self.sale_order_id.message_post(body=msg)
 
     def _finaliser_terminer(self):
-        """Actions communes apres terminaison"""
+        """
+        Actions communes apres terminaison :
+        1. Date reelle enlevement
+        2. Cloture BCG si necessaire
+        3. BL automatique
+        4. Facture immediate si mode comptant
+        5. Notification commercial
+        """
         self.ensure_one()
+
+        # 1 + 2
         if self.sale_order_id:
             self.sale_order_id.write({'date_reelle_enlevement': fields.Date.today()})
             if self.sale_order_id.commande_globale_id:
                 self.sale_order_id.commande_globale_id._check_cloture_automatique()
+
+        # 3 — BL
         self._creer_bon_livraison()
+
+        # 4 — Facture immediate si comptant
+        contrat = self.sale_order_id.commande_globale_id.contrat_id if self.sale_order_id else False
+        if contrat and contrat.mode_paiement == 'comptant':
+            self._creer_facture_immediate()
+
+        # 5 — Notification
         self._notifier_commercial()
 
     def action_terminer(self):
@@ -376,8 +475,20 @@ class GicaBonCirculation(models.Model):
             'res_id':    self.picking_id.id,
         }
 
+    def action_voir_facture(self):
+        """Ouvre la facture immediate depuis la bascule"""
+        self.ensure_one()
+        if not self.invoice_id:
+            return
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Facture',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id':    self.invoice_id.id,
+        }
+
     def action_imprimer_bon_livraison(self):
-        """Imprime le BL Odoo natif depuis la bascule"""
         self.ensure_one()
         if not self.picking_id:
             raise ValidationError('Aucun bon de livraison genere pour ce bon de circulation.')

@@ -43,8 +43,8 @@ class GicaCommandeGlobaleLine(models.Model):
     conditionnement = fields.Selection([
         ('sac_25kg',           'Sac 25kg'),
         ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelisé'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelisé'),
+        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
+        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
         ('vrac',               'Vrac'),
         ('big_bag_client',     'Big Bag Client'),
         ('big_bag_scaek',      'Big Bag Scaek'),
