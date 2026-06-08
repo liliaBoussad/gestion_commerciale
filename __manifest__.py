@@ -44,7 +44,7 @@
         'views/gica_planification_client_views.xml',
         'views/gica_planification_usine_views.xml',
         'views/gica_planification_calendar_views.xml',
-
+        'views/avenant.xml',  
         'views/sale_order_gica_views.xml',
         'views/gica_bon_circulation_views.xml',
         'data/clinker_sequences.xml',

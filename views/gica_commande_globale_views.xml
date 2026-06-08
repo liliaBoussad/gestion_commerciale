@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <form string="Commande Globale">
                 <header>
-                    <button name="action_demarrer" string="Démarrer" type="object"
+                    <button name="action_demarrer" string="Demarrer" type="object"
                             class="btn-primary" invisible="state != 'nouveau'"/>
                     <button name="action_annuler" string="Annuler" type="object"
                             class="btn-danger" invisible="state in ('cloturee', 'annulee')"/>
@@ -41,6 +41,15 @@
                                 <span class="o_stat_text">Bons de Commande</span>
                             </div>
                         </button>
+                        <!-- Avenants — de la binome -->
+                        <button class="oe_stat_button" icon="fa-edit"
+                                type="object" name="action_voir_avenants"
+                                invisible="avenant_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="avenant_count"/></span>
+                                <span class="o_stat_text">Avenants</span>
+                            </div>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -54,6 +63,11 @@
                             <field name="date_commande"/>
                             <field name="date_expiration"/>
                         </group>
+                        <group string="Tarification">
+                            <field name="pricelist_id"
+                                   options="{'no_create': True}"
+                                   readonly="state in ('cloturee', 'annulee')"/>
+                        </group>
                     </group>
 
                     <notebook>
@@ -66,18 +80,40 @@
                                            string="Produit"/>
                                     <field name="conditionnement"/>
                                     <field name="product_id"         invisible="1"/>
-                                    <field name="quantity_tonne"     string="Qté totale (T)"/>
+                                    <field name="quantity_tonne"     string="Qte totale (T)"/>
                                     <field name="prix_unitaire"      string="Prix unitaire (DA)"/>
                                     <field name="montant_total"      string="Montant (DA)" readonly="1"/>
-                                    <field name="quantity_planifiee" string="Planifiée (T)" readonly="1"/>
-                                    <field name="quantity_enlevee"   string="Enlevée (T)"  readonly="1"/>
+                                    <field name="quantity_planifiee" string="Planifiee (T)" readonly="1"/>
+                                    <field name="quantity_enlevee"   string="Enlevee (T)"  readonly="1"/>
                                     <field name="quantity_restante"  string="Restante (T)" readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
-                        <!-- planification_ids → modele gica.planification.client -->
-                        <page string="Planifications proposées">
+                        <!-- Avenants — de la binome -->
+                        <page string="Avenants">
+                            <field name="avenant_ids" nolabel="1">
+                                <list decoration-success="state == 'valide'"
+                                      decoration-warning="state == 'brouillon'">
+                                    <field name="name"         string="Numero"/>
+                                    <field name="type_avenant" string="Type" widget="badge"
+                                           decoration-success="type_avenant == 'addition'"
+                                           decoration-danger="type_avenant == 'reduction'"/>
+                                    <field name="product_tmpl_id"  string="Produit"/>
+                                    <field name="conditionnement"  string="Conditionnement"/>
+                                    <field name="quantite"         string="Quantite (T)"/>
+                                    <field name="ancien_prix"      string="Ancien prix"/>
+                                    <field name="nouveau_prix"     string="Nouveau prix"/>
+                                    <field name="date"             string="Date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'valide'"
+                                           decoration-warning="state == 'brouillon'"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- planification_ids → gica.planification.client -->
+                        <page string="Planifications proposees">
                             <field name="planification_ids" nolabel="1">
                                 <list decoration-success="state == 'validee'"
                                       decoration-warning="state == 'soumise'"
@@ -85,7 +121,7 @@
                                       decoration-muted="state == 'brouillon'">
                                     <field name="name"/>
                                     <field name="date_enlevement"/>
-                                    <field name="quantity_total_tonne" string="Qté (T)"/>
+                                    <field name="quantity_total_tonne" string="Qte (T)"/>
                                     <field name="source"/>
                                     <field name="state" widget="badge"
                                            decoration-success="state == 'validee'"
@@ -95,27 +131,27 @@
                             </field>
                         </page>
 
-                        <page string="Planifications validées">
+                        <page string="Planifications validees">
                             <field name="planification_ids"
                                    domain="[('state', '=', 'validee')]"
                                    nolabel="1">
                                 <list decoration-success="state == 'validee'">
                                     <field name="name"/>
                                     <field name="date_enlevement"/>
-                                    <field name="quantity_total_tonne" string="Qté (T)"/>
+                                    <field name="quantity_total_tonne" string="Qte (T)"/>
                                     <field name="state" widget="badge"
                                            decoration-success="state == 'validee'"/>
                                 </list>
                             </field>
                         </page>
 
-                        <!-- bon_commande_ids → modele sale.order -->
+                        <!-- bon_commande_ids → sale.order -->
                         <page string="Bons de Commande">
                             <field name="bon_commande_ids" nolabel="1">
                                 <list>
                                     <field name="name"/>
                                     <field name="date_prevue_enlevement"/>
-                                    <field name="quantity_livree"  string="Qté livrée (T)"/>
+                                    <field name="quantity_livree"  string="Qte livree (T)"/>
                                     <field name="amount_total"     string="Montant (DA)"/>
                                     <field name="state" widget="badge"/>
                                 </list>
@@ -144,14 +180,16 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="contrat_id"/>
+                <field name="pricelist_id"         string="Liste de prix"/>
                 <field name="date_commande"/>
                 <field name="date_expiration"/>
-                <field name="quantity_total_tonne" string="Qté totale (T)"/>
-                <field name="quantity_planifiee"   string="Planifiée (T)"/>
-                <field name="quantity_enlevee"     string="Enlevée (T)"/>
+                <field name="quantity_total_tonne" string="Qte totale (T)"/>
+                <field name="quantity_planifiee"   string="Planifiee (T)"/>
+                <field name="quantity_enlevee"     string="Enlevee (T)"/>
                 <field name="quantity_restante"    string="Restante (T)"/>
                 <field name="planification_count"  string="Planifs"/>
                 <field name="bon_commande_count"   string="BC"/>
+                <field name="avenant_count"        string="Avenants"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'cloturee'"
                        decoration-info="state == 'en_cours'"
@@ -170,14 +208,16 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="contrat_id"/>
+                <field name="pricelist_id"/>
                 <filter string="Nouveau"  name="nouveau"  domain="[('state','=','nouveau')]"/>
                 <filter string="En cours" name="en_cours" domain="[('state','=','en_cours')]"/>
-                <filter string="Clôturée" name="cloturee" domain="[('state','=','cloturee')]"/>
-                <filter string="Annulée"  name="annulee"  domain="[('state','=','annulee')]"/>
+                <filter string="Cloturee" name="cloturee" domain="[('state','=','cloturee')]"/>
+                <filter string="Annulee"  name="annulee"  domain="[('state','=','annulee')]"/>
                 <group expand="0" string="Grouper par">
-                    <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
-                    <filter string="Statut" name="group_state"  context="{'group_by': 'state'}"/>
-                    <filter string="Mois"   name="group_date"   context="{'group_by': 'date_commande:month'}"/>
+                    <filter string="Client"        name="group_client"    context="{'group_by': 'client_id'}"/>
+                    <filter string="Liste de prix" name="group_pricelist" context="{'group_by': 'pricelist_id'}"/>
+                    <filter string="Statut"        name="group_state"     context="{'group_by': 'state'}"/>
+                    <filter string="Mois"          name="group_date"      context="{'group_by': 'date_commande:month'}"/>
                 </group>
             </search>
         </field>
@@ -190,7 +230,7 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune commande globale</p>
-            <p>Créez une commande globale depuis un contrat client actif.</p>
+            <p>Creez une commande globale depuis un contrat client actif.</p>
         </field>
     </record>
 

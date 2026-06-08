@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_gica_avenant_form" model="ir.ui.view">
+        <field name="name">gica.avenant.form</field>
+        <field name="model">gica.avenant</field>
+        <field name="arch" type="xml">
+            <form string="Avenant">
+                <header>
+                    <button name="action_valider"
+                            string="Valider la modification"
+                            type="object" class="btn-primary"
+                            invisible="state == 'valide'"/>
+                    <button name="action_remettre_brouillon"
+                            string="Remettre en brouillon"
+                            type="object"
+                            invisible="state == 'brouillon'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,valide"/>
+                </header>
+                <sheet>
+
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not alerte_commande">
+                        Ce bon global est annule ou expire. Aucune modification n'est permise.
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="type_avenant" readonly="state == 'valide'"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Details">
+                            <field name="commande_globale_id"
+                                   readonly="state == 'valide'"
+                                   options="{'no_create': True}"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="product_tmpl_ids" invisible="1"/>
+                            <field name="product_tmpl_id"
+                                   readonly="state == 'valide'"
+                                   domain="[('id', 'in', product_tmpl_ids)]"
+                                   options="{'no_create': True}"/>
+                            <field name="conditionnement"
+                                   readonly="state == 'valide'"/>
+                        </group>
+
+                        <group string="Ajustement">
+                            <field name="quantite"     readonly="state == 'valide'"/>
+                            <field name="nbr_paquets"  readonly="state == 'valide'"/>
+                            <field name="ancien_prix"  readonly="1"/>
+                            <field name="nouveau_prix" readonly="state == 'valide'"/>
+                            <field name="motif"        readonly="state == 'valide'"/>
+                            <field name="date"         readonly="1"/>
+                            <field name="user_id"      readonly="1"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_gica_avenant_list" model="ir.ui.view">
+        <field name="name">gica.avenant.list</field>
+        <field name="model">gica.avenant</field>
+        <field name="arch" type="xml">
+            <list string="Avenants"
+                  decoration-success="state == 'valide'"
+                  decoration-muted="state == 'brouillon'">
+                <field name="name"                string="Numero"/>
+                <field name="type_avenant"        string="Type" widget="badge"
+                       decoration-success="type_avenant == 'addition'"
+                       decoration-danger="type_avenant == 'reduction'"/>
+                <field name="commande_globale_id" string="Bon Global"/>
+                <field name="client_id"           string="Client"/>
+                <field name="product_tmpl_id"     string="Produit"/>
+                <field name="conditionnement"     string="Conditionnement"/>
+                <field name="quantite"            string="Quantite (T)"/>
+                <field name="ancien_prix"         string="Ancien prix"/>
+                <field name="nouveau_prix"        string="Nouveau prix"/>
+                <field name="date"                string="Date"/>
+                <field name="state"               string="Etat" widget="badge"
+                       decoration-success="state == 'valide'"
+                       decoration-warning="state == 'brouillon'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_gica_avenant" model="ir.actions.act_window">
+        <field name="name">Avenants</field>
+        <field name="res_model">gica.avenant</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun avenant enregistre</p>
+        </field>
+    </record>
+
+</odoo>

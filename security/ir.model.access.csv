@@ -46,3 +46,6 @@ access_clinker_planning_portal,clinker.planning portal,model_clinker_planning,ba
 access_gica_client_contract_portal,gica.client.contract portal,model_gica_client_contract,base.group_portal,1,0,0,0
 access_clinker_global_order_line_portal,clinker.global.order.line portal,model_clinker_global_order_line,base.group_portal,1,1,1,0
 access_gica_commande_globale_line_portal,gica.commande.globale.line portal,model_gica_commande_globale_line,base.group_portal,1,1,1,0
+
+access_gica_avenant_manager,gica.avenant manager,model_gica_avenant,base.group_system,1,1,1,1
+access_gica_avenant_user,gica.avenant user,model_gica_avenant,base.group_user,1,1,1,0
