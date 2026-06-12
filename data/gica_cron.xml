@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ── Cron : expiration automatique des Contrats ── -->
+    <record id="cron_check_contract_expiration" model="ir.cron">
+        <field name="name">GICA — Expiration automatique des contrats</field>
+        <field name="model_id" ref="model_gica_client_contract"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_expiration()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+    <!-- ── Cron : expiration automatique des BCG ── -->
+    <record id="cron_check_bcg_expiration" model="ir.cron">
+        <field name="name">GICA — Expiration automatique des BCG</field>
+        <field name="model_id" ref="model_gica_commande_globale"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_expiration()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+    <!-- ── Cron : alerte expiration BCG 7 jours avant ── -->
+    <record id="cron_alerte_expiration_bcg" model="ir.cron">
+        <field name="name">GICA — Alerte expiration BCG 7 jours</field>
+        <field name="model_id" ref="model_gica_planification_client"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_alerte_expiration_bcg()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+</odoo>

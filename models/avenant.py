@@ -56,15 +56,12 @@ class GicaAvenant(models.Model):
         tracking=True,
     )
 
-    conditionnement = fields.Selection([
-        ('sac_25kg',           'Sac 25kg'),
-        ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
-        ('vrac',               'Vrac'),
-        ('big_bag_client',     'Big Bag Client'),
-        ('big_bag_scaek',      'Big Bag Scaek'),
-    ], string='Conditionnement', tracking=True)
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string='Conditionnement',
+        domain="[('attribute_id.name', '=', 'Conditionnement')]",
+        tracking=True,
+    )
 
     product_id = fields.Many2one(
         'product.product',
@@ -101,6 +98,8 @@ class GicaAvenant(models.Model):
 
     alerte_commande = fields.Boolean(compute='_compute_alerte_commande')
 
+    # ── Computes ──────────────────────────────────────────────────────────
+
     @api.depends('commande_globale_id')
     def _compute_product_tmpl_ids(self):
         for rec in self:
@@ -109,15 +108,15 @@ class GicaAvenant(models.Model):
             else:
                 rec.product_tmpl_ids = False
 
-    @api.depends('product_tmpl_id', 'conditionnement')
+    @api.depends('product_tmpl_id', 'conditionnement_id')
     def _compute_product_id(self):
         for rec in self:
-            if rec.product_tmpl_id and rec.conditionnement:
-                label = dict(rec._fields['conditionnement'].selection).get(rec.conditionnement)
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                label = rec.conditionnement_id.name
                 variant = rec.product_tmpl_id.product_variant_ids.filtered(
                     lambda v: any(
-                        a.attribute_id.name == 'Conditionnement' and
-                        a.product_attribute_value_id.name == label
+                        a.attribute_id.name == 'Conditionnement'
+                        and a.product_attribute_value_id.name == label
                         for a in v.product_template_attribute_value_ids
                     )
                 )
@@ -129,24 +128,46 @@ class GicaAvenant(models.Model):
     def _compute_alerte_commande(self):
         for rec in self:
             rec.alerte_commande = (
-                rec.commande_globale_id and
-                rec.commande_globale_id.state in ('annulee', 'cloturee')
+                rec.commande_globale_id
+                and rec.commande_globale_id.state in ('annulee', 'cloturee')
             )
+
+    # ── Onchanges ─────────────────────────────────────────────────────────
 
     @api.onchange('commande_globale_id')
     def _onchange_commande_globale_id(self):
-        self.product_tmpl_id = False
-        self.conditionnement = False
+        self.product_tmpl_id   = False
+        self.conditionnement_id = False
 
     @api.onchange('product_tmpl_id')
     def _onchange_product_tmpl_id(self):
-        self.conditionnement = False
+        self.conditionnement_id = False
         if self.product_tmpl_id and self.commande_globale_id:
+            # Filtre les conditionnements disponibles pour ce produit dans le BCG
+            lignes = self.commande_globale_id.line_ids.filtered(
+                lambda l: l.product_tmpl_id == self.product_tmpl_id
+            )
+            valeur_ids = lignes.mapped('conditionnement_id').ids
+            # Prix de la première ligne si une seule ligne
+            if len(lignes) == 1:
+                self.ancien_prix = lignes[0].prix_unitaire
+            return {
+                'domain': {
+                    'conditionnement_id': [('id', 'in', valeur_ids)]
+                }
+            }
+
+    @api.onchange('conditionnement_id')
+    def _onchange_conditionnement_id(self):
+        if self.product_tmpl_id and self.conditionnement_id and self.commande_globale_id:
             ligne = self.commande_globale_id.line_ids.filtered(
                 lambda l: l.product_tmpl_id == self.product_tmpl_id
+                and l.conditionnement_id == self.conditionnement_id
             )
             if ligne:
                 self.ancien_prix = ligne[0].prix_unitaire
+
+    # ── Create ────────────────────────────────────────────────────────────
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -157,6 +178,8 @@ class GicaAvenant(models.Model):
                 )
         return super().create(vals_list)
 
+    # ── Actions ───────────────────────────────────────────────────────────
+
     def action_valider(self):
         self.ensure_one()
         if self.state == 'valide':
@@ -166,28 +189,25 @@ class GicaAvenant(models.Model):
                 'Impossible de valider un avenant sur une commande annulee ou cloturee.'
             )
 
-        # Appliquer la modification sur la ligne BCG correspondante
-        if self.product_tmpl_id and self.conditionnement:
+        if self.product_tmpl_id and self.conditionnement_id:
             ligne_bcg = self.commande_globale_id.line_ids.filtered(
                 lambda l: l.product_tmpl_id == self.product_tmpl_id
-                and l.conditionnement == self.conditionnement
+                and l.conditionnement_id == self.conditionnement_id
             )
             if not ligne_bcg:
                 raise ValidationError(
-                    f'Le produit {self.product_tmpl_id.name} / {self.conditionnement} '
+                    f'Le produit {self.product_tmpl_id.name} / '
+                    f'{self.conditionnement_id.name} '
                     f'n\'existe pas dans le BCG {self.commande_globale_id.name}.'
                 )
 
             if self.type_avenant == 'addition':
-                # Ajouter la quantite
                 if self.quantite:
                     ligne_bcg[0].quantity_tonne += self.quantite
-                # Mettre a jour le prix si specifie
                 if self.nouveau_prix:
                     ligne_bcg[0].prix_unitaire = self.nouveau_prix
 
             elif self.type_avenant == 'reduction':
-                # Verifier que la reduction ne depasse pas la quantite restante
                 if self.quantite:
                     if self.quantite > ligne_bcg[0].quantity_restante:
                         raise ValidationError(
@@ -195,23 +215,21 @@ class GicaAvenant(models.Model):
                             f'la quantite restante ({ligne_bcg[0].quantity_restante:.2f} T).'
                         )
                     ligne_bcg[0].quantity_tonne -= self.quantite
-                # Mettre a jour le prix si specifie
                 if self.nouveau_prix:
                     ligne_bcg[0].prix_unitaire = self.nouveau_prix
 
         self.write({'state': 'valide'})
 
-        # Notifier dans le chatter de l'avenant
+        cond_name = self.conditionnement_id.name if self.conditionnement_id else '-'
+
         self.message_post(
             body=f'Avenant valide — {self.type_avenant} de {self.quantite} T '
-                 f'sur {self.product_tmpl_id.name} / {self.conditionnement}'
+                 f'sur {self.product_tmpl_id.name} / {cond_name}'
         )
-
-        # Notifier dans le chatter du BCG
         self.commande_globale_id.message_post(
             body=f'Avenant {self.name} valide : {self.type_avenant} '
                  f'de {self.quantite} T sur {self.product_tmpl_id.name} '
-                 f'/ {self.conditionnement}'
+                 f'/ {cond_name}'
         )
 
     def action_remettre_brouillon(self):

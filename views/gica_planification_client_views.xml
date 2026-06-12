@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE FORMULAIRE — Planification Client
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_form" model="ir.ui.view">
         <field name="name">gica.planification.client.form</field>
         <field name="model">gica.planification.client</field>
@@ -16,10 +19,13 @@
                             string="Remettre en Brouillon"
                             type="object"
                             invisible="state != 'soumise'"/>
-                    <field name="state" widget="statusbar"
+                    <field name="state"
+                           widget="statusbar"
                            statusbar_visible="brouillon,soumise,validee"/>
                 </header>
+
                 <sheet>
+                    <!-- Smart buttons -->
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button"
                                 icon="fa-shopping-cart"
@@ -40,7 +46,7 @@
                         <group string="Sélection">
                             <field name="client_id"
                                    readonly="state in ('validee', 'refusee')"
-                                   options="{'no_create': True, 'no_open': True}"
+                                   options="{'no_create': True}"
                                    placeholder="1. Choisir le client…"/>
                             <field name="commande_globale_id"
                                    readonly="state in ('validee', 'refusee') or not client_id"
@@ -54,33 +60,44 @@
                         <field name="motif_refus" nolabel="1" readonly="1"/>
                     </group>
 
-                    <!-- Binôme : product_tmpl_ids pour filtrer les produits -->
+                    <!-- Champ technique pour filtrer les produits -->
                     <field name="product_tmpl_ids" invisible="1"/>
 
                     <notebook>
-                        <page string="Produits demandés">
+                        <page string="Produits demandés" name="produits">
                             <field name="line_ids"
                                    readonly="state in ('validee', 'refusee') or not commande_globale_id"
                                    context="{'default_product_tmpl_ids': product_tmpl_ids}">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <!-- Binôme : product_tmpl_id + conditionnement -->
+
                                     <field name="product_tmpl_id"
                                            string="Produit"
                                            domain="[('id', 'in', context.get('default_product_tmpl_ids', []))]"/>
-                                    <field name="bcg_line_id"
-                                        string="Conditionnement"
-                                        domain="[('id', 'in', conditionnement_ids)]"
-                                        options="{'no_create': True, 'no_open': True}"/>
-                                    <field name="conditionnement" column_invisible="1"/>                                    <field name="product_id" column_invisible="1"/>
+
+                                    <!--
+                                        conditionnement_id : Many2one filtré dynamiquement.
+                                        Le domain est mis à jour via _onchange_product_tmpl_id
+                                        pour n'afficher que les conditionnements du produit dans ce BCG.
+                                    -->
+                                    <field name="conditionnement_id"
+                                            string="Conditionnement"
+                                            options="{'no_create': True, 'display_name_field': 'name'}"
+                                            domain="[('pav_attribute_line_ids.product_tmpl_id', '=', product_tmpl_id),
+                                                        ('attribute_id.name', '=', 'Conditionnement')]"/>
+
+                                    <!-- bcg_line_id : ligne BCG correspondante (technique, cachée) -->
+                                    <field name="bcg_line_id"     column_invisible="1"/>
+                                    <field name="bcg_line_ids"    column_invisible="1"/>
+                                    <field name="product_id"      column_invisible="1"/>
+
                                     <field name="date_enlevement" string="Date enlèvement"/>
-                                    <field name="nbr_paquets"/>
-                                    <field name="quantity_tonne" string="Qté (T)"/>
-                                    <field name="rotation" string="Rotations"/>
+                                    <field name="nbr_paquets"     string="Nb paquets"/>
+                                    <field name="quantity_tonne"  string="Qté (T)"/>
+                                    <field name="rotation"        string="Rotations"/>
                                     <field name="quantity_disponible"
                                            string="Disponible BCG (T)"
                                            readonly="1"/>
-                                    <!-- Votre version : prix unitaire visible -->
                                     <field name="prix_unitaire"
                                            string="Prix unit. (DA)"
                                            readonly="1"/>
@@ -92,7 +109,8 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Observations">
+
+                        <page string="Observations" name="observations">
                             <field name="observations"/>
                         </page>
                     </notebook>
@@ -102,6 +120,10 @@
         </field>
     </record>
 
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE LISTE — Planifications Clients
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_list" model="ir.ui.view">
         <field name="name">gica.planification.client.list</field>
         <field name="model">gica.planification.client</field>
@@ -111,10 +133,10 @@
                   decoration-warning="state == 'soumise'"
                   decoration-danger="state == 'refusee'"
                   decoration-muted="state == 'brouillon'">
-                <field name="name" string="Référence"/>
-                <field name="client_id" string="Client"/>
+                <field name="name"         string="Référence"/>
+                <field name="client_id"    string="Client"/>
                 <field name="periode_debut" string="Date début"/>
-                <field name="periode_fin" string="Date fin"/>
+                <field name="periode_fin"   string="Date fin"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'validee'"
                        decoration-warning="state == 'soumise'"
@@ -123,6 +145,10 @@
         </field>
     </record>
 
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE RECHERCHE — Planifications Clients
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_planification_client_search" model="ir.ui.view">
         <field name="name">gica.planification.client.search</field>
         <field name="model">gica.planification.client</field>
@@ -131,12 +157,13 @@
                 <field name="name"/>
                 <field name="client_id"/>
                 <field name="commande_globale_id"/>
-                <filter string="Brouillon" name="brouillon" domain="[('state','=','brouillon')]"/>
-                <filter string="Soumises"  name="soumise"   domain="[('state','=','soumise')]"/>
-                <filter string="Validées"  name="validee"   domain="[('state','=','validee')]"/>
-                <filter string="Refusées"  name="refusee"   domain="[('state','=','refusee')]"/>
                 <separator/>
-                <filter string="À traiter" name="a_traiter" domain="[('state','=','soumise')]"/>
+                <filter string="Brouillon" name="brouillon" domain="[('state', '=', 'brouillon')]"/>
+                <filter string="Soumises"  name="soumise"   domain="[('state', '=', 'soumise')]"/>
+                <filter string="Validées"  name="validee"   domain="[('state', '=', 'validee')]"/>
+                <filter string="Refusées"  name="refusee"   domain="[('state', '=', 'refusee')]"/>
+                <separator/>
+                <filter string="À traiter" name="a_traiter" domain="[('state', '=', 'soumise')]"/>
                 <group expand="0" string="Grouper par">
                     <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
                     <filter string="BCG"    name="group_bcg"    context="{'group_by': 'commande_globale_id'}"/>
@@ -146,6 +173,10 @@
         </field>
     </record>
 
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTION — Planifications Clients
+    ═══════════════════════════════════════════════════════════ -->
     <record id="action_gica_planification_client" model="ir.actions.act_window">
         <field name="name">Planifications Clients</field>
         <field name="res_model">gica.planification.client</field>

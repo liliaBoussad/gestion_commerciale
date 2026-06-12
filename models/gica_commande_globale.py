@@ -15,13 +15,10 @@ class GicaCommandeGlobaleLine(models.Model):
         store=True,
     )
 
-    @api.depends('product_tmpl_id', 'conditionnement')
+    @api.depends('product_tmpl_id', 'conditionnement_id')
     def _compute_display_name_line(self):
         for rec in self:
-            cond = dict(rec._fields['conditionnement'].selection).get(
-                rec.conditionnement, rec.conditionnement or '-'
-            )
-            rec.display_name_line = cond
+            rec.display_name_line = rec.conditionnement_id.name or '-'
 
     sequence = fields.Integer(default=10)
 
@@ -39,16 +36,11 @@ class GicaCommandeGlobaleLine(models.Model):
         domain="[('is_gica_product', '=', True)]",
     )
 
-    # Labels harmonises avec products_data.xml
-    conditionnement = fields.Selection([
-        ('sac_25kg',           'Sac 25kg'),
-        ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
-        ('vrac',               'Vrac'),
-        ('big_bag_client',     'Big Bag Client'),
-        ('big_bag_scaek',      'Big Bag Scaek'),
-    ], string='Conditionnement', required=True)
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string='Conditionnement',
+        domain="[('attribute_id.name', '=', 'Conditionnement')]",
+    )
 
     product_id = fields.Many2one(
         'product.product',
@@ -92,15 +84,17 @@ class GicaCommandeGlobaleLine(models.Model):
         store=True,
     )
 
-    @api.depends('product_tmpl_id', 'conditionnement')
+    # ── Computes ──────────────────────────────────────────────────────────
+
+    @api.depends('product_tmpl_id', 'conditionnement_id')
     def _compute_product_id(self):
         for rec in self:
-            if rec.product_tmpl_id and rec.conditionnement:
-                label = dict(rec._fields['conditionnement'].selection).get(rec.conditionnement)
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                label = rec.conditionnement_id.name
                 variant = rec.product_tmpl_id.product_variant_ids.filtered(
                     lambda v: any(
-                        a.attribute_id.name == 'Conditionnement' and
-                        a.product_attribute_value_id.name == label
+                        a.attribute_id.name == 'Conditionnement'
+                        and a.product_attribute_value_id.name == label
                         for a in v.product_template_attribute_value_ids
                     )
                 )
@@ -121,8 +115,8 @@ class GicaCommandeGlobaleLine(models.Model):
     def _compute_quantity_enlevee(self):
         for rec in self:
             enlevee = 0.0
-            if rec.commande_id and rec.product_tmpl_id and rec.conditionnement:
-                label = dict(rec._fields['conditionnement'].selection).get(rec.conditionnement)
+            if rec.commande_id and rec.product_tmpl_id and rec.conditionnement_id:
+                label = rec.conditionnement_id.name
                 bc_enleves = rec.commande_id.bon_commande_ids.filtered(
                     lambda bc: bc.date_reelle_enlevement
                 )
@@ -154,15 +148,63 @@ class GicaCommandeGlobaleLine(models.Model):
             )
             rec.quantity_planifiee = planifiee
 
+    # ── Helpers ───────────────────────────────────────────────────────────
+
+    def _resoudre_variante(self):
+        self.ensure_one()
+        if self.product_tmpl_id and self.conditionnement_id:
+            label = self.conditionnement_id.name
+            variant = self.product_tmpl_id.product_variant_ids.filtered(
+                lambda v: any(
+                    a.attribute_id.name == 'Conditionnement'
+                    and a.product_attribute_value_id.name == label
+                    for a in v.product_template_attribute_value_ids
+                )
+            )
+            return variant[0] if variant else False
+        return False
+
+    def _get_prix_from_pricelist(self):
+        self.ensure_one()
+        pricelist = self.commande_id.pricelist_id
+        product   = self._resoudre_variante()
+
+        if pricelist and product:
+            try:
+                results = pricelist._compute_price_rule(
+                    product, 1.0,
+                    uom=product.uom_id,
+                    date=fields.Date.today(),
+                    currency=pricelist.currency_id,
+                )
+                price = results.get(product.id, (0.0,))[0]
+                if price:
+                    return price
+            except Exception:
+                pass
+
+        return self.product_tmpl_id.list_price if self.product_tmpl_id else 0.0
+
+    # ── Onchanges ─────────────────────────────────────────────────────────
+
     @api.onchange('product_tmpl_id')
     def _onchange_product_tmpl_id(self):
-        self.conditionnement = False
-        self.prix_unitaire   = 0.0
+        self.conditionnement_id = False
+        self.prix_unitaire      = 0.0
+        if self.product_tmpl_id:
+            valeur_ids = self.product_tmpl_id.attribute_line_ids.filtered(
+                lambda l: l.attribute_id.name == 'Conditionnement'
+            ).value_ids.ids
+            return {
+                'domain': {
+                    'conditionnement_id': [('id', 'in', valeur_ids)]
+                }
+            }
 
-    @api.onchange('product_tmpl_id', 'conditionnement')
-    def _onchange_product_conditionnement(self):
-        if self.product_tmpl_id and self.conditionnement:
-            self.prix_unitaire = self.product_tmpl_id.list_price
+    @api.onchange('conditionnement_id')
+    def _onchange_conditionnement_id(self):
+        if self.product_tmpl_id and self.conditionnement_id:
+            self.prix_unitaire = self._get_prix_from_pricelist()
 
 
 class GicaCommandeGlobale(models.Model):
@@ -212,6 +254,7 @@ class GicaCommandeGlobale(models.Model):
         ('en_cours', 'En cours'),
         ('cloturee', 'Cloturee'),
         ('annulee',  'Annulee'),
+        ('expire',   'Expire'),
     ], string='Statut', default='nouveau', tracking=True, required=True)
 
     line_ids = fields.One2many(
@@ -248,7 +291,6 @@ class GicaCommandeGlobale(models.Model):
         'gica.planification.client', 'commande_globale_id',
         string='Planifications',
     )
-
     planification_count = fields.Integer(
         compute='_compute_planification_count',
         string='Nb Planifications',
@@ -267,7 +309,6 @@ class GicaCommandeGlobale(models.Model):
         string='Nb BC',
     )
 
-    # Avenants — de la binome ✅
     avenant_ids = fields.One2many(
         'gica.avenant', 'commande_globale_id',
         string='Avenants',
@@ -276,11 +317,6 @@ class GicaCommandeGlobale(models.Model):
         compute='_compute_avenant_count',
         string='Nb Avenants',
     )
-
-    @api.depends('avenant_ids')
-    def _compute_avenant_count(self):
-        for rec in self:
-            rec.avenant_count = len(rec.avenant_ids)
 
     montant_total        = fields.Float(compute='_compute_totaux', store=True)
     quantity_total_tonne = fields.Float(compute='_compute_totaux', store=True)
@@ -301,6 +337,8 @@ class GicaCommandeGlobale(models.Model):
 
     observations = fields.Text(string='Observations')
 
+    # ── Computes ──────────────────────────────────────────────────────────
+
     @api.depends('planification_ids', 'planification_ids.state')
     def _compute_planification_count(self):
         for rec in self:
@@ -313,6 +351,11 @@ class GicaCommandeGlobale(models.Model):
     def _compute_bon_commande_count(self):
         for rec in self:
             rec.bon_commande_count = len(rec.bon_commande_ids)
+
+    @api.depends('avenant_ids')
+    def _compute_avenant_count(self):
+        for rec in self:
+            rec.avenant_count = len(rec.avenant_ids)
 
     @api.depends(
         'line_ids.montant_total',
@@ -331,6 +374,14 @@ class GicaCommandeGlobale(models.Model):
                 (rec.quantity_enlevee / rec.quantity_total_tonne * 100)
                 if rec.quantity_total_tonne else 0.0
             )
+            # ── Clôture automatique quand toute la quantité est enlevée ──
+            if (rec.state == 'en_cours'
+                    and rec.quantity_total_tonne > 0
+                    and rec.quantity_enlevee >= rec.quantity_total_tonne):
+                rec.state = 'cloturee'
+                rec.message_post(body='BCG clôturé automatiquement — toute la quantité a été enlevée.')
+
+    # ── Create / Unlink ───────────────────────────────────────────────────
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -340,39 +391,85 @@ class GicaCommandeGlobale(models.Model):
                     'gica.commande.globale'
                 ) or 'Nouveau'
         records = super().create(vals_list)
-        contrat_ids = records.mapped('contrat_id')
-        if contrat_ids:
-            contrat_ids.invalidate_recordset(['commande_globale_id'])
+        records.mapped('contrat_id').invalidate_recordset(['commande_globale_id'])
         return records
 
     def unlink(self):
         contrat_ids = self.mapped('contrat_id')
         res = super().unlink()
-        if contrat_ids:
-            contrat_ids.invalidate_recordset(['commande_globale_id'])
+        contrat_ids.invalidate_recordset(['commande_globale_id'])
         return res
+
+    # ── Onchanges ─────────────────────────────────────────────────────────
 
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.contrat_id = False
+        # ── Remplissage automatique du contrat ──
+        # Si le client a un seul contrat actif → remplir automatiquement
+        # Si plusieurs → laisser l'utilisateur choisir
+        if self.client_id:
+            contrats = self.env['gica.client.contract'].search([
+                ('client_id', '=', self.client_id.id),
+                ('state', 'in', ['actif', 'en_cours']),
+            ])
+            if len(contrats) == 1:
+                self.contrat_id = contrats[0]
 
     @api.onchange('contrat_id')
     def _onchange_contrat_id(self):
-        if self.contrat_id:
-            lines = []
-            for line in self.contrat_id.line_ids:
-                lines.append((0, 0, {
-                    'product_tmpl_id': line.product_tmpl_id.id,
-                    'conditionnement': line.conditionnement,
-                    'quantity_tonne':  line.quantity_tonne,
-                    'prix_unitaire':   line.prix_unitaire,
-                }))
-            self.line_ids = lines
+        """
+        Copie uniquement produit + quantité depuis le contrat.
+        Le conditionnement et le prix sont saisis sur le BCG.
+        Les lignes ne sont pas modifiables après (readonly si state != nouveau).
+        """
+        if not self.contrat_id:
+            return
+        self.line_ids = [
+            (0, 0, {
+                'product_tmpl_id':    line.product_tmpl_id.id,
+                'conditionnement_id': False,
+                'quantity_tonne':     line.quantity_tonne,
+                'prix_unitaire':      0.0,
+            })
+            for line in self.contrat_id.line_ids
+        ]
+
+    @api.onchange('pricelist_id')
+    def _onchange_pricelist_id(self):
+        for line in self.line_ids:
+            if not line.product_tmpl_id or not line.conditionnement_id:
+                continue
+            product = line._resoudre_variante()
+            if not product:
+                continue
+            if self.pricelist_id:
+                try:
+                    results = self.pricelist_id._compute_price_rule(
+                        product, 1.0,
+                        uom=product.uom_id,
+                        date=fields.Date.today(),
+                        currency=self.pricelist_id.currency_id,
+                    )
+                    prix = results.get(product.id, (0.0,))[0] or 0.0
+                except Exception:
+                    prix = product.product_tmpl_id.list_price
+                line.prix_unitaire = prix
+            else:
+                line.prix_unitaire = product.product_tmpl_id.list_price
+
+    # ── Actions ───────────────────────────────────────────────────────────
 
     def action_demarrer(self):
         for rec in self:
             if not rec.line_ids:
                 raise ValidationError('La commande globale doit avoir au moins une ligne.')
+            # Vérifier que toutes les lignes ont un conditionnement
+            for line in rec.line_ids:
+                if not line.conditionnement_id:
+                    raise ValidationError(
+                        f'Le produit "{line.product_tmpl_id.name}" n\'a pas de conditionnement.'
+                    )
             rec.write({'state': 'en_cours'})
 
     def action_annuler(self):
@@ -392,7 +489,7 @@ class GicaCommandeGlobale(models.Model):
                     and rec.quantity_total_tonne > 0
                     and rec.quantity_restante <= 0):
                 rec.write({'state': 'cloturee'})
-                rec.message_post(body='Commande cloturee — toute la quantite a ete enlevee.')
+                rec.message_post(body='BCG clôturé — toute la quantité a été enlevée.')
 
     def action_voir_bons_commande(self):
         self.ensure_one()
@@ -429,6 +526,8 @@ class GicaCommandeGlobale(models.Model):
             'domain':    [('commande_globale_id', '=', self.id)],
             'context':   {'default_commande_globale_id': self.id},
         }
+
+    # ── Contraintes ───────────────────────────────────────────────────────
 
     @api.constrains('contrat_id', 'client_id')
     def _check_contrat_client(self):
@@ -481,3 +580,28 @@ class GicaCommandeGlobale(models.Model):
                         f'({qty_contrat:.0f} T).\n'
                         f'Creez un avenant pour ajouter de la quantite.'
                     )
+
+    # ── Cron ──────────────────────────────────────────────────────────────
+
+    @api.model
+    def _cron_check_expiration(self):
+        today = fields.Date.today()
+        expired = self.search([
+            ('state', 'in', ['nouveau', 'en_cours']),
+            ('date_expiration', '<', today),
+        ])
+        if expired:
+            expired.write({'state': 'expire'})
+            for rec in expired:
+                rec.message_post(
+                    body=f"BCG expiré automatiquement le {today}."
+                )
+
+
+# ── Suppression du préfixe "Conditionnement: " dans l'affichage ──────────
+class ProductAttributeValue(models.Model):
+    _inherit = 'product.attribute.value'
+
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = rec.name

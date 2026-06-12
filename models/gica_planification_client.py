@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from datetime import timedelta 
 
 
 class GicaPlanificationClientLine(models.Model):
@@ -44,15 +45,12 @@ class GicaPlanificationClientLine(models.Model):
         domain="[('id', 'in', parent.product_tmpl_ids)]",
     )
 
-    conditionnement = fields.Selection([
-        ('sac_25kg',           'Sac 25kg'),
-        ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
-        ('vrac',               'Vrac'),
-        ('big_bag_client',     'Big Bag Client'),
-        ('big_bag_scaek',      'Big Bag Scaek'),
-    ], string='Conditionnement', required=True)
+    # ── Remplacement conditionnement (Selection) → Many2one ───────────────
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string='Conditionnement',
+        domain="[('attribute_id.name', '=', 'Conditionnement')]",
+    )
 
     product_id = fields.Many2one(
         'product.product',
@@ -92,10 +90,10 @@ class GicaPlanificationClientLine(models.Model):
     @api.depends('sale_order_id.bon_circulation_ids')
     def _compute_bon_circulation_count(self):
         for rec in self:
-            if rec.sale_order_id:
-                rec.bon_circulation_count = len(rec.sale_order_id.bon_circulation_ids)
-            else:
-                rec.bon_circulation_count = 0
+            rec.bon_circulation_count = (
+                len(rec.sale_order_id.bon_circulation_ids)
+                if rec.sale_order_id else 0
+            )
 
     client_id = fields.Many2one(
         'res.partner',
@@ -125,56 +123,39 @@ class GicaPlanificationClientLine(models.Model):
         readonly=True,
     )
 
-    conditionnement_ids = fields.Many2many(
+    # bcg_line_id : ligne BCG correspondant au produit + conditionnement choisi
+    bcg_line_ids = fields.Many2many(
         'gica.commande.globale.line',
-        compute='_compute_conditionnement_ids',
+        compute='_compute_bcg_line_ids',
     )
     bcg_line_id = fields.Many2one(
         'gica.commande.globale.line',
-        string='Conditionnement',
-        domain="[('id', 'in', conditionnement_ids)]",
+        string='Ligne BCG',
+        domain="[('id', 'in', bcg_line_ids)]",
     )
 
     @api.depends('planification_id.commande_globale_id', 'product_tmpl_id')
-    def _compute_conditionnement_ids(self):
+    def _compute_bcg_line_ids(self):
         for rec in self:
             bcg = rec.planification_id.commande_globale_id
             if bcg and rec.product_tmpl_id:
-                rec.conditionnement_ids = bcg.line_ids.filtered(
+                rec.bcg_line_ids = bcg.line_ids.filtered(
                     lambda l: l.product_tmpl_id == rec.product_tmpl_id
                 )
             else:
-                rec.conditionnement_ids = False
+                rec.bcg_line_ids = False
 
-    @api.onchange('product_tmpl_id')
-    def _onchange_product_tmpl_id(self):
-        self.bcg_line_id = False
-        self.conditionnement = False
-        if self.product_tmpl_id and self.planification_id.commande_globale_id:
-            bcg    = self.planification_id.commande_globale_id
-            lignes = bcg.line_ids.filtered(
-                lambda l: l.product_tmpl_id == self.product_tmpl_id
-            )
-            if len(lignes) == 1:
-                self.bcg_line_id = lignes[0]
-                self.conditionnement = lignes[0].conditionnement
+    # ── Computes ──────────────────────────────────────────────────────────
 
-    @api.onchange('bcg_line_id')
-    def _onchange_bcg_line_id(self):
-        if self.bcg_line_id:
-            self.conditionnement = self.bcg_line_id.conditionnement
-
-    @api.depends('product_tmpl_id', 'conditionnement')
+    @api.depends('product_tmpl_id', 'conditionnement_id')
     def _compute_product_id(self):
         for rec in self:
-            if rec.product_tmpl_id and rec.conditionnement:
-                label = dict(
-                    rec._fields['conditionnement'].selection
-                ).get(rec.conditionnement)
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                label = rec.conditionnement_id.name
                 variant = rec.product_tmpl_id.product_variant_ids.filtered(
                     lambda v: any(
-                        a.attribute_id.name == 'Conditionnement' and
-                        a.product_attribute_value_id.name == label
+                        a.attribute_id.name == 'Conditionnement'
+                        and a.product_attribute_value_id.name == label
                         for a in v.product_template_attribute_value_ids
                     )
                 )
@@ -182,15 +163,19 @@ class GicaPlanificationClientLine(models.Model):
             else:
                 rec.product_id = False
 
-    @api.depends('planification_id.commande_globale_id', 'product_tmpl_id', 'conditionnement')
+    @api.depends(
+        'planification_id.commande_globale_id',
+        'product_tmpl_id',
+        'conditionnement_id',
+    )
     def _compute_prix_unitaire(self):
         for rec in self:
             prix = 0.0
             bcg  = rec.planification_id.commande_globale_id
-            if bcg and rec.product_tmpl_id and rec.conditionnement:
+            if bcg and rec.product_tmpl_id and rec.conditionnement_id:
                 line = bcg.line_ids.filtered(
                     lambda l: l.product_tmpl_id == rec.product_tmpl_id
-                    and l.conditionnement == rec.conditionnement
+                    and l.conditionnement_id == rec.conditionnement_id
                 )
                 if line:
                     prix = line[0].prix_unitaire
@@ -199,22 +184,64 @@ class GicaPlanificationClientLine(models.Model):
     @api.depends(
         'planification_id.commande_globale_id',
         'planification_id.commande_globale_id.line_ids',
-        'product_tmpl_id', 'conditionnement',
+        'product_tmpl_id',
+        'conditionnement_id',
     )
     def _compute_quantity_disponible(self):
         for rec in self:
             disponible = 0.0
             bcg        = rec.planification_id.commande_globale_id
-            if bcg and rec.product_tmpl_id and rec.conditionnement:
+            if bcg and rec.product_tmpl_id and rec.conditionnement_id:
                 line = bcg.line_ids.filtered(
                     lambda l: l.product_tmpl_id == rec.product_tmpl_id
-                    and l.conditionnement == rec.conditionnement
+                    and l.conditionnement_id == rec.conditionnement_id
                 )
                 if line:
                     disponible = line[0].quantity_restante
             rec.quantity_disponible = disponible
 
-    @api.constrains('product_tmpl_id', 'conditionnement', 'planification_id')
+    # ── Onchanges ─────────────────────────────────────────────────────────
+
+    @api.onchange('product_tmpl_id')
+    def _onchange_product_tmpl_id(self):
+        self.bcg_line_id       = False
+        self.conditionnement_id = False
+        if self.product_tmpl_id and self.planification_id.commande_globale_id:
+            bcg    = self.planification_id.commande_globale_id
+            lignes = bcg.line_ids.filtered(
+                lambda l: l.product_tmpl_id == self.product_tmpl_id
+            )
+            # Filtre les conditionnements disponibles pour ce produit dans ce BCG
+            valeur_ids = lignes.mapped('conditionnement_id').ids
+            # Si une seule ligne → pré-sélectionne automatiquement
+            if len(lignes) == 1:
+                self.bcg_line_id        = lignes[0]
+                self.conditionnement_id = lignes[0].conditionnement_id
+            return {
+                'domain': {
+                    'conditionnement_id': [('id', 'in', valeur_ids)]
+                }
+            }
+
+    @api.onchange('bcg_line_id')
+    def _onchange_bcg_line_id(self):
+        if self.bcg_line_id:
+            self.conditionnement_id = self.bcg_line_id.conditionnement_id
+
+    @api.onchange('conditionnement_id')
+    def _onchange_conditionnement_id(self):
+        """Synchronise bcg_line_id quand le conditionnement est choisi manuellement."""
+        if self.conditionnement_id and self.planification_id.commande_globale_id:
+            bcg  = self.planification_id.commande_globale_id
+            line = bcg.line_ids.filtered(
+                lambda l: l.product_tmpl_id == self.product_tmpl_id
+                and l.conditionnement_id == self.conditionnement_id
+            )
+            self.bcg_line_id = line[0] if line else False
+
+    # ── Contraintes ───────────────────────────────────────────────────────
+
+    @api.constrains('product_tmpl_id', 'conditionnement_id', 'planification_id')
     def _check_produit_dans_bcg(self):
         for rec in self:
             bcg = rec.planification_id.commande_globale_id
@@ -222,14 +249,15 @@ class GicaPlanificationClientLine(models.Model):
                 continue
             if not bcg.line_ids.filtered(
                 lambda l: l.product_tmpl_id == rec.product_tmpl_id
-                and l.conditionnement == rec.conditionnement
+                and l.conditionnement_id == rec.conditionnement_id
             ):
+                cond = rec.conditionnement_id.name if rec.conditionnement_id else '-'
                 raise ValidationError(
-                    f'Le produit "{rec.product_tmpl_id.name} - '
-                    f'{rec.conditionnement}" n\'existe pas dans le BCG {bcg.name}.'
+                    f'Le produit "{rec.product_tmpl_id.name} - {cond}" '
+                    f'n\'existe pas dans le BCG {bcg.name}.'
                 )
 
-    @api.constrains('quantity_tonne', 'product_tmpl_id', 'conditionnement', 'planification_id')
+    @api.constrains('quantity_tonne', 'product_tmpl_id', 'conditionnement_id', 'planification_id')
     def _check_quantite_disponible(self):
         for rec in self:
             if rec.quantity_tonne <= 0:
@@ -239,7 +267,7 @@ class GicaPlanificationClientLine(models.Model):
                 continue
             line = bcg.line_ids.filtered(
                 lambda l: l.product_tmpl_id == rec.product_tmpl_id
-                and l.conditionnement == rec.conditionnement
+                and l.conditionnement_id == rec.conditionnement_id
             )
             if not line:
                 continue
@@ -250,7 +278,7 @@ class GicaPlanificationClientLine(models.Model):
                 )
                 for l in p.line_ids.filtered(
                     lambda l: l.product_tmpl_id == rec.product_tmpl_id
-                    and l.conditionnement == rec.conditionnement
+                    and l.conditionnement_id == rec.conditionnement_id
                     and l.id != rec.id
                 )
             )
@@ -300,16 +328,32 @@ class GicaPlanificationClientLine(models.Model):
     def _onchange_date_enlevement(self):
         if not self.date_enlevement:
             return
+
+        # ── Vérification expiration BCG ──────────────────────────────
+        bcg = self.planification_id.commande_globale_id
+        if bcg and bcg.date_expiration and self.date_enlevement > bcg.date_expiration:
+            self.date_enlevement = False
+            return {
+                'warning': {
+                    'title':   'Date hors délai BCG',
+                    'message': f'La date d\'enlèvement choisie dépasse '
+                            f'la date d\'expiration du BCG ({bcg.date_expiration}).\n'
+                            f'Veuillez choisir une date avant le {bcg.date_expiration}.',
+                }
+            }
+
+        # ── Weekend ──────────────────────────────────────────────────
         if self.date_enlevement.weekday() in (4, 5):
             jour = "Vendredi" if self.date_enlevement.weekday() == 4 else "Samedi"
             return {
                 'warning': {
                     'title':   'Jour non ouvrable',
                     'message': f'Le {jour} {self.date_enlevement} est un jour de weekend.\n'
-                               f'Les enlevements ne sont pas autorises le vendredi et samedi.\n'
-                               f'Veuillez choisir une autre date.',
+                            f'Veuillez choisir une autre date.',
                 }
             }
+
+        # ── Période verrouillée ──────────────────────────────────────
         periode = self.env['gica.planification.usine'].search([
             ('state',      '=',  'confirmee'),
             ('date_debut', '<=', self.date_enlevement),
@@ -320,10 +364,13 @@ class GicaPlanificationClientLine(models.Model):
                 'warning': {
                     'title':   'Periode verrouillee',
                     'message': f'La date {self.date_enlevement} est dans une periode verrouillee :\n'
-                               f'{periode.name} ({periode.date_debut} - {periode.date_fin})\n'
-                               f'Veuillez choisir une autre date.',
+                            f'{periode.name} ({periode.date_debut} - {periode.date_fin})\n'
+                            f'Veuillez choisir une autre date.',
                 }
             }
+            
+
+    # ── Actions ───────────────────────────────────────────────────────────
 
     def action_valider_ligne(self):
         for rec in self:
@@ -376,7 +423,6 @@ class GicaPlanificationClientLine(models.Model):
         bcg       = planif.commande_globale_id
         pricelist = bcg.pricelist_id if bcg else False
 
-        # Creer le bon de commande
         order = self.env['sale.order'].with_context(no_recompute=True).create({
             'partner_id':             partner.id if partner else False,
             'pricelist_id':           pricelist.id if pricelist else False,
@@ -393,19 +439,16 @@ class GicaPlanificationClientLine(models.Model):
         order.order_line._compute_price_unit()
         self.write({'sale_order_id': order.id})
 
-        # Creer N bons de circulation (1 par rotation)
-        nbr_rotations         = max(1, self.rotation)
-        quantite_par_rotation = round(self.quantity_tonne / nbr_rotations, 3)
+        nbr_rotations            = max(1, self.rotation)
+        quantite_par_rotation    = round(self.quantity_tonne / nbr_rotations, 3)
         nbr_paquets_par_rotation = (self.nbr_paquets // nbr_rotations if self.nbr_paquets else 0)
 
         for i in range(nbr_rotations):
-            if i == nbr_rotations - 1:
-                qte = round(
-                    self.quantity_tonne - quantite_par_rotation * (nbr_rotations - 1), 3
-                )
-            else:
-                qte = quantite_par_rotation
-
+            qte = (
+                round(self.quantity_tonne - quantite_par_rotation * (nbr_rotations - 1), 3)
+                if i == nbr_rotations - 1
+                else quantite_par_rotation
+            )
             self.env['gica.bon.circulation'].create({
                 'sale_order_id':         order.id,
                 'planification_line_id': self.id,
@@ -542,6 +585,8 @@ class GicaPlanificationClient(models.Model):
         for rec in self:
             rec.quantity_total_tonne = sum(rec.line_ids.mapped('quantity_tonne'))
 
+    # ── Onchanges ─────────────────────────────────────────────────────────
+
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.commande_globale_id = False
@@ -552,6 +597,8 @@ class GicaPlanificationClient(models.Model):
         self.line_ids = [(5, 0, 0)]
         if self.commande_globale_id and not self.client_id:
             self.client_id = self.commande_globale_id.client_id
+
+    # ── Contraintes ───────────────────────────────────────────────────────
 
     @api.constrains('client_id', 'commande_globale_id')
     def _check_client_bcg(self):
@@ -564,6 +611,8 @@ class GicaPlanificationClient(models.Model):
                     f'n\'appartient pas au client {rec.client_id.display_name}.'
                 )
 
+    # ── Create ────────────────────────────────────────────────────────────
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -575,6 +624,8 @@ class GicaPlanificationClient(models.Model):
                     'gica.planification.client'
                 ) or 'Nouveau'
         return super().create(vals_list)
+
+    # ── Actions ───────────────────────────────────────────────────────────
 
     def _recompute_state(self):
         for rec in self:
@@ -694,3 +745,22 @@ class GicaPlanificationClient(models.Model):
         )
         if template:
             template.send_mail(self.id, force_send=True)
+
+    # ── Cron : alerte expiration BCG 7 jours avant ────────────────────────
+ 
+    @api.model
+    def _cron_alerte_expiration_bcg(self):
+        """Envoie une alerte 7 jours avant l'expiration du BCG."""
+        today   = fields.Date.today()
+        dans_7j = today + timedelta(days=7)
+        bcgs = self.env['gica.commande.globale'].search([
+            ('state', 'in', ['nouveau', 'en_cours']),
+            ('date_expiration', '=', dans_7j),
+        ])
+        for bcg in bcgs:
+            bcg.message_post(
+                body=f'⚠️ Le BCG {bcg.name} expire dans 7 jours le {bcg.date_expiration}. '
+                     f'Pensez à créer un avenant ou un nouveau contrat.',
+                message_type='notification',
+            )
+ 

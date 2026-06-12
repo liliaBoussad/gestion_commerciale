@@ -24,24 +24,6 @@ class GicaClientContractLine(models.Model):
         domain="[('is_gica_product', '=', True)]",
     )
 
-    # Labels harmonises avec products_data.xml
-    conditionnement = fields.Selection([
-        ('sac_25kg',           'Sac 25kg'),
-        ('sac_50kg',           'Sac 50kg'),
-        ('sac_25kg_fardelise', 'Sac 25kg Fardelise'),
-        ('sac_50kg_fardelise', 'Sac 50kg Fardelise'),
-        ('vrac',               'Vrac'),
-        ('big_bag_client',     'Big Bag Client'),
-        ('big_bag_scaek',      'Big Bag Scaek'),
-    ], string='Conditionnement', required=True)
-
-    product_id = fields.Many2one(
-        'product.product',
-        string='Variante',
-        compute='_compute_product_id',
-        store=True,
-    )
-
     type_ciment = fields.Selection(
         related='product_tmpl_id.type_ciment',
         string='Famille ciment',
@@ -49,7 +31,8 @@ class GicaClientContractLine(models.Model):
         readonly=True,
     )
 
-    quantity       = fields.Float(string='Quantite', required=True)
+    quantity = fields.Float(string='Quantite', required=True)
+
     quantity_tonne = fields.Float(
         string='Quantite (tonnes)',
         compute='_compute_quantity_tonne',
@@ -61,67 +44,19 @@ class GicaClientContractLine(models.Model):
         ('sac',   'Sac'),
     ], string='Unite de mesure', required=True, default='tonne')
 
-    prix_unitaire = fields.Float(string='Prix unitaire (DA)')
-    montant_total = fields.Float(
-        string='Montant total (DA)',
-        compute='_compute_montant_total',
-        store=True,
-    )
-
     quantity_livree   = fields.Float(string='Qte livree',   compute='_compute_quantity_livree', store=True)
     quantity_restante = fields.Float(string='Qte restante', compute='_compute_quantity_livree', store=True)
 
-    @api.depends('product_tmpl_id', 'conditionnement')
-    def _compute_product_id(self):
-        for rec in self:
-            if rec.product_tmpl_id and rec.conditionnement:
-                label = dict(rec._fields['conditionnement'].selection).get(rec.conditionnement)
-                variant = rec.product_tmpl_id.product_variant_ids.filtered(
-                    lambda v: any(
-                        a.attribute_id.name == 'Conditionnement' and
-                        a.product_attribute_value_id.name == label
-                        for a in v.product_template_attribute_value_ids
-                    )
-                )
-                rec.product_id = variant[0] if variant else False
-            else:
-                rec.product_id = False
-
-    @api.depends('quantity', 'uom', 'conditionnement')
+    @api.depends('quantity', 'uom')
     def _compute_quantity_tonne(self):
         for rec in self:
-            if rec.uom == 'tonne':
-                rec.quantity_tonne = rec.quantity
-            elif rec.uom == 'sac':
-                if rec.conditionnement == 'sac_50kg':
-                    rec.quantity_tonne = rec.quantity * 0.05
-                elif rec.conditionnement in ('sac_25kg', 'sac_25kg_fardelise'):
-                    rec.quantity_tonne = rec.quantity * 0.025
-                else:
-                    rec.quantity_tonne = rec.quantity
-            else:
-                rec.quantity_tonne = rec.quantity
-
-    @api.depends('quantity', 'prix_unitaire')
-    def _compute_montant_total(self):
-        for rec in self:
-            rec.montant_total = rec.quantity * rec.prix_unitaire
+            rec.quantity_tonne = rec.quantity
 
     @api.depends('quantity')
     def _compute_quantity_livree(self):
         for rec in self:
             rec.quantity_livree   = 0.0
             rec.quantity_restante = rec.quantity
-
-    @api.onchange('product_tmpl_id')
-    def _onchange_product_tmpl_id(self):
-        self.conditionnement = False
-        self.prix_unitaire   = 0.0
-
-    @api.onchange('product_tmpl_id', 'conditionnement')
-    def _onchange_product_conditionnement(self):
-        if self.product_tmpl_id and self.conditionnement:
-            self.prix_unitaire = self.product_tmpl_id.list_price
 
 
 class GicaClientContract(models.Model):
@@ -157,19 +92,14 @@ class GicaClientContract(models.Model):
         string='Lignes produits', copy=True,
     )
 
-    montant_total = fields.Float(
-        string='Montant total (DA)',
-        compute='_compute_totaux', store=True,
-    )
     quantity_total_tonne = fields.Float(
         string='Quantite totale (tonnes)',
         compute='_compute_totaux', store=True,
     )
 
-    @api.depends('line_ids.montant_total', 'line_ids.quantity_tonne')
+    @api.depends('line_ids.quantity_tonne')
     def _compute_totaux(self):
         for rec in self:
-            rec.montant_total        = sum(rec.line_ids.mapped('montant_total'))
             rec.quantity_total_tonne = sum(rec.line_ids.mapped('quantity_tonne'))
 
     # Paiement
@@ -269,6 +199,8 @@ class GicaClientContract(models.Model):
             project_ids.invalidate_recordset(['contract_id'])
         return res
 
+    # ── Onchanges ─────────────────────────────────────────────────────────
+
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.project_id = False
@@ -311,32 +243,21 @@ class GicaClientContract(models.Model):
 
     @api.constrains('line_ids', 'mode_paiement', 'client_id')
     def _check_paiement_terme_interdit(self):
-        """
-        Article V Section 5.01 :
-        La vente a terme est interdite pour :
-        1. Le clinker
-        2. Les contrats d'exportation (liste de prix Exportation OU client type exportation)
-        """
         for rec in self:
             if rec.mode_paiement != 'terme':
                 continue
-            # Verifier clinker
             for line in rec.line_ids:
                 if line.type_ciment == 'clinker':
-                    raise ValidationError(
-                        'Le clinker ne peut pas etre vendu a terme .'
-                    )
-            # Verifier exportation via liste de prix du BCG
+                    raise ValidationError('Le clinker ne peut pas etre vendu a terme.')
             bcg = rec.commande_globale_id
             if bcg and bcg.pricelist_id:
                 if 'Exportation' in (bcg.pricelist_id.name or ''):
                     raise ValidationError(
-                        'Les contrats d\'exportation ne peuvent pas etre vendus a terme .'
+                        "Les contrats d'exportation ne peuvent pas etre vendus a terme."
                     )
-            # Verifier exportation via client_type
             if rec.client_id.client_type == 'exportation':
                 raise ValidationError(
-                    'Les clients exportateurs ne peuvent pas avoir un contrat a terme .'
+                    'Les clients exportateurs ne peuvent pas avoir un contrat a terme.'
                 )
 
     @api.constrains('line_ids')
@@ -347,14 +268,12 @@ class GicaClientContract(models.Model):
 
     @api.constrains('line_ids')
     def _check_no_duplicate_product(self):
+        """Un même produit ne peut pas apparaître deux fois dans un contrat."""
         for rec in self:
-            combinations = [
-                (l.product_tmpl_id.id, l.conditionnement)
-                for l in rec.line_ids
-            ]
-            if len(combinations) != len(set(combinations)):
+            product_ids = [l.product_tmpl_id.id for l in rec.line_ids]
+            if len(product_ids) != len(set(product_ids)):
                 raise ValidationError(
-                    'Un meme produit/conditionnement ne peut pas apparaitre deux fois.'
+                    'Un meme produit ne peut pas apparaitre deux fois dans le contrat.'
                 )
 
     # ── Actions ───────────────────────────────────────────────────────────
@@ -362,9 +281,7 @@ class GicaClientContract(models.Model):
     def action_activer(self):
         for rec in self:
             if rec.client_id.client_type == 'realisation' and not rec.project_id:
-                raise ValidationError(
-                    'Impossible d\'activer ce contrat : projet manquant.'
-                )
+                raise ValidationError('Impossible d\'activer ce contrat : projet manquant.')
         self.write({'state': 'actif'})
 
     def action_demarrer(self):
@@ -402,10 +319,19 @@ class GicaClientContract(models.Model):
             },
         }
 
+    # ── Cron ──────────────────────────────────────────────────────────────
+
     @api.model
     def _cron_check_expiration(self):
+        """Passe automatiquement les contrats dont la date de fin est dépassée en 'expire'."""
         today = fields.Date.today()
-        self.search([
+        expired = self.search([
             ('state', 'in', ['actif', 'en_cours']),
             ('date_end', '<', today),
-        ]).write({'state': 'expire'})
+        ])
+        if expired:
+            expired.write({'state': 'expire'})
+            for rec in expired:
+                rec.message_post(
+                    body=f"Contrat expiré automatiquement le {today}."
+                )

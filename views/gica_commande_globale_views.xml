@@ -1,128 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE FORMULAIRE — Commande Globale (BCG)
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_commande_globale_form" model="ir.ui.view">
         <field name="name">gica.commande.globale.form</field>
         <field name="model">gica.commande.globale</field>
         <field name="arch" type="xml">
-            <form string="Commande Globale">
+            <form string="Bon de Commande Global">
+
+                <!-- ── Barre d'actions ── -->
                 <header>
-                    <button name="action_demarrer" string="Demarrer" type="object"
-                            class="btn-primary" invisible="state != 'nouveau'"/>
-                    <button name="action_annuler" string="Annuler" type="object"
-                            class="btn-danger" invisible="state in ('cloturee', 'annulee')"/>
-                    <button name="action_remettre_nouveau" string="Remettre en Nouveau"
-                            type="object" invisible="state != 'annulee'"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="nouveau,en_cours,cloturee"/>
+                    <button name="action_demarrer"
+                            string="Démarrer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'nouveau'"/>
+                    <button name="action_annuler"
+                            string="Annuler"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('cloturee', 'annulee', 'expire')"/>
+                    <button name="action_remettre_nouveau"
+                            string="Remettre en Nouveau"
+                            type="object"
+                            invisible="state != 'annulee'"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="nouveau,en_cours,cloturee,expire"/>
                 </header>
+
                 <sheet>
+                    <!-- ── Smart buttons ── -->
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" icon="fa-calendar"
-                                type="object" name="action_voir_planifications">
+
+                        <button class="oe_stat_button"
+                                icon="fa-calendar"
+                                type="object"
+                                name="action_voir_planifications">
                             <div class="o_stat_info">
-                                <span class="o_stat_value"><field name="planification_count"/></span>
+                                <span class="o_stat_value">
+                                    <field name="planification_count"/>
+                                </span>
                                 <span class="o_stat_text">Planifications</span>
                             </div>
                         </button>
-                        <button class="oe_stat_button" icon="fa-clock-o"
-                                type="object" name="action_voir_planifications"
-                                invisible="planification_en_attente_count == 0">
-                            <div class="o_stat_info">
-                                <span class="o_stat_value"><field name="planification_en_attente_count"/></span>
-                                <span class="o_stat_text">En attente</span>
-                            </div>
-                        </button>
-                        <button class="oe_stat_button" icon="fa-shopping-cart"
-                                type="object" name="action_voir_bons_commande"
+
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bons_commande"
                                 invisible="bon_commande_count == 0">
                             <div class="o_stat_info">
-                                <span class="o_stat_value"><field name="bon_commande_count"/></span>
-                                <span class="o_stat_text">Bons de Commande</span>
+                                <span class="o_stat_value">
+                                    <field name="bon_commande_count"/>
+                                </span>
+                                <span class="o_stat_text">Bons de commande</span>
                             </div>
                         </button>
-                        <!-- Avenants — de la binome -->
-                        <button class="oe_stat_button" icon="fa-edit"
-                                type="object" name="action_voir_avenants"
+
+                        <button class="oe_stat_button"
+                                icon="fa-edit"
+                                type="object"
+                                name="action_voir_avenants"
                                 invisible="avenant_count == 0">
                             <div class="o_stat_info">
-                                <span class="o_stat_value"><field name="avenant_count"/></span>
+                                <span class="o_stat_value">
+                                    <field name="avenant_count"/>
+                                </span>
                                 <span class="o_stat_text">Avenants</span>
                             </div>
                         </button>
+
                     </div>
 
+                    <!-- ── Titre ── -->
                     <div class="oe_title">
-                        <h1><field name="name" readonly="1"/></h1>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
                     </div>
 
+                    <!-- ── Informations principales ── -->
                     <group>
                         <group string="Informations">
-                            <field name="client_id"/>
-                            <field name="contrat_id"/>
-                            <field name="date_commande"/>
-                            <field name="date_expiration"/>
+                            <field name="client_id"
+                                   string="Client"
+                                   readonly="state != 'nouveau'"
+                                   options="{'no_create': True}"/>
+                            <field name="contrat_id"
+                                   string="Contrat"
+                                   readonly="state != 'nouveau'"
+                                   options="{'no_create': True}"/>
+                            <field name="date_commande"   string="Date de commande"/>
+                            <field name="date_expiration" string="Date d'expiration"/>
                         </group>
                         <group string="Tarification">
                             <field name="pricelist_id"
+                                   string="Liste de prix"
                                    options="{'no_create': True}"
-                                   readonly="state in ('cloturee', 'annulee')"/>
+                                   readonly="state != 'nouveau'"/>
                         </group>
                     </group>
 
+                    <!-- ── Onglets ── -->
                     <notebook>
-                        <page string="Produits">
-                            <field name="line_ids" readonly="state in ('cloturee', 'annulee')">
+
+                        <!-- Onglet 1 : Produits -->
+                        <page string="Produits commandés" name="produits">
+                            <field name="line_ids" readonly="state in ('en_cours', 'cloturee', 'annulee', 'expire')">
+
                                 <list editable="bottom">
-                                    <field name="sequence"           widget="handle"/>
-                                    <field name="product_tmpl_id"
-                                           domain="[('is_gica_product','=',True)]"
-                                           string="Produit"/>
-                                    <field name="conditionnement"/>
-                                    <field name="product_id"         invisible="1"/>
-                                    <field name="quantity_tonne"     string="Qte totale (T)"/>
-                                    <field name="prix_unitaire"      string="Prix unitaire (DA)"/>
-                                    <field name="montant_total"      string="Montant (DA)" readonly="1"/>
-                                    <field name="quantity_planifiee" string="Planifiee (T)" readonly="1"/>
-                                    <field name="quantity_enlevee"   string="Enlevee (T)"  readonly="1"/>
-                                    <field name="quantity_restante"  string="Restante (T)" readonly="1"/>
+                                    <field name="sequence"         widget="handle"/>
+                                   <field name="product_tmpl_id"
+                                        string="Produit"
+                                        domain="[('is_gica_product', '=', True)]"
+                                        readonly="1"/>
+
+                                    <field name="conditionnement_id"
+                                        string="Conditionnement"
+                                        options="{'no_create': True, 'display_name_field': 'name'}"
+                                        domain="[('pav_attribute_line_ids.product_tmpl_id', '=', product_tmpl_id),
+                                                    ('attribute_id.name', '=', 'Conditionnement')]"/>
+
+                                    <field name="quantity_tonne"  string="Qté totale (T)"   readonly="1"/>
+                                    <field name="prix_unitaire"   string="Prix unitaire (DA)"/>
+                                    <field name="montant_total"      string="Montant (DA)"   readonly="1"/>
+                                    <field name="quantity_planifiee" string="Planifiée (T)"  readonly="1"/>
+                                    <field name="quantity_enlevee"   string="Enlevée (T)"    readonly="1"/>
+                                    <field name="quantity_restante"  string="Restante (T)"   readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
-                        <!-- Avenants — de la binome -->
-                        <page string="Avenants">
-                            <field name="avenant_ids" nolabel="1">
-                                <list decoration-success="state == 'valide'"
-                                      decoration-warning="state == 'brouillon'">
-                                    <field name="name"         string="Numero"/>
-                                    <field name="type_avenant" string="Type" widget="badge"
-                                           decoration-success="type_avenant == 'addition'"
-                                           decoration-danger="type_avenant == 'reduction'"/>
-                                    <field name="product_tmpl_id"  string="Produit"/>
-                                    <field name="conditionnement"  string="Conditionnement"/>
-                                    <field name="quantite"         string="Quantite (T)"/>
-                                    <field name="ancien_prix"      string="Ancien prix"/>
-                                    <field name="nouveau_prix"     string="Nouveau prix"/>
-                                    <field name="date"             string="Date"/>
-                                    <field name="state" widget="badge"
-                                           decoration-success="state == 'valide'"
-                                           decoration-warning="state == 'brouillon'"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <!-- planification_ids → gica.planification.client -->
-                        <page string="Planifications proposees">
+                        <!-- Onglet 2 : Planifications -->
+                        <page string="Planifications" name="planifications">
                             <field name="planification_ids" nolabel="1">
                                 <list decoration-success="state == 'validee'"
                                       decoration-warning="state == 'soumise'"
                                       decoration-danger="state == 'refusee'"
                                       decoration-muted="state == 'brouillon'">
-                                    <field name="name"/>
-                                    <field name="date_enlevement"/>
-                                    <field name="quantity_total_tonne" string="Qte (T)"/>
-                                    <field name="source"/>
+                                    <field name="name"                 string="Référence"/>
+                                    <field name="date_enlevement"      string="Date d'enlèvement"/>
+                                    <field name="quantity_total_tonne" string="Qté (T)"/>
+                                    <field name="source"               string="Source"/>
                                     <field name="state" widget="badge"
                                            decoration-success="state == 'validee'"
                                            decoration-warning="state == 'soumise'"
@@ -131,36 +153,47 @@
                             </field>
                         </page>
 
-                        <page string="Planifications validees">
-                            <field name="planification_ids"
-                                   domain="[('state', '=', 'validee')]"
-                                   nolabel="1">
-                                <list decoration-success="state == 'validee'">
-                                    <field name="name"/>
-                                    <field name="date_enlevement"/>
-                                    <field name="quantity_total_tonne" string="Qte (T)"/>
-                                    <field name="state" widget="badge"
-                                           decoration-success="state == 'validee'"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <!-- bon_commande_ids → sale.order -->
-                        <page string="Bons de Commande">
+                        <!-- Onglet 3 : Bons de commande -->
+                        <page string="Bons de commande" name="bons_commande">
                             <field name="bon_commande_ids" nolabel="1">
                                 <list>
-                                    <field name="name"/>
-                                    <field name="date_prevue_enlevement"/>
-                                    <field name="quantity_livree"  string="Qte livree (T)"/>
-                                    <field name="amount_total"     string="Montant (DA)"/>
+                                    <field name="name"                   string="Référence"/>
+                                    <field name="date_prevue_enlevement" string="Date prévue"/>
+                                    <field name="quantity_livree"        string="Qté livrée (T)"/>
+                                    <field name="amount_total"           string="Montant (DA)"/>
                                     <field name="state" widget="badge"/>
                                 </list>
                             </field>
                         </page>
 
-                        <page string="Observations">
-                            <field name="observations"/>
+                        <!-- Onglet 4 : Avenants -->
+                        <page string="Avenants" name="avenants">
+                            <field name="avenant_ids" nolabel="1">
+                                <list decoration-success="state == 'valide'"
+                                      decoration-warning="state == 'brouillon'">
+                                    <field name="name"            string="N° Avenant"/>
+                                    <field name="type_avenant"    string="Type" widget="badge"
+                                           decoration-success="type_avenant == 'addition'"
+                                           decoration-danger="type_avenant == 'reduction'"/>
+                                    <field name="product_tmpl_id" string="Produit"/>
+                                    <field name="conditionnement_id" string="Conditionnement"/>
+                                    <field name="quantite"        string="Quantité (T)"/>
+                                    <field name="ancien_prix"     string="Ancien prix (DA)"/>
+                                    <field name="nouveau_prix"    string="Nouveau prix (DA)"/>
+                                    <field name="date"            string="Date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'valide'"
+                                           decoration-warning="state == 'brouillon'"/>
+                                </list>
+                            </field>
                         </page>
+
+                        <!-- Onglet 5 : Observations -->
+                        <page string="Observations" name="observations">
+                            <field name="observations"
+                                   placeholder="Notes, remarques, conditions particulières..."/>
+                        </page>
+
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -168,7 +201,10 @@
         </field>
     </record>
 
-    <!-- Liste -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE LISTE — Commandes Globales
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_commande_globale_list" model="ir.ui.view">
         <field name="name">gica.commande.globale.list</field>
         <field name="model">gica.commande.globale</field>
@@ -176,16 +212,17 @@
             <list string="Commandes Globales"
                   decoration-success="state == 'cloturee'"
                   decoration-info="state == 'en_cours'"
-                  decoration-muted="state == 'annulee'">
-                <field name="name"/>
-                <field name="client_id"/>
-                <field name="contrat_id"/>
+                  decoration-muted="state in ('annulee', 'expire')">
+
+                <field name="name"                 string="Référence"/>
+                <field name="client_id"            string="Client"/>
+                <field name="contrat_id"           string="Contrat"/>
                 <field name="pricelist_id"         string="Liste de prix"/>
-                <field name="date_commande"/>
-                <field name="date_expiration"/>
-                <field name="quantity_total_tonne" string="Qte totale (T)"/>
-                <field name="quantity_planifiee"   string="Planifiee (T)"/>
-                <field name="quantity_enlevee"     string="Enlevee (T)"/>
+                <field name="date_commande"        string="Date commande"/>
+                <field name="date_expiration"      string="Expiration"/>
+                <field name="quantity_total_tonne" string="Qté totale (T)"/>
+                <field name="quantity_planifiee"   string="Planifiée (T)"/>
+                <field name="quantity_enlevee"     string="Enlevée (T)"/>
                 <field name="quantity_restante"    string="Restante (T)"/>
                 <field name="planification_count"  string="Planifs"/>
                 <field name="bon_commande_count"   string="BC"/>
@@ -194,43 +231,59 @@
                        decoration-success="state == 'cloturee'"
                        decoration-info="state == 'en_cours'"
                        decoration-warning="state == 'nouveau'"
-                       decoration-danger="state == 'annulee'"/>
+                       decoration-danger="state == 'annulee'"
+                       decoration-muted="state == 'expire'"/>
             </list>
         </field>
     </record>
 
-    <!-- Recherche -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE RECHERCHE — Filtres et regroupements
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_commande_globale_search" model="ir.ui.view">
         <field name="name">gica.commande.globale.search</field>
         <field name="model">gica.commande.globale</field>
         <field name="arch" type="xml">
-            <search string="Rechercher">
-                <field name="name"/>
-                <field name="client_id"/>
-                <field name="contrat_id"/>
-                <field name="pricelist_id"/>
-                <filter string="Nouveau"  name="nouveau"  domain="[('state','=','nouveau')]"/>
-                <filter string="En cours" name="en_cours" domain="[('state','=','en_cours')]"/>
-                <filter string="Cloturee" name="cloturee" domain="[('state','=','cloturee')]"/>
-                <filter string="Annulee"  name="annulee"  domain="[('state','=','annulee')]"/>
-                <group expand="0" string="Grouper par">
-                    <filter string="Client"        name="group_client"    context="{'group_by': 'client_id'}"/>
-                    <filter string="Liste de prix" name="group_pricelist" context="{'group_by': 'pricelist_id'}"/>
-                    <filter string="Statut"        name="group_state"     context="{'group_by': 'state'}"/>
-                    <filter string="Mois"          name="group_date"      context="{'group_by': 'date_commande:month'}"/>
+            <search string="Rechercher une commande globale">
+
+                <field name="name"         string="Référence"/>
+                <field name="client_id"    string="Client"/>
+                <field name="contrat_id"   string="Contrat"/>
+                <field name="pricelist_id" string="Liste de prix"/>
+
+                <separator/>
+
+                <filter name="nouveau"  string="Nouveau"   domain="[('state', '=', 'nouveau')]"/>
+                <filter name="en_cours" string="En cours"  domain="[('state', '=', 'en_cours')]"/>
+                <filter name="cloturee" string="Clôturées" domain="[('state', '=', 'cloturee')]"/>
+                <filter name="annulee"  string="Annulées"  domain="[('state', '=', 'annulee')]"/>
+                <filter name="expire"   string="Expirées"  domain="[('state', '=', 'expire')]"/>
+
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_client"    string="Client"        context="{'group_by': 'client_id'}"/>
+                    <filter name="group_pricelist" string="Liste de prix" context="{'group_by': 'pricelist_id'}"/>
+                    <filter name="group_state"     string="Statut"        context="{'group_by': 'state'}"/>
+                    <filter name="group_date"      string="Mois"          context="{'group_by': 'date_commande:month'}"/>
                 </group>
+
             </search>
         </field>
     </record>
 
-    <!-- Action -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTION — Fenêtre principale BCG
+    ═══════════════════════════════════════════════════════════ -->
     <record id="action_gica_commande_globale" model="ir.actions.act_window">
         <field name="name">Commandes Globales</field>
         <field name="res_model">gica.commande.globale</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gica_commande_globale_search"/>
+        <field name="context">{'search_default_en_cours': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Aucune commande globale</p>
-            <p>Creez une commande globale depuis un contrat client actif.</p>
+            <p class="o_view_nocontent_smiling_face">Aucune commande globale enregistrée</p>
+            <p>Créez une commande globale depuis un contrat client actif.</p>
         </field>
     </record>
 

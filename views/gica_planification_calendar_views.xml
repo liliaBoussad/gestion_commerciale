@@ -13,13 +13,14 @@
                       color="state"
                       mode="month"
                       quick_create="false">
-                <field name="client_id" string="Client"/>
-                <field name="product_id" string="Produit"/>
+                <field name="client_id"     string="Client"/>
+                <field name="product_id"    string="Produit"/>
                 <field name="quantity_tonne" string="Qté (T)"/>
-                <field name="state" string="État" filters="1"/>
+                <field name="state"         string="État" filters="1"/>
             </calendar>
         </field>
     </record>
+
 
     <!-- Vue Liste pour affichage par date -->
     <record id="view_gica_planification_line_list_cal" model="ir.ui.view">
@@ -30,14 +31,15 @@
                   decoration-success="state == 'validee'"
                   decoration-warning="state == 'en_attente'"
                   decoration-danger="state == 'refusee'">
-                <field name="date_enlevement" string="Date enlèvement"/>
-                <field name="planification_id" string="Planification"/>
-                <field name="client_id" string="Client"/>
+                <field name="date_enlevement"    string="Date enlèvement"/>
+                <field name="planification_id"   string="Planification"/>
+                <field name="client_id"          string="Client"/>
                 <field name="commande_globale_id" string="BCG"/>
-                <field name="product_id" string="Produit"/>
-                <field name="conditionnement" string="Conditionnement"/>
-                <field name="quantity_tonne" string="Qté (T)" sum="Total (T)"/>
-                <field name="rotation" string="Rotations"/>
+                <field name="product_id"         string="Produit"/>
+                <!-- conditionnement_id : Many2one (remplace l'ancien Selection) -->
+                <field name="conditionnement_id" string="Conditionnement"/>
+                <field name="quantity_tonne"     string="Qté (T)" sum="Total (T)"/>
+                <field name="rotation"           string="Rotations"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'validee'"
                        decoration-warning="state == 'en_attente'"
@@ -50,6 +52,7 @@
             </list>
         </field>
     </record>
+
 
     <!-- Action calendrier -->
     <record id="action_gica_planification_calendar" model="ir.actions.act_window">

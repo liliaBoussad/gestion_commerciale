@@ -1,30 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════
-         LISTE
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_client_agrement_list" model="ir.ui.view">
         <field name="name">gica.client.agrement.list</field>
         <field name="model">gica.client.agrement</field>
         <field name="arch" type="xml">
             <list string="Agréments"
-                  decoration-primary="state == 'nouveau'"
                   decoration-success="state == 'en_cours' and not expiration_proche"
                   decoration-warning="expiration_proche == True"
                   decoration-muted="state == 'expire'"
                   decoration-danger="state == 'resilie'">
-                <field name="name"            string="N° Agrément"/>
-                <field name="partner_id"      string="Client"/>
-                <field name="client_type"     string="Type"/>
-                <field name="date_debut"      string="Date début"/>
-                <field name="date_expiration" string="Date expiration"/>
-                <field name="duree_mois"      string="Durée (mois)"/>
-                <field name="renouvele"       string="Renouvelé"/>
-                <field name="expiration_proche" optional="hide"/>
+                <field name="name"              string="N° Agrément"/>
+                <field name="partner_id"        string="Client"/>
+                <field name="client_type"       string="Type"/>
+                <field name="date_debut"        string="Date début"/>
+                <field name="date_expiration"   string="Date expiration"/>
+                <field name="duree_mois"        string="Durée (mois)"/>
+                <field name="renouvele"         string="Renouvelé" optional="show"/>
+                <field name="expiration_proche" invisible="1"/>
                 <field name="state" widget="badge"
-                       decoration-primary="state == 'nouveau'"
-                       decoration-success="state == 'en_cours'"
+                       decoration-success="state == 'en_cours' and not expiration_proche"
                        decoration-warning="expiration_proche"
                        decoration-muted="state == 'expire'"
                        decoration-danger="state == 'resilie'"/>
@@ -32,9 +27,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         FORMULAIRE
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_client_agrement_form" model="ir.ui.view">
         <field name="name">gica.client.agrement.form</field>
         <field name="model">gica.client.agrement</field>
@@ -42,89 +34,80 @@
             <form string="Agrément Client GICA">
 
                 <header>
-                    <!-- Nouveau → En cours -->
                     <button name="action_confirmer"
                             string="Confirmer"
                             type="object"
                             class="btn-primary"
                             invisible="state != 'nouveau'"/>
-
-                    <!-- En cours → afficher bloc motif -->
                     <button name="action_resilier"
                             string="Résilier"
                             type="object"
                             class="btn-danger"
                             invisible="state != 'en_cours' or en_cours_resiliation"/>
-
-                    <!-- Renouveler uniquement si expiré -->
                     <button name="action_renouveler"
-                            string="🔄 Renouveler"
+                            string="Renouveler"
                             type="object"
                             class="btn-secondary"
                             invisible="state != 'expire'"/>
-
-                    <!-- Confirmer résiliation -->
                     <button name="action_confirmer_resiliation"
-                            string="✅ Confirmer la résiliation"
+                            string="Confirmer la résiliation"
                             type="object"
                             class="btn-danger"
                             invisible="not en_cours_resiliation"/>
                     <button name="action_annuler_resiliation"
-                            string="↩ Annuler"
+                            string="Annuler"
                             type="object"
                             class="btn-secondary"
                             invisible="not en_cours_resiliation"/>
-
                     <field name="state" widget="statusbar"
                            statusbar_visible="nouveau,en_cours,expire,resilie"/>
                 </header>
 
                 <sheet>
 
-                    <!-- Alerte expiration proche -->
-                    <div class="alert alert-warning"
-                        role="alert"
-                        invisible="not expiration_proche">
-                        <i class="fa fa-exclamation-triangle"/>
-                        ⚠️ Cet agrément expire dans moins de 30 jours. Pensez à le renouveler.
+                    <!-- Alerte résiliation en cours -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="not en_cours_resiliation">
+                        Résiliation en cours — confirmez ou annulez avant de continuer.
                     </div>
+
+                    <!-- Alerte expiration proche -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not expiration_proche or state != 'en_cours'">
+                        Cet agrément expire dans moins de 30 jours. Pensez à le renouveler.
+                    </div>
+
+                    <div class="oe_button_box" name="button_box"/>
 
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
 
-                    <!-- Infos client -->
                     <group>
-                        <group>
+                        <group string="Client">
                             <field name="partner_id"
-                                   readonly="state != 'nouveau'"/>
+                                   readonly="state != 'nouveau'"
+                                   options="{'no_create': True}"/>
                             <field name="client_type" readonly="1"/>
                         </group>
-                        <group>
-                            <field name="date_expiration"
-                                   readonly="state not in ('nouveau',)"/>
-                        </group>
-                    </group>
-
-                    <!-- Dates -->
-                    <group string="Durée de l'agrément (max 2 ans)">
-                        <group>
+                        <group string="Validité">
                             <field name="date_debut"
                                    readonly="state != 'nouveau'"/>
                             <field name="date_expiration"
                                    readonly="state != 'nouveau'"/>
                             <field name="duree_mois" readonly="1"/>
                         </group>
-                        <group>
-                            <field name="renouvele" readonly="1"/>
-                            <field name="agrement_precedent_id"
-                                   invisible="not renouvele"
-                                   readonly="1"/>
-                        </group>
                     </group>
 
-                    <!-- Détails résiliation -->
-                    <group string="Détails de résiliation"
+                    <group string="Renouvellement"
+                           invisible="not renouvele">
+                        <field name="renouvele" readonly="1"/>
+                        <field name="agrement_precedent_id"
+                               readonly="1"
+                               options="{'no_open': False}"/>
+                    </group>
+
+                    <group string="Motif de résiliation"
                            invisible="not en_cours_resiliation and state != 'resilie'">
                         <field name="en_cours_resiliation" invisible="1"/>
                         <field name="motif_resiliation"
@@ -139,9 +122,6 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         RECHERCHE
-    ══════════════════════════════════════════════════ -->
     <record id="view_gica_client_agrement_search" model="ir.ui.view">
         <field name="name">gica.client.agrement.search</field>
         <field name="model">gica.client.agrement</field>
@@ -150,11 +130,15 @@
                 <field name="name"       string="N° Agrément"/>
                 <field name="partner_id" string="Client"/>
                 <separator/>
-                <filter name="nouveau"   string="Nouveaux"    domain="[('state','=','nouveau')]"/>
-                <filter name="en_cours"  string="En cours"    domain="[('state','=','en_cours')]"/>
-                <filter name="expire"    string="Expirés"     domain="[('state','=','expire')]"/>
-                <filter name="resilie"   string="Résiliés"    domain="[('state','=','resilie')]"/>
-                <filter name="expiration_proche" string="⚠️ Expiration proche"
+                <filter name="nouveau"           string="Nouveaux"
+                        domain="[('state','=','nouveau')]"/>
+                <filter name="en_cours"          string="En cours"
+                        domain="[('state','=','en_cours')]"/>
+                <filter name="expire"            string="Expirés"
+                        domain="[('state','=','expire')]"/>
+                <filter name="resilie"           string="Résiliés"
+                        domain="[('state','=','resilie')]"/>
+                <filter name="expiration_proche" string="Expiration proche"
                         domain="[('expiration_proche','=',True)]"/>
                 <separator/>
                 <filter name="distributeur"  string="Distributeurs"
@@ -175,18 +159,15 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════
-         ACTION — affiche TOUS les agréments
-    ══════════════════════════════════════════════════ -->
     <record id="action_gica_client_agrement" model="ir.actions.act_window">
         <field name="name">Agréments</field>
         <field name="res_model">gica.client.agrement</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_gica_client_agrement_search"/>
-        <field name="context">{}</field>
+        <field name="context">{'search_default_en_cours': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Créer un nouvel agrément</p>
-            <p>Gérez ici les agréments des distributeurs, conditionneurs et revendeurs agréés.</p>
+            <p class="o_view_nocontent_smiling_face">Aucun agrément enregistré</p>
+            <p>Créez un agrément pour un distributeur, conditionneur ou revendeur agréé.</p>
         </field>
     </record>
 
