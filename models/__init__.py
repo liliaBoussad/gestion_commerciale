@@ -15,6 +15,8 @@ from . import gica_client_classification
 from . import gica_commande_globale
 from . import gica_planification_client   # ← nouveau Phase 1
 from . import gica_planification_usine    # ← nouveau Phase 1
+from . import gica_planification_config
+
 from . import sale_order_gica
 
 from . import gica_bon_circulation

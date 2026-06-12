@@ -188,7 +188,7 @@ class GicaPlanificationUsine(models.Model):
                     f'{overlap[0].name} ({overlap[0].date_debut} → {overlap[0].date_fin})'
                 )
 
-    # ── Binôme : récupération précise avec gestion partielle/complète ─────
+    # ── Récupération manuelle avec gestion partielle/complète ─────────────
     def action_recuperer_planifications(self):
         self.ensure_one()
         if not self.date_debut or not self.date_fin:
@@ -265,19 +265,20 @@ class GicaPlanificationUsine(models.Model):
                      f'{rec.date_debut} → {rec.date_fin}'
             )
 
-    # ── Binôme : remettre en cours ────────────────────────────────────────
     def action_remettre_en_cours(self):
         for rec in self:
             rec.write({'state': 'en_cours'})
             rec.message_post(body='↩️ Période remise en cours.')
 
     def _calculer_consolidation(self):
+        """Agrège les lignes validées par (date, produit, conditionnement)."""
         self.ensure_one()
         self.consolidation_ids.unlink()
 
         data = {}
         for line in self.planification_line_ids.filtered(lambda l: l.state == 'validee'):
-            key = (line.date_enlevement, line.product_id.id, line.conditionnement)
+            cond = line.conditionnement_id.name if line.conditionnement_id else ''
+            key  = (line.date_enlevement, line.product_id.id, cond)
             if key not in data:
                 data[key] = {
                     'nb_lignes':      0,
@@ -341,13 +342,18 @@ class GicaPlanificationUsine(models.Model):
             'context':   {'default_planification_usine_id': self.id},
         }
 
-    # ── Votre version : cron job ──────────────────────────────────────────
+    # ── Cron : création automatique + rattachement ────────────────────────
     @api.model
     def _cron_recuperer_planifications(self):
+        """
+        Crée automatiquement la prochaine période de 15 jours et rattache
+        les planifications soumises avec gestion partielle/complète.
+        """
         config = self.env['gica.planification.config'].get_config()
         if not config.actif:
             return
 
+        # Trouver la dernière période confirmée
         derniere = self.search([
             ('state', '=', 'confirmee'),
         ], order='date_fin desc', limit=1)
@@ -357,38 +363,58 @@ class GicaPlanificationUsine(models.Model):
         else:
             date_debut = date.today() + timedelta(days=1)
 
-        existante = self.search([
-            ('date_debut', '=', date_debut),
-        ], limit=1)
+        date_fin = date_debut + timedelta(days=14)
 
+        # Créer la période si elle n'existe pas
+        existante = self.search([('date_debut', '=', date_debut)], limit=1)
         if not existante:
-            nouveau = self.create({'date_debut': date_debut})
-            nouveau.message_post(
+            existante = self.create({'date_debut': date_debut})
+            existante.message_post(
                 body=f'Période créée automatiquement : '
-                     f'{date_debut} → {date_debut + timedelta(days=14)}'
+                     f'{date_debut} → {date_fin}'
             )
 
-        date_fin = date_debut + timedelta(days=14)
-        planning = self.search([
-            ('date_debut', '=', date_debut),
-        ], limit=1)
+        planning = existante
 
-        if planning:
-            planifications_orphelines = self.env['gica.planification.client'].search([
-                ('state',                  '=',  'soumise'),
-                ('planification_usine_id', '=',  False),
-                ('date_enlevement',        '>=', date_debut),
-                ('date_enlevement',        '<=', date_fin),
-            ])
-            if planifications_orphelines:
-                planifications_orphelines.write({'planification_usine_id': planning.id})
-                planning.write({'state': 'en_cours'})
-                planning.message_post(
-                    body=f'{len(planifications_orphelines)} planification(s) '
-                         f'rattachée(s) automatiquement.'
+        # Rattacher les lignes soumises avec gestion partielle/complète
+        lignes = self.env['gica.planification.client.line'].search([
+            ('date_enlevement',                         '>=', date_debut),
+            ('date_enlevement',                         '<=', date_fin),
+            ('planification_id.state',                  '=',  'soumise'),
+            ('planification_id.planification_usine_id', '=',  False),
+            ('state',                                   '=',  'en_attente'),
+        ])
+
+        if lignes:
+            planifications_concernees = lignes.mapped('planification_id')
+            planifications_completes  = self.env['gica.planification.client']
+            planifications_partielles = self.env['gica.planification.client']
+
+            for planif in planifications_concernees:
+                lignes_planif       = planif.line_ids
+                lignes_dans_periode = lignes_planif.filtered(
+                    lambda l: l.date_enlevement
+                    and date_debut <= l.date_enlevement <= date_fin
                 )
+                if len(lignes_dans_periode) == len(lignes_planif):
+                    planifications_completes |= planif
+                else:
+                    planifications_partielles |= planif
 
-    # ── Votre version : créer ou récupérer période ────────────────────────
+            if planifications_completes:
+                planifications_completes.write({'planification_usine_id': planning.id})
+            if planifications_partielles:
+                lignes.filtered(
+                    lambda l: l.planification_id in planifications_partielles
+                ).write({'planification_usine_id': planning.id})
+
+            planning.write({'state': 'en_cours'})
+            planning.message_post(
+                body=f'{len(planifications_concernees)} planification(s) '
+                     f'rattachée(s) automatiquement ({len(lignes)} ligne(s)).'
+            )
+
+    # ── Créer ou récupérer période pour une date donnée ───────────────────
     def _get_or_create_periode_for_date(self, date_enlevement):
         config = self.env['gica.planification.config'].get_config()
         if not config.actif:
@@ -408,10 +434,7 @@ class GicaPlanificationUsine(models.Model):
         if not (date_debut <= date_enlevement <= date_fin):
             return False
 
-        planning = self.search([
-            ('date_debut', '=', date_debut)
-        ], limit=1)
-
+        planning = self.search([('date_debut', '=', date_debut)], limit=1)
         if not planning:
             planning = self.create({'date_debut': date_debut})
 

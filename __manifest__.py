@@ -43,6 +43,7 @@
         'views/gica_commande_globale_views.xml',
         'views/gica_planification_client_views.xml',
         'views/gica_planification_usine_views.xml',
+        'views/gica_planification_config_views.xml',
         'views/gica_planification_calendar_views.xml',
         'views/avenant.xml',  
         'views/sale_order_gica_views.xml',

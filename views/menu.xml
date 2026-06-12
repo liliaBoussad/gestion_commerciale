@@ -99,6 +99,14 @@
                   action="action_gica_planification_calendar"
                   sequence="30"/>
 
+        <menuitem id="menu_ventes_gica_planification_config"
+                  name="Configuration Planification"
+                  parent="menu_ventes_gica_planification_root"
+                  action="action_gica_planification_config"
+                  sequence="40"/>
+
+       
+
         <!-- ══════════════════════════════════════════════════
              Ventes Clinker
         ══════════════════════════════════════════════════ -->

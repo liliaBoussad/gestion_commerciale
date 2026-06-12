@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from datetime import timedelta 
+from datetime import timedelta
 
 
 class GicaPlanificationClientLine(models.Model):
@@ -45,7 +45,6 @@ class GicaPlanificationClientLine(models.Model):
         domain="[('id', 'in', parent.product_tmpl_ids)]",
     )
 
-    # ── Remplacement conditionnement (Selection) → Many2one ───────────────
     conditionnement_id = fields.Many2one(
         'product.attribute.value',
         string='Conditionnement',
@@ -123,7 +122,6 @@ class GicaPlanificationClientLine(models.Model):
         readonly=True,
     )
 
-    # bcg_line_id : ligne BCG correspondant au produit + conditionnement choisi
     bcg_line_ids = fields.Many2many(
         'gica.commande.globale.line',
         compute='_compute_bcg_line_ids',
@@ -204,16 +202,14 @@ class GicaPlanificationClientLine(models.Model):
 
     @api.onchange('product_tmpl_id')
     def _onchange_product_tmpl_id(self):
-        self.bcg_line_id       = False
+        self.bcg_line_id        = False
         self.conditionnement_id = False
         if self.product_tmpl_id and self.planification_id.commande_globale_id:
             bcg    = self.planification_id.commande_globale_id
             lignes = bcg.line_ids.filtered(
                 lambda l: l.product_tmpl_id == self.product_tmpl_id
             )
-            # Filtre les conditionnements disponibles pour ce produit dans ce BCG
             valeur_ids = lignes.mapped('conditionnement_id').ids
-            # Si une seule ligne → pré-sélectionne automatiquement
             if len(lignes) == 1:
                 self.bcg_line_id        = lignes[0]
                 self.conditionnement_id = lignes[0].conditionnement_id
@@ -230,7 +226,6 @@ class GicaPlanificationClientLine(models.Model):
 
     @api.onchange('conditionnement_id')
     def _onchange_conditionnement_id(self):
-        """Synchronise bcg_line_id quand le conditionnement est choisi manuellement."""
         if self.conditionnement_id and self.planification_id.commande_globale_id:
             bcg  = self.planification_id.commande_globale_id
             line = bcg.line_ids.filtered(
@@ -329,31 +324,28 @@ class GicaPlanificationClientLine(models.Model):
         if not self.date_enlevement:
             return
 
-        # ── Vérification expiration BCG ──────────────────────────────
         bcg = self.planification_id.commande_globale_id
         if bcg and bcg.date_expiration and self.date_enlevement > bcg.date_expiration:
             self.date_enlevement = False
             return {
                 'warning': {
-                    'title':   'Date hors délai BCG',
-                    'message': f'La date d\'enlèvement choisie dépasse '
-                            f'la date d\'expiration du BCG ({bcg.date_expiration}).\n'
-                            f'Veuillez choisir une date avant le {bcg.date_expiration}.',
+                    'title':   'Date hors delai BCG',
+                    'message': f'La date d\'enlevement choisie depasse '
+                               f'la date d\'expiration du BCG ({bcg.date_expiration}).\n'
+                               f'Veuillez choisir une date avant le {bcg.date_expiration}.',
                 }
             }
 
-        # ── Weekend ──────────────────────────────────────────────────
         if self.date_enlevement.weekday() in (4, 5):
             jour = "Vendredi" if self.date_enlevement.weekday() == 4 else "Samedi"
             return {
                 'warning': {
                     'title':   'Jour non ouvrable',
                     'message': f'Le {jour} {self.date_enlevement} est un jour de weekend.\n'
-                            f'Veuillez choisir une autre date.',
+                               f'Veuillez choisir une autre date.',
                 }
             }
 
-        # ── Période verrouillée ──────────────────────────────────────
         periode = self.env['gica.planification.usine'].search([
             ('state',      '=',  'confirmee'),
             ('date_debut', '<=', self.date_enlevement),
@@ -364,11 +356,10 @@ class GicaPlanificationClientLine(models.Model):
                 'warning': {
                     'title':   'Periode verrouillee',
                     'message': f'La date {self.date_enlevement} est dans une periode verrouillee :\n'
-                            f'{periode.name} ({periode.date_debut} - {periode.date_fin})\n'
-                            f'Veuillez choisir une autre date.',
+                               f'{periode.name} ({periode.date_debut} - {periode.date_fin})\n'
+                               f'Veuillez choisir une autre date.',
                 }
             }
-            
 
     # ── Actions ───────────────────────────────────────────────────────────
 
@@ -412,7 +403,7 @@ class GicaPlanificationClientLine(models.Model):
         """
         Cree 1 BC (sale.order) + N bons de circulation automatiquement.
         N = self.rotation
-        quantite par BC = self.quantity_tonne / self.rotation
+        quantite par rotation = self.quantity_tonne / self.rotation
         """
         self.ensure_one()
         if self.sale_order_id:
@@ -483,6 +474,7 @@ class GicaPlanificationClient(models.Model):
         domain="[('is_gica_client', '=', True)]",
     )
 
+    # Domain filtré : seulement les BCG actifs (pas expiré, pas cloturé, pas annulé)
     commande_globale_id = fields.Many2one(
         'gica.commande.globale',
         string='Commande Globale (BCG)',
@@ -600,6 +592,26 @@ class GicaPlanificationClient(models.Model):
 
     # ── Contraintes ───────────────────────────────────────────────────────
 
+    @api.constrains('commande_globale_id')
+    def _check_bcg_actif(self):
+        """
+        Securite DB : bloque toute planification rattachee a un BCG
+        cloture, expire ou annule — meme si le domain UI est contourne.
+        """
+        etats_bloques = {
+            'cloturee': 'cloture (toute la quantite a ete enlevee)',
+            'expire':   'expire',
+            'annulee':  'annule',
+        }
+        for rec in self:
+            if rec.commande_globale_id and rec.commande_globale_id.state in etats_bloques:
+                etat = etats_bloques[rec.commande_globale_id.state]
+                raise ValidationError(
+                    f'Le BCG {rec.commande_globale_id.name} est {etat}.\n'
+                    f'Aucune planification ne peut y etre rattachee.\n'
+                    f'Creez un nouveau BCG ou un avenant pour continuer.'
+                )
+
     @api.constrains('client_id', 'commande_globale_id')
     def _check_client_bcg(self):
         for rec in self:
@@ -650,23 +662,45 @@ class GicaPlanificationClient(models.Model):
     def action_soumettre(self):
         today = fields.Date.today()
         for rec in self:
+            # 1. Verifier l'agrement client
             agrement = rec.client_id.agrement_actif_id
             if agrement and agrement.date_expiration < today:
                 raise ValidationError(
                     f'Agrement expire le {agrement.date_expiration}.\n'
                     f'Renouvelez l\'agrement avant de soumettre une planification.'
                 )
+
             bcg = rec.commande_globale_id
-            if bcg and bcg.date_expiration and bcg.date_expiration < today:
-                raise ValidationError(
-                    f'Le BCG {bcg.name} a expire le {bcg.date_expiration}.\n'
-                    f'Creez un nouveau BCG pour continuer.'
-                )
-            if bcg and bcg.quantity_restante <= 0:
-                raise ValidationError(
-                    f'Le BCG {bcg.name} est epuise - quantite restante : 0 T.\n'
-                    f'Creez un nouveau BCG ou un avenant contrat.'
-                )
+
+            # 2. Verifier le statut du BCG — bloque si cloture, expire ou annule
+            if bcg:
+                etats_bloques = {
+                    'cloturee': 'cloture (toute la quantite contractuelle a ete enlevee)',
+                    'expire':   'expire',
+                    'annulee':  'annule',
+                }
+                if bcg.state in etats_bloques:
+                    raise ValidationError(
+                        f'Impossible de planifier : le BCG {bcg.name} est '
+                        f'{etats_bloques[bcg.state]}.\n'
+                        f'Creez un nouveau BCG ou un avenant pour continuer.'
+                    )
+
+                # 3. Verifier la date d'expiration
+                if bcg.date_expiration and bcg.date_expiration < today:
+                    raise ValidationError(
+                        f'Le BCG {bcg.name} a expire le {bcg.date_expiration}.\n'
+                        f'Creez un nouveau BCG pour continuer.'
+                    )
+
+                # 4. Verifier la quantite restante
+                if bcg.quantity_restante <= 0:
+                    raise ValidationError(
+                        f'Le BCG {bcg.name} est epuise — quantite restante : 0 T.\n'
+                        f'Creez un nouveau BCG ou un avenant contrat.'
+                    )
+
+            # 5. Verifier les dates d'enlevement (weekend)
             for line in rec.line_ids:
                 if line.date_enlevement and line.date_enlevement.weekday() in (4, 5):
                     jour = "Vendredi" if line.date_enlevement.weekday() == 4 else "Samedi"
@@ -674,6 +708,8 @@ class GicaPlanificationClient(models.Model):
                         f'La date {line.date_enlevement} est un {jour} (jour non ouvrable).\n'
                         f'Choisissez une date du dimanche au jeudi.'
                     )
+
+            # 6. Verifier presence de lignes
             if not rec.line_ids:
                 raise ValidationError('La planification doit contenir au moins une ligne.')
             if not all(l.date_enlevement for l in rec.line_ids):
@@ -747,7 +783,7 @@ class GicaPlanificationClient(models.Model):
             template.send_mail(self.id, force_send=True)
 
     # ── Cron : alerte expiration BCG 7 jours avant ────────────────────────
- 
+
     @api.model
     def _cron_alerte_expiration_bcg(self):
         """Envoie une alerte 7 jours avant l'expiration du BCG."""
@@ -759,8 +795,9 @@ class GicaPlanificationClient(models.Model):
         ])
         for bcg in bcgs:
             bcg.message_post(
-                body=f'⚠️ Le BCG {bcg.name} expire dans 7 jours le {bcg.date_expiration}. '
-                     f'Pensez à créer un avenant ou un nouveau contrat.',
+                body=(
+                    f'Le BCG {bcg.name} expire dans 7 jours le {bcg.date_expiration}. '
+                    f'Pensez a creer un avenant ou un nouveau contrat.'
+                ),
                 message_type='notification',
             )
- 

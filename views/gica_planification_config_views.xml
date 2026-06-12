@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_gica_planification_config_form" model="ir.ui.view">
+        <field name="name">gica.planification.config.form</field>
+        <field name="model">gica.planification.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuration Planification GICA">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Configuration Planification GICA</h1>
+                    </div>
+                    <group string="Recuperation automatique">
+                        <field name="actif"/>
+                        <field name="heure_cron"
+                               string="Heure de recuperation (0-23)"
+                               invisible="not actif"/>
+                        <field name="nb_jours_periode"
+                               string="Duree de la periode (jours)"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_gica_planification_config" model="ir.actions.act_window">
+        <field name="name">Configuration Planification</field>
+        <field name="res_model">gica.planification.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+</odoo>

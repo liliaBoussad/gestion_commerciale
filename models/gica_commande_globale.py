@@ -109,43 +109,54 @@ class GicaCommandeGlobaleLine(models.Model):
 
     @api.depends(
         'quantity_tonne',
-        'commande_id.bon_commande_ids.order_line.product_uom_qty',
-        'commande_id.bon_commande_ids.date_reelle_enlevement',
+        'product_id',
+        'commande_id.bon_commande_ids.bon_circulation_ids.state',
+        'commande_id.bon_commande_ids.bon_circulation_ids.poids_net',
+        'commande_id.bon_commande_ids.bon_circulation_ids.product_id',
     )
     def _compute_quantity_enlevee(self):
+        """
+        Quantite reellement enlevee = somme des poids_net des bons de circulation
+        termines rattaches aux BCs de ce BCG, pour ce produit precis.
+        Pas la quantite planifiee du BC, mais le poids pesé a la bascule.
+        """
         for rec in self:
             enlevee = 0.0
-            if rec.commande_id and rec.product_tmpl_id and rec.conditionnement_id:
-                label = rec.conditionnement_id.name
-                bc_enleves = rec.commande_id.bon_commande_ids.filtered(
-                    lambda bc: bc.date_reelle_enlevement
-                )
-                for bc in bc_enleves:
-                    for line in bc.order_line:
-                        if (line.product_id.product_tmpl_id == rec.product_tmpl_id
-                                and line.product_id.product_template_attribute_value_ids.filtered(
-                                    lambda a: a.attribute_id.name == 'Conditionnement'
-                                    and a.product_attribute_value_id.name == label
-                                )):
-                            enlevee += line.product_uom_qty
+            if rec.commande_id and rec.product_id:
+                for bc in rec.commande_id.bon_commande_ids:
+                    bons_termines = bc.bon_circulation_ids.filtered(
+                        lambda b: b.state == 'termine'
+                    )
+                    for bon_circ in bons_termines:
+                        if bon_circ.product_id == rec.product_id:
+                            enlevee += bon_circ.poids_net
             rec.quantity_enlevee  = enlevee
             rec.quantity_restante = rec.quantity_tonne - enlevee
 
     @api.depends(
-        'commande_id.planification_ids.line_ids.quantity_tonne',
+        'product_id',
         'commande_id.planification_ids.state',
+        'commande_id.planification_ids.line_ids.quantity_tonne',
+        'commande_id.planification_ids.line_ids.state',
+        'commande_id.planification_ids.line_ids.product_id',
     )
     def _compute_quantity_planifiee(self):
+        """
+        Quantite planifiee = somme des lignes en_attente + validees
+        sur toutes les planifications soumises ou validees du BCG.
+        """
         for rec in self:
-            planifs = rec.commande_id.planification_ids.filtered(
-                lambda p: p.state in ('soumise', 'validee')
-            )
-            planifiee = sum(
-                line.quantity_tonne
-                for p in planifs
-                for line in p.line_ids
-                if line.product_id == rec.product_id
-            )
+            planifiee = 0.0
+            if rec.commande_id and rec.product_id:
+                planifs_actives = rec.commande_id.planification_ids.filtered(
+                    lambda p: p.state in ('soumise', 'validee')
+                )
+                for planif in planifs_actives:
+                    for line in planif.line_ids.filtered(
+                        lambda l: l.state in ('en_attente', 'validee')
+                    ):
+                        if line.product_id == rec.product_id:
+                            planifiee += line.quantity_tonne
             rec.quantity_planifiee = planifiee
 
     # ── Helpers ───────────────────────────────────────────────────────────
@@ -374,12 +385,6 @@ class GicaCommandeGlobale(models.Model):
                 (rec.quantity_enlevee / rec.quantity_total_tonne * 100)
                 if rec.quantity_total_tonne else 0.0
             )
-            # ── Clôture automatique quand toute la quantité est enlevée ──
-            if (rec.state == 'en_cours'
-                    and rec.quantity_total_tonne > 0
-                    and rec.quantity_enlevee >= rec.quantity_total_tonne):
-                rec.state = 'cloturee'
-                rec.message_post(body='BCG clôturé automatiquement — toute la quantité a été enlevée.')
 
     # ── Create / Unlink ───────────────────────────────────────────────────
 
@@ -405,9 +410,6 @@ class GicaCommandeGlobale(models.Model):
     @api.onchange('client_id')
     def _onchange_client_id(self):
         self.contrat_id = False
-        # ── Remplissage automatique du contrat ──
-        # Si le client a un seul contrat actif → remplir automatiquement
-        # Si plusieurs → laisser l'utilisateur choisir
         if self.client_id:
             contrats = self.env['gica.client.contract'].search([
                 ('client_id', '=', self.client_id.id),
@@ -418,11 +420,6 @@ class GicaCommandeGlobale(models.Model):
 
     @api.onchange('contrat_id')
     def _onchange_contrat_id(self):
-        """
-        Copie uniquement produit + quantité depuis le contrat.
-        Le conditionnement et le prix sont saisis sur le BCG.
-        Les lignes ne sont pas modifiables après (readonly si state != nouveau).
-        """
         if not self.contrat_id:
             return
         self.line_ids = [
@@ -464,7 +461,6 @@ class GicaCommandeGlobale(models.Model):
         for rec in self:
             if not rec.line_ids:
                 raise ValidationError('La commande globale doit avoir au moins une ligne.')
-            # Vérifier que toutes les lignes ont un conditionnement
             for line in rec.line_ids:
                 if not line.conditionnement_id:
                     raise ValidationError(
@@ -484,12 +480,25 @@ class GicaCommandeGlobale(models.Model):
                 rec.write({'state': 'nouveau'})
 
     def _check_cloture_automatique(self):
+        """
+        Appele depuis gica_bon_circulation._finaliser_terminer() apres chaque pesee.
+        Passe le BCG en 'cloturee' si toute la quantite contractuelle a ete enlevee.
+        """
         for rec in self:
+            # Forcer le recalcul des champs cached avant lecture
+            rec.invalidate_recordset([
+                'quantity_enlevee', 'quantity_restante', 'quantity_total_tonne'
+            ])
             if (rec.state == 'en_cours'
                     and rec.quantity_total_tonne > 0
                     and rec.quantity_restante <= 0):
                 rec.write({'state': 'cloturee'})
-                rec.message_post(body='BCG clôturé — toute la quantité a été enlevée.')
+                rec.message_post(
+                    body=(
+                        f'BCG cloture automatiquement : toute la quantite '
+                        f'({rec.quantity_total_tonne:.0f} T) a ete enlevee.'
+                    )
+                )
 
     def action_voir_bons_commande(self):
         self.ensure_one()
@@ -594,11 +603,11 @@ class GicaCommandeGlobale(models.Model):
             expired.write({'state': 'expire'})
             for rec in expired:
                 rec.message_post(
-                    body=f"BCG expiré automatiquement le {today}."
+                    body=f'BCG expire automatiquement le {today}.'
                 )
 
 
-# ── Suppression du préfixe "Conditionnement: " dans l'affichage ──────────
+# ── Suppression du prefixe "Conditionnement: " dans l'affichage ──────────
 class ProductAttributeValue(models.Model):
     _inherit = 'product.attribute.value'
 
