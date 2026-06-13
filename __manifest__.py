@@ -7,6 +7,13 @@
     'license': 'LGPL-3', 
     'category': 'Sales',
     'depends': ['base', 'mail', 'sale', 'product', 'sale_management', 'portal'],
+    'assets': {
+    'web.assets_backend': [
+        'gestion_commerciale/static/src/js/date_field_verrouillee.js',
+        'gestion_commerciale/static/src/css/date_field_verrouillee.css',
+    ],
+    },
+
     'data': [
         'security/ir.model.access.csv',
 
@@ -59,6 +66,7 @@
 
         'views/menu.xml',
     ],
+
     'installable': True,
     'application': True,
 }

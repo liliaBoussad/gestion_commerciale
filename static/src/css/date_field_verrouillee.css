@@ -1,0 +1,32 @@
+/* ============================================================
+   GICA — Styles pour les jours verrouillés dans le datepicker Odoo 18
+   ============================================================ */
+
+/* Cellules du calendrier natif Odoo 18 */
+.o_date_item_cell.gica-date-verrouillee,
+.o_date_item_cell.gica-date-verrouillee:hover {
+    background: repeating-linear-gradient(
+        45deg,
+        #f8d7da,
+        #f8d7da 4px,
+        #fff5f5 4px,
+        #fff5f5 9px
+    ) !important;
+    color: #c0392b !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+/* Si Odoo utilise .o_selected sur une cellule verrouillée */
+.o_date_item_cell.gica-date-verrouillee.o_selected {
+    background: repeating-linear-gradient(
+        45deg,
+        #f8d7da,
+        #f8d7da 4px,
+        #fff5f5 4px,
+        #fff5f5 9px
+    ) !important;
+    color: #c0392b !important;
+}
