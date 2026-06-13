@@ -131,6 +131,11 @@
                                            decoration-danger="state == 'refusee'"
                                            decoration-warning="state == 'en_attente'"/>
 
+                                    <field name="motif_refus"
+                                            string="Motif refus"
+                                            column_invisible="parent.state != 'refusee'"
+                                            readonly="1"/>
+
                                     <button name="action_voir_bc"
                                             string="Voir BC"
                                             type="object"

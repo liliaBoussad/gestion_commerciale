@@ -31,6 +31,8 @@ access_gica_planification_usine_user,gica.planification.usine user,model_gica_pl
 access_gica_planification_config_manager,gica.planification.config manager,model_gica_planification_config,base.group_system,1,1,1,1
 access_gica_planification_config_user,gica.planification.config user,model_gica_planification_config,base.group_user,1,0,0,0
 
+access_gica_refus_ligne_wizard,gica.refus.ligne.wizard,model_gica_refus_ligne_wizard,base.group_user,1,1,1,1
+
 access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1
 access_gica_bon_circulation,gica.bon.circulation,model_gica_bon_circulation,base.group_user,1,1,1,1
 access_gica_circulation_line,gica.circulation.line,model_gica_circulation_line,base.group_user,1,1,1,1

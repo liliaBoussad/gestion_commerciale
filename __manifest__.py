@@ -32,6 +32,8 @@
           # Rapports — AVANT les vues
         'reports/report_ticket_pesee.xml',
         'reports/report_bon_circulation.xml',
+
+
         
         'templates/portal_templates.xml',
 
@@ -57,6 +59,8 @@
         'views/gica_bon_circulation_views.xml',
         'data/clinker_sequences.xml',
         'views/gica_bascule_views.xml',
+        'views/gica_refus_wizard_views.xml',
+
 
         # Clinker
         'views/clinker_cadence_views.xml',

@@ -80,6 +80,8 @@ class GicaPlanificationClientLine(models.Model):
         string='Bon de Commande',
         readonly=True,
     )
+    motif_refus = fields.Text(string='Motif du refus', readonly=True)
+
 
     bon_circulation_count = fields.Integer(
         string='Nb BCs',
@@ -370,9 +372,29 @@ class GicaPlanificationClientLine(models.Model):
             rec.planification_id._recompute_state()
 
     def action_refuser_ligne(self):
-        for rec in self:
-            rec.write({'state': 'refusee'})
-            rec.planification_id._recompute_state()
+        """Ouvre le wizard de refus."""
+        self.ensure_one()
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Motif du refus',
+            'res_model': 'gica.refus.ligne.wizard',
+            'view_mode': 'form',
+            'target':    'new',
+            'context':   {'default_ligne_id': self.id},
+        }
+
+    def action_refuser_ligne_avec_motif(self, motif):
+        """Appelé par le wizard après saisie du motif."""
+        self.ensure_one()
+        self.write({
+            'state':      'refusee',
+            'motif_refus': motif,
+        })
+        self.planification_id.message_post(
+            body=f'❌ Ligne refusée — {self.product_id.name} '
+                f'({self.date_enlevement}) : {motif}'
+        )
+        self.planification_id._recompute_state()
 
     def action_voir_bc(self):
         self.ensure_one()
@@ -507,7 +529,8 @@ class GicaPlanificationClient(models.Model):
         ('refusee',   'Refusee'),
     ], string='Statut', default='brouillon', tracking=True, required=True)
 
-    motif_refus            = fields.Text(string='Motif du refus', tracking=True)
+    motif_refus = fields.Text(string='Motif du refus', readonly=True)
+
     planification_usine_id = fields.Many2one('gica.planification.usine', readonly=True, tracking=True)
 
     periode_debut = fields.Date(related='planification_usine_id.date_debut', store=True, readonly=True)

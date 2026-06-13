@@ -135,6 +135,10 @@
                                             type="object"
                                             class="btn-secondary btn-sm"
                                             invisible="not sale_order_id"/>
+                                    <field name="motif_refus"
+                                            string="Motif refus"
+                                            optional="show"
+                                            readonly="1"/>
                                 </list>
                             </field>
                         </page>
