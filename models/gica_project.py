@@ -77,10 +77,10 @@ class GicaProject(models.Model):
     observations = fields.Text(string='Observations')
 
     # ── Computed ──────────────────────────────────────────────────────────
-    @api.depends('line_ids.quantity')
+    @api.depends('line_ids.quantity_tonne')
     def _compute_totaux(self):
         for rec in self:
-            rec.quantity_total = sum(rec.line_ids.mapped('quantity'))
+            rec.quantity_total = sum(rec.line_ids.mapped('quantity_tonne'))
             rec.nb_produits    = len(rec.line_ids)
 
     # @api.depends() vide : Odoo recalcule à chaque lecture du champ.
@@ -181,26 +181,32 @@ class GicaProjectLine(models.Model):
     project_name = fields.Char(
         related='project_id.name', string='Nom du projet', store=True,
     )
-    product_id = fields.Many2one(
-        'product.product', string='Produit', required=True,
-        domain="[('product_tmpl_id.is_gica_product','=',True)]",
+
+    # ── Aligné sur gica.client.contract.line ──
+    product_tmpl_id = fields.Many2one(
+        'product.template',
+        string='Produit',
+        required=True,
+        domain="[('is_gica_product', '=', True)]",
+    )
+    type_ciment = fields.Selection(
+        related='product_tmpl_id.type_ciment',
+        string='Famille ciment',
+        store=True,
+        readonly=True,
     )
     quantity = fields.Float(string='Quantité', required=True)
-    unite_mesure = fields.Selection([
-        ('sac50',     'Sac 50 kg'),
-        ('sac25',     'Sac 25 kg'),
-        ('vrac',      'Vrac'),
-        ('bigbag2t',  'Big Bag 2 tonnes'),
-        ('fardeau60', 'Fardeau 60 sacs'),
-    ], string='Unité', required=True)
-
-    quantity_livree   = fields.Float(string='Qté livrée',   default=0.0)
-    quantity_restante = fields.Float(
-        string='Qté restante',
-        compute='_compute_restante', store=True,
+    uom = fields.Selection([
+        ('tonne', 'Tonne'),
+        ('sac',   'Sac'),
+    ], string='Unité', required=True, default='tonne')
+    quantity_tonne = fields.Float(
+        string='Qté (T)',
+        compute='_compute_quantity_tonne',
+        store=True,
     )
 
-    @api.depends('quantity', 'quantity_livree')
-    def _compute_restante(self):
+    @api.depends('quantity', 'uom')
+    def _compute_quantity_tonne(self):
         for rec in self:
-            rec.quantity_restante = rec.quantity - rec.quantity_livree
+            rec.quantity_tonne = rec.quantity

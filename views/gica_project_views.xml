@@ -63,21 +63,22 @@
                     </group>
 
                     <notebook>
-                        <page string="Produits du projet">
-                            <field name="line_ids" nolabel="1">
+                        <page string="Produits du projet" name="produits">
+                            <field name="line_ids" nolabel="1"
+                                readonly="state in ('termine', 'annule')">
                                 <list editable="bottom">
-                                    <field name="sequence"         widget="handle"/>
-                                    <field name="product_id"       string="Produit"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="quantity"         string="Quantité"/>
-                                    <field name="unite_mesure"     string="Unité"/>
-                                    <field name="quantity_livree"  string="Livré"/>
-                                    <field name="quantity_restante" string="Restant" readonly="1"/>
+                                    <field name="sequence"        widget="handle"/>
+                                    <field name="product_tmpl_id"
+                                        string="Produit"
+                                        domain="[('is_gica_product', '=', True)]"/>
+                                    <field name="quantity"        string="Quantité"/>
+                                    <field name="uom"             string="Unité"/>
+                                    <field name="quantity_tonne"  string="Qté (T)" readonly="1"/>
                                 </list>
                             </field>
                             <group class="oe_subtotal_footer">
                                 <field name="nb_produits"    string="Nb produits"/>
-                                <field name="quantity_total" string="Quantité totale"/>
+                                <field name="quantity_total" string="Quantité totale (T)"/>
                             </group>
                         </page>
                         <page string="Observations">
