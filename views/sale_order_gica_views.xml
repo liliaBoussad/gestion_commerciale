@@ -9,7 +9,7 @@
 
             <xpath expr="//notebook" position="inside">
 
-                <!-- Onglet Bons de Circulation — caché si aucun BC -->
+                <!-- Onglet Bons de Circulation -->
                 <page string="Bons de Circulation" name="bons_circulation"
                       invisible="bon_circulation_count == 0">
 
@@ -52,15 +52,19 @@
                          invisible="not toutes_rotations_terminees">
                         <field name="toutes_rotations_terminees" invisible="1"/>
                         Toutes les rotations sont terminees.
-                        Utilisez le bouton "Creer une facture" d'Odoo pour facturer.
+                        Utilisez le bouton "Creer une facture" pour facturer.
                     </div>
 
-                    <!-- Liste BCs -->
-                    <field name="bon_circulation_ids" nolabel="1" readonly="1">
+                    <!--
+                        CORRECTION :
+                        form_view_ref force l'ouverture de la vue bascule
+                        au clic sur une ligne — plus de wizard.
+                    -->
+                    <field name="bon_circulation_ids" nolabel="1">
                         <list decoration-info="state == 'transmis_tare'"
-                              decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
-                              decoration-success="state == 'termine'"
-                              decoration-muted="state == 'annule'">
+                            decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                            decoration-success="state == 'termine'"
+                            decoration-muted="state == 'annule'">
                             <field name="name"            string="N Bon"/>
                             <field name="numero_rotation" string="Rotation"/>
                             <field name="quantite_prevue" string="Qte prevue (T)"/>
@@ -69,10 +73,15 @@
                             <field name="matricule"       string="Matricule"/>
                             <field name="picking_id"      string="Bon de Livraison"/>
                             <field name="state" widget="badge"
-                                   decoration-info="state == 'transmis_tare'"
-                                   decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
-                                   decoration-success="state == 'termine'"
-                                   decoration-danger="state == 'annule'"/>
+                                decoration-info="state == 'transmis_tare'"
+                                decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                                decoration-success="state == 'termine'"
+                                decoration-danger="state == 'annule'"/>
+                            <button name="action_ouvrir_bon_circulation"
+                                    string="Ouvrir"
+                                    type="object"
+                                    icon="fa-external-link"
+                                    class="btn-sm btn-secondary"/>
                         </list>
                     </field>
                 </page>

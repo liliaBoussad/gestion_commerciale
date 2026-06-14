@@ -25,7 +25,6 @@ class GicaSaleOrder(models.Model):
         'gica.bon.circulation',
         'sale_order_id',
         string='Bons de Circulation',
-        readonly=True,
     )
 
     bon_circulation_count = fields.Integer(

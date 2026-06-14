@@ -20,7 +20,6 @@ from . import gica_planification_config
 from . import sale_order_gica
 
 from . import gica_bon_circulation
-from . import gica_wizard_bon_circulation
 
 from . import gica_pesee
 

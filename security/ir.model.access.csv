@@ -35,8 +35,6 @@ access_gica_refus_ligne_wizard,gica.refus.ligne.wizard,model_gica_refus_ligne_wi
 
 access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1
 access_gica_bon_circulation,gica.bon.circulation,model_gica_bon_circulation,base.group_user,1,1,1,1
-access_gica_circulation_line,gica.circulation.line,model_gica_circulation_line,base.group_user,1,1,1,1
-access_gica_wizard_bon_circulation,gica.wizard.bon.circulation,model_gica_wizard_bon_circulation,base.group_user,1,1,1,1
 access_gica_pesee,gica.pesee,model_gica_pesee,base.group_user,1,1,1,1
 access_clinker_cadence,clinker.cadence,model_clinker_cadence,,1,1,1,1
 access_clinker_global_order,clinker.global.order,model_clinker_global_order,,1,1,1,1

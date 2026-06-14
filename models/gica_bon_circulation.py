@@ -157,6 +157,17 @@ class GicaBonCirculation(models.Model):
     ], string='Etat', default='brouillon', tracking=True, required=True)
 
     # ── Workflow ──────────────────────────────────────────────────────────
+    def action_ouvrir_bon_circulation(self):
+        self.ensure_one()
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Bon de Circulation',
+            'res_model': 'gica.bon.circulation',
+            'view_mode': 'form',
+            'res_id':    self.id,
+            'views':     [(self.env.ref('gestion_commerciale.view_gica_bon_circulation_form').id, 'form')],
+            'target':    'current',   # navigation pleine page, pas de dialog
+        }
 
     def action_transmettre_tare(self):
         for rec in self:
