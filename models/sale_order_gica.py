@@ -61,12 +61,27 @@ class GicaSaleOrder(models.Model):
 
     # ── Client GICA ───────────────────────────────────────────────────────
     gica_client_id = fields.Many2one(
-        'gica.client',
-        string='Client GICA',
-        related='commande_globale_id.client_id',
-        store=True,
-        readonly=True,
+    'gica.client',
+    string='Client GICA',
+    store=True,
+    tracking=True,
     )
+    
+    @api.onchange('partner_id')
+    def _onchange_partner_gica(self):
+        if self.partner_id:
+            client = self.env['gica.client'].search(
+                [('partner_id', '=', self.partner_id.id)], limit=1
+            )
+            self.gica_client_id = client or False
+
+    @api.onchange('partner_id')
+    def _onchange_partner_gica(self):
+        if self.partner_id:
+            client = self.env['gica.client'].search(
+                [('partner_id', '=', self.partner_id.id)], limit=1
+            )
+            self.gica_client_id = client or False
 
     # ── Contrat GICA ──────────────────────────────────────────────────────
     gica_contrat_id = fields.Many2one(

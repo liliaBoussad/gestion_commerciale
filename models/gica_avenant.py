@@ -200,8 +200,40 @@ class GicaAvenant(models.Model):
             raise ValidationError(
                 'Impossible de valider un avenant sur une commande annulée ou clôturée.'
             )
+
+        if self.quantite and self.product_tmpl_id and self.conditionnement_id:
+            ligne = self.commande_globale_id.line_ids.filtered(
+                lambda l: l.product_tmpl_id == self.product_tmpl_id
+                and l.conditionnement_id == self.conditionnement_id
+            )
+            if ligne:
+                ligne[0].invalidate_recordset()  # ← forcer relecture depuis DB
+                qty_actuelle = ligne[0].quantity_tonne
+                if self.type_avenant == 'addition':
+                    nouvelle_qty = qty_actuelle + self.quantite
+                else:
+                    nouvelle_qty = qty_actuelle - self.quantite
+                    if nouvelle_qty < 0:
+                        raise ValidationError(
+                            f'La réduction dépasse la quantité disponible '
+                            f'({qty_actuelle} T).'
+                        )
+                ligne[0].write({'quantity_tonne': nouvelle_qty})
+
+        if self.nouveau_prix and self.product_tmpl_id and self.conditionnement_id:
+            ligne = self.commande_globale_id.line_ids.filtered(
+                lambda l: l.product_tmpl_id == self.product_tmpl_id
+                and l.conditionnement_id == self.conditionnement_id
+            )
+            if ligne:
+                ligne[0].write({'prix_unitaire': self.nouveau_prix})
+
         self.write({'state': 'valide'})
-        self.message_post(body='Avenant validé.')
+        self.message_post(
+            body=f'Avenant validé — {self.type_avenant} de {self.quantite} T '
+                f'sur {self.product_tmpl_id.name} ({self.conditionnement_id.name}).'
+        )
+        self.commande_globale_id._compute_totaux()
 
     def action_remettre_brouillon(self):
         self.ensure_one()

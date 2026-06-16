@@ -20,3 +20,4 @@ from . import gica_planification_config
 from . import sale_order_gica
 from . import gica_avenant
 from . import gica_pricelist
+

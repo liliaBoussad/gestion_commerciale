@@ -52,6 +52,7 @@ class GicaPlanificationClientLine(models.Model):
     nbr_paquets    = fields.Integer(string='Nombre de Paquets')
     quantity_tonne = fields.Float(string='Quantité (T)', required=True)
     rotation       = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
+    motif_refus = fields.Text(string='Motif du refus', tracking=True)
 
     quantity_disponible = fields.Float(
         string='Qté restante BCG (T)',
@@ -292,9 +293,29 @@ class GicaPlanificationClientLine(models.Model):
             rec.planification_id._recompute_state()
 
     def action_refuser_ligne(self):
-        for rec in self:
-            rec.write({'state': 'refusee'})
-            rec.planification_id._recompute_state()
+        """Ouvre le wizard de refus."""
+        self.ensure_one()
+        return {
+            'type':      'ir.actions.act_window',
+            'name':      'Motif du refus',
+            'res_model': 'gica.refus.ligne.wizard',
+            'view_mode': 'form',
+            'target':    'new',
+            'context':   {'default_ligne_id': self.id},
+        }
+
+    def action_refuser_ligne_avec_motif(self, motif):
+        """Appelé par le wizard après saisie du motif."""
+        self.ensure_one()
+        self.write({
+            'state':      'refusee',
+            'motif_refus': motif,
+        })
+        self.planification_id.message_post(
+            body=f'❌ Ligne refusée — {self.product_id.name} '
+                f'({self.date_enlevement}) : {motif}'
+        )
+        self.planification_id._recompute_state()
 
     def action_voir_bc(self):
         self.ensure_one()
@@ -536,7 +557,7 @@ class GicaPlanificationClient(models.Model):
                     rec._notifier_client_refus(rec.motif_refus or '')
                 else:
                     rec.write({'state': 'validee'})
-                    rec.message_post(body='✅ Planification traitée — BCs générés.')
+                    rec.message_post(body='✅ Plan)ification traitée — BCs générés.')
                     rec._notifier_client_validation()
 
     def action_soumettre(self):

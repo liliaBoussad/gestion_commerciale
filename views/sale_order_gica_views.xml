@@ -19,7 +19,9 @@
                                    options="{'no_create': True}"
                                    readonly="1"/>
                             <field name="planification_id" readonly="1"/>
-                            <field name="gica_client_id"   readonly="1"/>
+                            <field name="gica_client_id"
+                                options="{'no_create': True}"
+                                readonly="commande_globale_id != False"/>
                             <field name="gica_contrat_id"  readonly="1"/>
                         </group>
                         <group string="Enlèvement">
@@ -59,5 +61,6 @@
             <p>Les bons de commande sont créés depuis une planification validée.</p>
         </field>
     </record>
-
+  
+   
 </odoo>

@@ -116,6 +116,6 @@
                   parent="sale.sale_order_menu"
                   action="action_gica_planification_config"
                   sequence="9"/>
-        
+   
     </data>
 </odoo>

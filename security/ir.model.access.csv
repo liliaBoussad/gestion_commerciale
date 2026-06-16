@@ -29,3 +29,4 @@ access_gica_planification_usine_user,gica.planification.usine user,model_gica_pl
 access_gica_planification_consolidation,gica.planification.consolidation,model_gica_planification_consolidation,base.group_user,1,1,1,1
 access_gica_planification_config,gica.planification.config,model_gica_planification_config,base.group_user,1,1,1,1
 access_gica_avenant,gica.avenant,model_gica_avenant,base.group_user,1,1,1,1
+access_gica_refus_ligne_wizard,gica.refus.ligne.wizard,model_gica_refus_ligne_wizard,base.group_user,1,1,1,1

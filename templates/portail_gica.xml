@@ -1,117 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         MENU PORTAIL — ajoute les entrées dans le menu "Mon compte"
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Injection cartes GICA sur /my/home -->
+    
+    
+    
     <template id="portal_my_home_menu_gica" name="Portail GICA Menu"
-              inherit_id="portal.portal_my_home" customize_show="True">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="title">Mes Contrats</t>
-                <t t-set="url">/my/gica/contrats</t>
-                <t t-set="count" t-value="contract_count"/>
-                <t t-set="icon">fa-file-text-o</t>
-            </t>
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="title">Mes BCG</t>
-                <t t-set="url">/my/gica/bcg</t>
-                <t t-set="count" t-value="bcg_count"/>
-                <t t-set="icon">fa-shopping-cart</t>
-            </t>
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="title">Mes Planifications</t>
-                <t t-set="url">/my/gica/planifications</t>
-                <t t-set="count" t-value="planification_count"/>
-                <t t-set="icon">fa-calendar</t>
-            </t>
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="title">Mes Projets</t>
-                <t t-set="url">/my/gica/projets</t>
-                <t t-set="count" t-value="project_count"/>
-                <t t-set="icon">fa-building</t>
-            </t>
+              inherit_id="portal.portal_my_home" customize_show="True" priority="10">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <div class="o_portal_docs mb-4">
+                <h5 class="mb-3">Mon Espace GICA</h5>
+                <div class="row g-3">
+ 
+                    <!-- Devis -->
+                    <div class="col-lg-4 col-md-6">
+                        <a href="/my/quotes"
+                           class="d-flex align-items-center gap-3 p-3 border rounded text-decoration-none text-dark bg-white shadow-sm h-100">
+                            <img src="/web/static/img/quotation.svg" style="width:48px; height:48px;"/>
+                            <div>
+                                <div class="fw-bold">Mes Devis</div>
+                                <small class="text-muted">
+                                    <t t-esc="devis_count or 0"/> devis GICA
+                                </small>
+                            </div>
+                        </a>
+                    </div>
+ 
+                    <!-- Contrats -->
+                    <div class="col-lg-4 col-md-6">
+                        <a href="/my/gica/contrats"
+                           class="d-flex align-items-center gap-3 p-3 border rounded text-decoration-none text-dark bg-white shadow-sm h-100">
+                            <img src="/web/static/img/bill.svg" style="width:48px; height:48px;"/>
+                            <div>
+                                <div class="fw-bold">Mes Contrats</div>
+                                <small class="text-muted">
+                                    <t t-esc="contract_count or 0"/> contrats actifs
+                                </small>
+                            </div>
+                        </a>
+                    </div>
+ 
+                    <!-- BCG -->
+                    <div class="col-lg-4 col-md-6">
+                        <a href="/my/gica/bcg"
+                           class="d-flex align-items-center gap-3 p-3 border rounded text-decoration-none text-dark bg-white shadow-sm h-100">
+                            <img src="/web/static/img/rfq.svg" style="width:48px; height:48px;"/>
+                            <div>
+                                <div class="fw-bold">Mes BCG</div>
+                                <small class="text-muted">
+                                    <t t-esc="bcg_count or 0"/> bons de commande globaux
+                                </small>
+                            </div>
+                        </a>
+                    </div>
+ 
+                    <!-- Planifications -->
+                    <div class="col-lg-4 col-md-6">
+                        <a href="/my/gica/planifications"
+                           class="d-flex align-items-center gap-3 p-3 border rounded text-decoration-none text-dark bg-white shadow-sm h-100">
+                            <img src="/portal/static/src/img/portal-addresses.svg" style="width:48px; height:48px;"/>
+                            <div>
+                                <div class="fw-bold">Mes Planifications</div>
+                                <small class="text-muted">
+                                    <t t-esc="planification_count or 0"/> planifications
+                                </small>
+                            </div>
+                        </a>
+                    </div>
+ 
+                    <!-- Projets -->
+                    <t t-if="is_entreprise_realisation">
+                        <div class="col-lg-4 col-md-6">
+                            <a href="/my/gica/projets"
+                            class="d-flex align-items-center gap-3 p-3 border rounded text-decoration-none text-dark bg-white shadow-sm h-100">
+                                <img src="/portal/static/src/img/portal-connection.svg" style="width:48px; height:48px;"/>
+                                <div>
+                                    <div class="fw-bold">Mes Projets</div>
+                                    <small class="text-muted">
+                                        <t t-esc="project_count or 0"/> projets
+                                    </small>
+                                </div>
+                            </a>
+                        </div>
+                    </t>    
+    
+                </div>
+            </div>
         </xpath>
     </template>
+    
+    <template id="portal_my_home_menu_sale_hide" 
+          inherit_id="sale.portal_my_home_menu_sale"
+          active="False"/>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Pas client GICA
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Pas client GICA -->
     <template id="portail_pas_client_gica" name="Pas client GICA">
         <t t-call="portal.portal_layout">
             <div class="container mt-4">
                 <div class="alert alert-warning">
-                    <h4>Accès non autorisé</h4>
-                    <p>Votre compte n'est pas associé à un client GICA.</p>
+                    <h4>Acces non autorise</h4>
+                    <p>Votre compte n'est pas associe a un client GICA.</p>
                     <p>Veuillez contacter votre commercial.</p>
                 </div>
             </div>
         </t>
     </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Accueil portail GICA
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Page accueil /my/gica -->
     <template id="portail_gica_accueil" name="Portail GICA Accueil">
         <t t-call="portal.portal_layout">
-            <t t-set="breadcrumbs_searchbar" t-value="True"/>
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mon Espace GICA</t>
-            </t>
             <div class="container mt-4">
-                <div class="row">
-                    <!-- Contrats -->
-                    <div class="col-md-3 mb-3">
+                <div class="text-center mb-5">
+                    <img src="/web/binary/company_logo" style="max-height:60px;" class="mb-3"/>
+                    <h2>Mon Espace GICA</h2>
+                    <p class="text-muted">
+                        Bienvenue <strong><t t-esc="gica_client.display_name"/></strong>
+                    </p>
+                </div>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-5 col-sm-6 mb-4">
+                        <a href="/my/quotes" class="text-decoration-none">
+                            <div class="card h-100 shadow border-0" style="border-left:5px solid #6c757d !important;">
+                                <div class="card-body text-center py-4">
+                                    <i class="fa fa-file-text fa-4x mb-3" style="color:#6c757d;"/>
+                                    <h4 class="card-title">Mes Devis</h4>
+                                    <div class="display-4 fw-bold" style="color:#6c757d;"><t t-esc="nb_devis"/></div>
+                                </div>
+                                <div class="card-footer text-center py-2" style="background-color:#6c757d; color:white;">
+                                    <small>Cliquez pour consulter</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-5 col-sm-6 mb-4">
                         <a href="/my/gica/contrats" class="text-decoration-none">
-                            <div class="card text-center shadow-sm h-100">
-                                <div class="card-body">
-                                    <i class="fa fa-file-text-o fa-3x text-primary mb-2"/>
-                                    <h5 class="card-title">Contrats</h5>
-                                    <p class="display-6 text-primary">
-                                        <t t-esc="len(contrats)"/>
-                                    </p>
+                            <div class="card h-100 shadow border-0" style="border-left:5px solid #0d6efd !important;">
+                                <div class="card-body text-center py-4">
+                                    <i class="fa fa-file-text-o fa-4x mb-3" style="color:#0d6efd;"/>
+                                    <h4 class="card-title">Mes Contrats</h4>
+                                    <div class="display-4 fw-bold" style="color:#0d6efd;"><t t-esc="nb_contrats"/></div>
+                                </div>
+                                <div class="card-footer text-center py-2" style="background-color:#0d6efd; color:white;">
+                                    <small>Cliquez pour consulter</small>
                                 </div>
                             </div>
                         </a>
                     </div>
-                    <!-- BCG -->
-                    <div class="col-md-3 mb-3">
+                </div>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-5 col-sm-6 mb-4">
                         <a href="/my/gica/bcg" class="text-decoration-none">
-                            <div class="card text-center shadow-sm h-100">
-                                <div class="card-body">
-                                    <i class="fa fa-shopping-cart fa-3x text-success mb-2"/>
-                                    <h5 class="card-title">BCG</h5>
-                                    <p class="display-6 text-success">
-                                        <t t-esc="len(bcgs)"/>
-                                    </p>
+                            <div class="card h-100 shadow border-0" style="border-left:5px solid #198754 !important;">
+                                <div class="card-body text-center py-4">
+                                    <i class="fa fa-shopping-cart fa-4x mb-3" style="color:#198754;"/>
+                                    <h4 class="card-title">Mes BCG</h4>
+                                    <div class="display-4 fw-bold" style="color:#198754;"><t t-esc="nb_bcgs"/></div>
+                                </div>
+                                <div class="card-footer text-center py-2" style="background-color:#198754; color:white;">
+                                    <small>Cliquez pour consulter</small>
                                 </div>
                             </div>
                         </a>
                     </div>
-                    <!-- Planifications -->
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-5 col-sm-6 mb-4">
                         <a href="/my/gica/planifications" class="text-decoration-none">
-                            <div class="card text-center shadow-sm h-100">
-                                <div class="card-body">
-                                    <i class="fa fa-calendar fa-3x text-warning mb-2"/>
-                                    <h5 class="card-title">Planifications</h5>
-                                    <p class="display-6 text-warning">
-                                        <t t-esc="len(planifications)"/>
-                                    </p>
+                            <div class="card h-100 shadow border-0" style="border-left:5px solid #ffc107 !important;">
+                                <div class="card-body text-center py-4">
+                                    <i class="fa fa-calendar fa-4x mb-3" style="color:#ffc107;"/>
+                                    <h4 class="card-title">Mes Planifications</h4>
+                                    <div class="display-4 fw-bold" style="color:#ffc107;"><t t-esc="nb_planifications"/></div>
+                                </div>
+                                <div class="card-footer text-center py-2" style="background-color:#ffc107; color:white;">
+                                    <small>Cliquez pour consulter</small>
                                 </div>
                             </div>
                         </a>
                     </div>
-                    <!-- Projets -->
-                    <div class="col-md-3 mb-3">
+                </div>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-5 col-sm-6 mb-4">
                         <a href="/my/gica/projets" class="text-decoration-none">
-                            <div class="card text-center shadow-sm h-100">
-                                <div class="card-body">
-                                    <i class="fa fa-building fa-3x text-info mb-2"/>
-                                    <h5 class="card-title">Projets</h5>
-                                    <p class="display-6 text-info">
-                                        <t t-esc="len(projets)"/>
-                                    </p>
+                            <div class="card h-100 shadow border-0" style="border-left:5px solid #0dcaf0 !important;">
+                                <div class="card-body text-center py-4">
+                                    <i class="fa fa-building fa-4x mb-3" style="color:#0dcaf0;"/>
+                                    <h4 class="card-title">Mes Projets</h4>
+                                    <div class="display-4 fw-bold" style="color:#0dcaf0;"><t t-esc="nb_projets"/></div>
+                                </div>
+                                <div class="card-footer text-center py-2" style="background-color:#0dcaf0; color:white;">
+                                    <small>Cliquez pour consulter</small>
                                 </div>
                             </div>
                         </a>
@@ -121,184 +197,506 @@
         </t>
     </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Mes Contrats
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Page Devis -->
+    <template id="portail_gica_devis" name="Portail GICA Devis">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><i class="fa fa-file-text me-2"/>Mes Devis</h4>
+                    <a href="/my/home" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Retour
+                    </a>
+                </div>
+                <div class="alert alert-info small">
+                    <i class="fa fa-info-circle"/>
+                    Pour demander un devis, contactez votre commercial.
+                </div>
+                <t t-if="not devis">
+                    <div class="alert alert-light border">Aucun devis pour le moment.</div>
+                </t>
+                <t t-else="">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Date</th>
+                                    <th>Montant (DA)</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="devis" t-as="dv">
+                                    <tr>
+                                        <td><strong><t t-esc="dv.name"/></strong></td>
+                                        <td><t t-esc="dv.date_order"/></td>
+                                        <td>
+                                            <t t-if="dv.state == 'sent'">
+                                                <t t-esc="'{:,.0f}'.format(dv.amount_total)"/>
+                                            </t>
+                                            <t t-else=""><span class="text-muted">En attente</span></t>
+                                        </td>
+                                        <td>
+                                            <t t-if="dv.state == 'draft'"><span class="badge bg-secondary">Brouillon</span></t>
+                                            <t t-elif="dv.state == 'sent'"><span class="badge bg-warning text-dark">A valider</span></t>
+                                            <t t-elif="dv.state == 'sale'"><span class="badge bg-success">Accepte</span></t>
+                                            <t t-elif="dv.state == 'cancel'"><span class="badge bg-danger">Annule</span></t>
+                                        </td>
+                                        <td>
+                                            <a t-att-href="'/my/orders/%d' % dv.id" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-eye"/> Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+  
+ 
+
+    <!-- Liste des contrats -->
     <template id="portail_gica_contrats" name="Portail GICA Contrats">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mes Contrats</t>
-            </t>
             <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><i class="fa fa-file-text-o me-2"/>Mes Contrats</h4>
+                    <a href="/my/home" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Retour
+                    </a>
+                </div>
+
                 <t t-if="not contrats">
                     <div class="alert alert-info">Aucun contrat pour le moment.</div>
                 </t>
                 <t t-else="">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>N° Contrat</th>
-                                <th>Date début</th>
-                                <th>Date fin</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="contrats" t-as="contrat">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td><t t-esc="contrat.name"/></td>
-                                    <td><t t-esc="contrat.date_start"/></td>
-                                    <td><t t-esc="contrat.date_end"/></td>
-                                    <td><t t-esc="contrat.state"/></td>
+                                    <th>N° Contrat</th>
+                                    <th>Date debut</th>
+                                    <th>Date fin</th>
+                                    <th>Mode paiement</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
                                 </tr>
-                            </t>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="contrats" t-as="contrat">
+                                    <tr>
+                                        <td><strong><t t-esc="contrat.name"/></strong></td>
+                                        <td><t t-esc="contrat.date_start"/></td>
+                                        <td><t t-esc="contrat.date_end"/></td>
+                                        <td><t t-esc="contrat.mode_paiement"/></td>
+                                        <td>
+                                            <t t-if="contrat.state == 'actif'">
+                                                <span class="badge bg-success">Actif</span>
+                                            </t>
+                                            <t t-elif="contrat.state == 'en_cours'">
+                                                <span class="badge bg-primary">En cours</span>
+                                            </t>
+                                            <t t-elif="contrat.state == 'expire'">
+                                                <span class="badge bg-danger">Expire</span>
+                                            </t>
+                                            <t t-elif="contrat.state == 'resilie'">
+                                                <span class="badge bg-dark">Resilie</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge bg-secondary">
+                                                    <t t-esc="contrat.state"/>
+                                                </span>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <a t-att-href="'/my/gica/contrats/%d' % contrat.id"
+                                               class="btn btn-sm btn-outline-primary"
+                                               style="pointer-events:auto;">
+                                                <i class="fa fa-eye"/> Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
                 </t>
             </div>
         </t>
     </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Mes BCG
-    ══════════════════════════════════════════════════════════════════════ -->
-    <template id="portail_gica_bcg" name="Portail GICA BCG">
+    <!-- Detail d'un contrat -->
+    <template id="portail_gica_contrat_detail" name="Portail GICA Contrat Detail">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mes Bons de Commande Globaux</t>
-            </t>
             <div class="container mt-4">
-                <t t-if="not bcgs">
-                    <div class="alert alert-info">Aucun BCG pour le moment.</div>
-                </t>
-                <t t-else="">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Référence</th>
-                                <th>Date expiration</th>
-                                <th>Qté totale (T)</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="bcgs" t-as="bcg">
-                                <tr>
-                                    <td><t t-esc="bcg.name"/></td>
-                                    <td><t t-esc="bcg.date_expiration"/></td>
-                                    <td><t t-esc="bcg.quantity_total_tonne"/></td>
-                                    <td><t t-esc="bcg.state"/></td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
-                </t>
+
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home">Accueil</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/gica/contrats">Mes Contrats</a>
+                        </li>
+                        <li class="breadcrumb-item active">
+                            <t t-esc="contrat.name"/>
+                        </li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between">
+                        <h5 class="mb-0">
+                            <i class="fa fa-file-text-o me-2"/>
+                            Contrat <t t-esc="contrat.name"/>
+                        </h5>
+                        <t t-if="contrat.state == 'actif'">
+                            <span class="badge bg-success align-self-center">Actif</span>
+                        </t>
+                        <t t-elif="contrat.state == 'en_cours'">
+                            <span class="badge bg-light text-primary align-self-center">En cours</span>
+                        </t>
+                        <t t-elif="contrat.state == 'expire'">
+                            <span class="badge bg-danger align-self-center">Expire</span>
+                        </t>
+                        <t t-else="">
+                            <span class="badge bg-secondary align-self-center">
+                                <t t-esc="contrat.state"/>
+                            </span>
+                        </t>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Informations generales -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3">PERIODE DU CONTRAT</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold" style="width:50%">Date debut</td>
+                                        <td><t t-esc="contrat.date_start"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Date fin</td>
+                                        <td><t t-esc="contrat.date_end"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3">PAIEMENT</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold" style="width:50%">Mode</td>
+                                        <td><t t-esc="contrat.mode_paiement"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Modalite</td>
+                                        <td><t t-esc="contrat.modalite_paiement or '-'"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Delai (jours)</td>
+                                        <td><t t-esc="contrat.delai_paiement"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Lignes produits -->
+                        <h6 class="fw-bold text-muted mb-3">PRODUITS COMMANDES</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produit</th>
+                                       
+                                        <th class="text-end">Quantite</th>
+                                        <th>Unite</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not contrat.line_ids">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                Aucun produit
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="contrat.line_ids" t-as="ligne">
+                                        <tr>
+                                            <td><t t-esc="ligne.product_tmpl_id.name"/></td>
+                                           
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity"/>
+                                            </td>
+                                            <td><t t-esc="ligne.uom"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bouton retour -->
+                        <div class="mt-3">
+                            <a href="/my/gica/contrats" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"/> Retour
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </t>
     </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Mes Planifications
-    ══════════════════════════════════════════════════════════════════════ -->
-    <template id="portail_gica_planifications" name="Portail GICA Planifications">
-        <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mes Planifications</t>
-            </t>
-            <div class="container mt-4">
-                <t t-if="not planifications">
-                    <div class="alert alert-info">Aucune planification pour le moment.</div>
-                </t>
-                <t t-else="">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Référence</th>
-                                <th>BCG</th>
-                                <th>Qté totale (T)</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="planifications" t-as="planif">
-                                <tr>
-                                    <td><t t-esc="planif.name"/></td>
-                                    <td><t t-esc="planif.commande_globale_id.name"/></td>
-                                    <td><t t-esc="planif.quantity_total_tonne"/></td>
-                                    <td><t t-esc="planif.state"/></td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
-                </t>
-            </div>
-        </t>
-    </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Mes Projets
-    ══════════════════════════════════════════════════════════════════════ -->
+
+ 
+
+    <!-- Liste des projets -->
     <template id="portail_gica_projets" name="Portail GICA Projets">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mes Projets</t>
-            </t>
             <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><i class="fa fa-building me-2"/>Mes Projets</h4>
+                    <a href="/my/home" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Retour
+                    </a>
+                </div>
+
                 <a href="/my/gica/projets/nouveau" class="btn btn-primary mb-3">
                     <i class="fa fa-plus"/> Nouveau Projet
                 </a>
+
                 <t t-if="not projets">
                     <div class="alert alert-info">Aucun projet pour le moment.</div>
                 </t>
                 <t t-else="">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Nom du projet</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="projets" t-as="projet">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td><t t-esc="projet.name"/></td>
+                                    <th>Nom du projet</th>
+                                    <th>Nb produits</th>
+                                    <th>Action</th>
                                 </tr>
-                            </t>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="projets" t-as="projet">
+                                    <tr>
+                                        <td><strong><t t-esc="projet.name"/></strong></td>
+                                        <td><t t-esc="len(projet.line_ids)"/></td>
+                                        <td>
+                                            <a t-att-href="'/my/gica/projets/%d' % projet.id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-eye"/> Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
                 </t>
             </div>
         </t>
     </template>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PAGE — Nouveau Projet (formulaire)
-    ══════════════════════════════════════════════════════════════════════ -->
-    <template id="portail_gica_projet_form" name="Portail GICA Nouveau Projet">
+    <!-- Detail projet -->
+    <template id="portail_gica_projet_detail" name="Portail GICA Projet Detail">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Nouveau Projet</t>
-            </t>
+            <div class="container mt-4">
+
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/my/home">Accueil</a></li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/gica/projets">Mes Projets</a>
+                        </li>
+                        <li class="breadcrumb-item active"><t t-esc="projet.name"/></li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fa fa-building me-2"/>
+                            Projet <t t-esc="projet.name"/>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                      <h6 class="fw-bold text-muted mb-3">PRODUITS DU PROJET</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th class="text-end">Quantite (T)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not projet.line_ids">
+                                        <tr>
+                                            <td colspan="2" class="text-center text-muted">
+                                                Aucun produit
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="projet.line_ids" t-as="ligne">
+                                        <tr>
+                                            <td><t t-esc="ligne.product_tmpl_id.name"/></td>
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="/my/gica/projets" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Retour
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Formulaire nouveau projet -->
+   <template id="portail_gica_projet_form" name="Portail GICA Nouveau Projet">
+        <t t-call="portal.portal_layout">
             <div class="container mt-4">
                 <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fa fa-plus"/> Nouveau Projet</h5>
+                    </div>
                     <div class="card-body">
                         <form method="POST" action="/my/gica/projets/nouveau">
                             <input type="hidden" name="csrf_token"
-                                   t-att-value="request.csrf_token()"/>
+                                t-att-value="request.csrf_token()"/>
+
                             <div class="mb-3">
-                                <label class="form-label">Nom du projet</label>
-                                <input type="text" name="name"
-                                       class="form-control" required="1"/>
+                                <label class="form-label fw-bold">Nom du projet <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control"
+                                    style="pointer-events:auto;" required="1"/>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                Créer le projet
+
+                            <h6 class="fw-bold mb-2">Produits du projet</h6>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered" id="table_produits">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Produit <span class="text-danger">*</span></th>
+                                           
+                                            <th>Quantite (T) <span class="text-danger">*</span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_produits">
+                                        <tr class="ligne-produit" data-index="0">
+                                            <td>
+                                                <select name="product_0"
+                                                        class="form-select form-select-sm select-product"
+                                                        style="pointer-events:auto;" required="1">
+                                                    <option value="">-- Choisir --</option>
+                                                       <t t-foreach="produits" t-as="prod">
+                                                         <option t-att-value="prod['tmpl_id']">
+                                                            <t t-esc="prod['name']"/>
+                                                          </option>
+                                                        </t>
+                                                </select>
+                                            </td>
+                                           
+                                            <td>
+                                                <input type="number" name="qty_0"
+                                                    step="0.01" min="0.01"
+                                                    class="form-control form-control-sm"
+                                                    style="pointer-events:auto;" required="1"/>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger btn-suppr"
+                                                        style="pointer-events:auto;">
+                                                    <i class="fa fa-trash"/>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button type="button" id="btn_ajouter"
+                                    class="btn btn-sm btn-success mb-3"
+                                    style="pointer-events:auto;">
+                                <i class="fa fa-plus"/> Ajouter un produit
                             </button>
-                            <a href="/my/gica/projets" class="btn btn-secondary ms-2">
-                                Annuler
-                            </a>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-check"/> Creer le projet
+                                </button>
+                                <a href="/my/gica/projets" class="btn btn-secondary">Annuler</a>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
+
+            <script type="text/javascript">
+            //<![CDATA[
+            document.addEventListener('DOMContentLoaded', function () {
+                var tbody     = document.getElementById('tbody_produits');
+                var btnAjouter = document.getElementById('btn_ajouter');
+                var lineIndex  = 1;
+
+                function buildCondOptions(condList) {
+                    var opts = '<option value="">-- Choisir --</option>';
+                    condList.forEach(function (c) {
+                        opts += '<option value="' + c.id + '">' + c.name + '</option>';
+                    });
+                    return opts;
+                }
+
+                function buildProductOptions() {
+                    var first = document.querySelector('.select-product');
+                    return first ? first.innerHTML : '';
+                }
+
+                function ajouterLigne() {
+                    var idx = lineIndex++;
+                    var row = '<tr class="ligne-produit" data-index="' + idx + '">' +
+                        '<td><select name="product_' + idx + '" class="form-select form-select-sm select-product" required style="pointer-events:auto;">' + buildProductOptions() + '</select></td>' +
+                       
+                        '<td><input type="number" name="qty_' + idx + '" step="0.01" min="0.01" class="form-control form-control-sm" style="pointer-events:auto;" required/></td>' +
+                        '<td><button type="button" class="btn btn-sm btn-danger btn-suppr" style="pointer-events:auto;"><i class="fa fa-trash"></i></button></td>' +
+                        '</tr>';
+                    tbody.insertAdjacentHTML('beforeend', row);
+                    attachListeners(tbody.lastElementChild);
+                    tbody.lastElementChild.querySelector('.select-product').value = '';
+                }
+
+               function attachListeners(row) {
+                    var btnSuppr = row.querySelector('.btn-suppr');
+
+                    if (btnSuppr) {
+                        btnSuppr.addEventListener('click', function () {
+                            if (tbody.querySelectorAll('.ligne-produit').length > 1) row.remove();
+                        });
+                    }
+                }
+
+                tbody.querySelectorAll('.ligne-produit').forEach(attachListeners);
+                if (btnAjouter) btnAjouter.addEventListener('click', ajouterLigne);
+            });
+            //]]>
+            </script>
         </t>
     </template>
 

@@ -49,6 +49,13 @@
                                    placeholder="2. Choisir le BCG actif…"/>
                         </group>
                     </group>
+                     <!-- Motif du refus -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state != 'refusee'">
+                        <strong>Planification refusee :</strong>
+                        <field name="motif_refus" nolabel="1" readonly="1"/>
+                    </div>
+
 
                     <group string="Motif du refus" invisible="state != 'refusee'">
                         <field name="motif_refus" nolabel="1" readonly="1"/>
