@@ -243,23 +243,23 @@ class GicaBonCirculation(models.Model):
             return
         if not self.product_id or not self.poids_net:
             return
-
+ 
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'outgoing'),
             ('warehouse_id.company_id', '=', self.env.company.id),
         ], limit=1)
-
+ 
         if not picking_type:
             return
-
+ 
         location_src  = picking_type.default_location_src_id
         location_dest = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
-
+ 
         if not location_src or not location_dest:
             return
-
+ 
         uom = self.product_id.uom_id
-
+ 
         picking = self.env['stock.picking'].create({
             'partner_id':       self.partner_id.id,
             'picking_type_id':  picking_type.id,
@@ -277,18 +277,31 @@ class GicaBonCirculation(models.Model):
                 'location_dest_id': location_dest.id,
             })],
         })
-
+ 
         picking.action_confirm()
         picking.action_assign()
-
-        for move_line in picking.move_line_ids:
-            move_line.quantity = self.poids_net
-
+ 
+        # Forcer la quantite meme si le stock n'est pas reserve
+        if picking.move_line_ids:
+            for move_line in picking.move_line_ids:
+                move_line.quantity = self.poids_net
+        else:
+            # Creer la move_line manuellement si action_assign n'a rien reserve
+            self.env['stock.move.line'].create({
+                'picking_id':       picking.id,
+                'move_id':          picking.move_ids[0].id,
+                'product_id':       self.product_id.id,
+                'product_uom_id':   uom.id,
+                'quantity':         self.poids_net,
+                'location_id':      location_src.id,
+                'location_dest_id': location_dest.id,
+            })
+ 
         picking.with_context(
             skip_backorder=True,
             immediate_transfer=True,
         ).button_validate()
-
+ 
         self.write({'picking_id': picking.id})
         self.message_post(
             body=f'Bon de Livraison cree : {picking.name} - Quantite : {self.poids_net:.3f} T'

@@ -30,7 +30,6 @@
         'data/gica_circulation_sequences.xml',
         'data/gica_cron.xml',
           # Rapports — AVANT les vues
-        'reports/report_ticket_pesee.xml',
         'reports/report_bon_circulation.xml',
 
 
