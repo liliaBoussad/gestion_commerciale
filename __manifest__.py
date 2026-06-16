@@ -70,7 +70,22 @@
         'views/clinker_planning_views.xml',
         'views/clinker_approbation_wizard_views.xml',
 
+        'views/gica_pricelist_config_views.xml',
+       
+       
+
+         # Portail
+        'templates/portail_gica.xml',
+        'templates/portal_quotations_inherit.xml',
+        'templates/portal_sale_hide_actions.xml',
+        'templates/portal_my_home_sale_remove_alert.xml',
+        'templates/portail_bcg_templates.xml',
+        'templates/portail_planification_templates.xml',
+        'templates/portail_devis_demande_template.xml',
+        
+        'wizard/gica_refus_wizard_views.xml',
         'views/menu.xml',
+
     ],
 
     'installable': True,

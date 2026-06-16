@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+   
+
+    <!-- Liste des BCG -->
+    <template id="portail_gica_bcg" name="Portail GICA BCG">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><i class="fa fa-shopping-cart me-2"/>Mes Bons de Commande Globaux</h4>
+                    <a href="/my/home" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Retour
+                    </a>
+                </div>
+
+                <t t-set="erreur" t-value="request.params.get('erreur')"/>
+                <t t-set="succes" t-value="request.params.get('succes')"/>
+                <t t-set="ref"    t-value="request.params.get('ref')"/>
+
+                <t t-if="succes == 'bcg_soumis'">
+                    <div class="alert alert-success">
+                        Votre BCG <strong><t t-esc="ref"/></strong> a ete soumis avec succes.
+                        Il sera traite par votre commercial.
+                    </div>
+                </t>
+                <t t-if="erreur == 'bcg_existant'">
+                    <div class="alert alert-danger">Un BCG actif existe deja pour ce contrat.</div>
+                </t>
+                <t t-if="erreur == 'aucun_contrat'">
+                    <div class="alert alert-warning">
+                        Aucun contrat actif disponible. Contactez votre commercial.
+                    </div>
+                </t>
+
+                <t t-if="peut_creer_bcg">
+                    <a href="/my/gica/bcg/nouveau" class="btn btn-primary mb-3">
+                        <i class="fa fa-plus"/> Nouveau BCG
+                    </a>
+                </t>
+                <t t-else="">
+                    <div class="alert alert-info mb-3">
+                        Aucun contrat disponible pour creer un BCG.
+                    </div>
+                </t>
+
+                <t t-if="not bcgs">
+                    <div class="alert alert-info">Aucun bon de commande global pour le moment.</div>
+                </t>
+                <t t-else="">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Contrat</th>
+                                    <th>Date</th>
+                                    <th>Expiration</th>
+                                    <th>Qte (T)</th>
+                                    <th>Restante (T)</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="bcgs" t-as="bcg">
+                                    <tr>
+                                        <td><strong><t t-esc="bcg.name"/></strong></td>
+                                        <td><t t-esc="bcg.contrat_id.name"/></td>
+                                        <td><t t-esc="bcg.date_commande"/></td>
+                                        <td><t t-esc="bcg.date_expiration"/></td>
+                                        <td><t t-esc="'%.2f' % bcg.quantity_total_tonne"/></td>
+                                        <td><t t-esc="'%.2f' % bcg.quantity_restante"/></td>
+                                        <td>
+                                            <t t-if="bcg.state == 'soumis'">
+                                                <span class="badge bg-warning text-dark">En attente</span>
+                                            </t>
+                                            <t t-elif="bcg.state == 'en_cours'">
+                                                <span class="badge bg-success">En cours</span>
+                                            </t>
+                                            <t t-elif="bcg.state == 'cloturee'">
+                                                <span class="badge bg-dark">Cloture</span>
+                                            </t>
+                                            <t t-elif="bcg.state == 'annulee'">
+                                                <span class="badge bg-danger">Annule</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge bg-secondary">
+                                                    <t t-esc="bcg.state"/>
+                                                </span>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <a t-att-href="'/my/gica/bcg/%d' % bcg.id"
+                                               class="btn btn-sm btn-outline-primary"
+                                               style="pointer-events:auto;">
+                                                <i class="fa fa-eye"/> Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- Detail BCG -->
+    <template id="portail_gica_bcg_detail" name="Portail GICA BCG Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/my/home">Accueil</a></li>
+                        <li class="breadcrumb-item"><a href="/my/gica/bcg">Mes BCG</a></li>
+                        <li class="breadcrumb-item active"><t t-esc="bcg.name"/></li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white d-flex justify-content-between">
+                        <h5 class="mb-0">
+                            <i class="fa fa-shopping-cart me-2"/>
+                            BCG <t t-esc="bcg.name"/>
+                        </h5>
+                        <t t-if="bcg.state == 'soumis'">
+                            <span class="badge bg-warning text-dark align-self-center">En attente validation</span>
+                        </t>
+                        <t t-elif="bcg.state == 'en_cours'">
+                            <span class="badge bg-light text-success align-self-center">En cours</span>
+                        </t>
+                        <t t-elif="bcg.state == 'cloturee'">
+                            <span class="badge bg-dark align-self-center">Cloture</span>
+                        </t>
+                        <t t-elif="bcg.state == 'annulee'">
+                            <span class="badge bg-danger align-self-center">Annule</span>
+                        </t>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Informations generales -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3">INFORMATIONS</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold" style="width:50%">Contrat</td>
+                                        <td><t t-esc="bcg.contrat_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Date de la commande</td>
+                                        <td><t t-esc="bcg.date_commande"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Date d expiration</td>
+                                        <td><t t-esc="bcg.date_expiration"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3">TARIFICATION</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold" style="width:50%">Liste de prix</td>
+                                        <td>
+                                            <t t-if="bcg.pricelist_id">
+                                                <t t-esc="bcg.pricelist_id.name"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted">Non definie</span>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                   
+                                
+                                 
+                                  
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Lignes produits -->
+                        <h6 class="fw-bold text-muted mb-3">PRODUITS</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Conditionnement</th>
+                                        <th class="text-end">Qte totale (T)</th>
+                                        <th class="text-end">Planifiee (T)</th>
+                                        <th class="text-end">Enlevee (T)</th>
+                                        <th class="text-end">Restante (T)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="bcg.line_ids" t-as="ligne">
+                                        <tr>
+                                            <td><t t-esc="ligne.product_tmpl_id.name"/></td>
+                                            <td><t t-esc="ligne.conditionnement_id.name or '-'"/></td>
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity_tonne"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity_planifiee"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity_enlevee"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="'%.2f' % ligne.quantity_restante"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bouton retour -->
+                        <a href="/my/gica/bcg" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Retour
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+
+    <!-- Formulaire nouveau BCG -->
+    <template id="portail_gica_bcg_form" name="Portail GICA Nouveau BCG">
+        <t t-call="portal.portal_layout">
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Nouveau Bon de Commande Global</t>
+            </t>
+
+            <div class="container mt-4">
+
+                <t t-set="erreur" t-value="request.params.get('erreur')"/>
+                <t t-if="erreur == 'lignes_vides'">
+                    <div class="alert alert-danger">
+                        Veuillez saisir au moins une quantite et choisir un conditionnement.
+                    </div>
+                </t>
+                <t t-if="erreur == 'contrat_manquant'">
+                    <div class="alert alert-danger">Veuillez selectionner un contrat.</div>
+                </t>
+                <t t-if="erreur == 'validation'">
+                    <div class="alert alert-danger">Erreur lors de la creation. Verifiez vos donnees.</div>
+                </t>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fa fa-shopping-cart"/> Nouveau Bon de Commande Global
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/my/gica/bcg/soumettre" id="form_bcg">
+                            <input type="hidden" name="csrf_token"
+                                   t-att-value="request.csrf_token()"/>
+
+                            <!-- Contrat -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    Contrat <span class="text-danger">*</span>
+                                </label>
+                                <select name="contrat_id" id="select_contrat"
+                                        class="form-select" required="1"
+                                        style="pointer-events:auto;">
+                                    <option value="">-- Selectionner un contrat --</option>
+                                    <t t-foreach="contrats_disponibles" t-as="contrat">
+                                        <option t-att-value="contrat.id"
+                                                t-att-selected="contrat_selectionne and contrat_selectionne.id == contrat.id">
+                                            <t t-esc="contrat.name"/> - expire le
+                                            <t t-esc="contrat.date_end"/>
+                                        </option>
+                                    </t>
+                                </select>
+                                <div class="form-text">
+                                    Seuls les contrats actifs sans BCG en cours sont affiches.
+                                </div>
+                            </div>
+
+                            <!-- Info contrat -->
+                            <div id="info_contrat" class="alert alert-light border mb-4"
+                                 t-att-style="'' if contrat_selectionne else 'display:none;'">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Date expiration :</strong>
+                                        <span id="lbl_date_expiration">
+                                            <t t-if="contrat_selectionne">
+                                                <t t-esc="contrat_selectionne.date_end"/>
+                                            </t>
+                                        </span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Mode de paiement :</strong>
+                                        <span id="lbl_mode_paiement">
+                                            <t t-if="contrat_selectionne">
+                                                <t t-esc="contrat_selectionne.mode_paiement"/>
+                                            </t>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tableau lignes -->
+                            <div id="section_lignes"
+                                 t-att-style="'' if contrat_selectionne else 'display:none;'">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fa fa-list"/> Produits a commander
+                                </h6>
+                                <div class="alert alert-info small mb-3">
+                                    <i class="fa fa-info-circle"/>
+                                    Choisissez le conditionnement disponible pour chaque produit
+                                    et saisissez la quantite souhaitee.
+                                    Les prix seront appliques par votre commercial apres validation.
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="table_lignes">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Produit</th>
+                                                <th>Conditionnement <span class="text-danger">*</span></th>
+                                                <th>Qte contrat (T)</th>
+                                                <th>Qte souhaitee (T) <span class="text-danger">*</span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody_lignes">
+                                            <!-- Rendu statique si contrat pre-selectionne -->
+                                            <t t-if="contrat_selectionne and lignes_avec_conds">
+                                                <t t-foreach="lignes_avec_conds" t-as="ligne">
+                                                    <tr>
+                                                        <td><t t-esc="ligne['product_name']"/></td>
+                                                        <td>
+                                                            <select t-att-name="'cond_%d' % ligne['product_tmpl_id']"
+                                                                    class="form-select form-select-sm"
+                                                                    required="1"
+                                                                    style="pointer-events:auto;">
+                                                                <option value="">-- Choisir --</option>
+                                                                <t t-foreach="ligne['conditionnements']" t-as="cond">
+                                                                    <option t-att-value="cond['id']">
+                                                                        <t t-esc="cond['name']"/>
+                                                                    </option>
+                                                                </t>
+                                                            </select>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <t t-esc="'%.2f' % ligne['quantity_tonne']"/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="number"
+                                                                   step="0.01" min="0.01"
+                                                                   t-att-max="ligne['quantity_tonne']"
+                                                                   t-att-name="'qty_%d' % ligne['product_tmpl_id']"
+                                                                   t-att-value="'%.2f' % ligne['quantity_tonne']"
+                                                                   class="form-control form-control-sm"
+                                                                   style="pointer-events:auto;"
+                                                                   required="1"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Observations -->
+                            <div class="mb-4" id="section_observations"
+                                 t-att-style="'' if contrat_selectionne else 'display:none;'">
+                                <label class="form-label fw-bold">Observations</label>
+                                <textarea name="observations" class="form-control"
+                                          rows="3" placeholder="Remarques eventuelles..."
+                                          style="pointer-events:auto;"/>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary"
+                                        id="btn_soumettre"
+                                        t-att-disabled="None if contrat_selectionne else 'disabled'">
+                                    <i class="fa fa-paper-plane"/> Soumettre le BCG
+                                </button>
+                                <a href="/my/gica/bcg" class="btn btn-secondary">Annuler</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script type="text/javascript">
+            //<![CDATA[
+            document.addEventListener('DOMContentLoaded', function () {
+                var selectContrat = document.getElementById('select_contrat');
+                var infoContrat   = document.getElementById('info_contrat');
+                var sectionLignes = document.getElementById('section_lignes');
+                var sectionObs    = document.getElementById('section_observations');
+                var btnSoumettre  = document.getElementById('btn_soumettre');
+                var tbody         = document.getElementById('tbody_lignes');
+                var lblDate       = document.getElementById('lbl_date_expiration');
+                var lblMode       = document.getElementById('lbl_mode_paiement');
+                var csrfToken     = document.querySelector('[name=csrf_token]').value;
+
+                if (!selectContrat) return;
+
+                selectContrat.addEventListener('change', function () {
+                    var contratId = this.value;
+
+                    if (!contratId) {
+                        infoContrat.style.display  = 'none';
+                        sectionLignes.style.display = 'none';
+                        sectionObs.style.display    = 'none';
+                        btnSoumettre.disabled       = true;
+                        tbody.innerHTML             = '';
+                        return;
+                    }
+
+                    fetch('/my/gica/bcg/lignes_contrat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            method:  'call',
+                            id:      1,
+                            params:  { contrat_id: parseInt(contratId) },
+                        }),
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        var result = data.result || {};
+                        var lignes = result.lignes || [];
+
+                        lblDate.textContent = result.date_expiration || '';
+                        lblMode.textContent = result.mode_paiement   || '';
+                        infoContrat.style.display = '';
+
+                        tbody.innerHTML = '';
+
+                        if (lignes.length === 0) {
+                            tbody.innerHTML =
+                                '<tr><td colspan="4" class="text-center text-muted">' +
+                                'Aucun produit dans ce contrat.</td></tr>';
+                            btnSoumettre.disabled = true;
+                            return;
+                        }
+
+                        lignes.forEach(function (l) {
+                            // Construire options conditionnement filtrees par produit
+                            var condOptions = '<option value="">-- Choisir --</option>';
+                            (l.conditionnements || []).forEach(function (c) {
+                                condOptions += '<option value="' + c.id + '">' + c.name + '</option>';
+                            });
+
+                            var row =
+                                '<tr>' +
+                                '<td>' + (l.product_name || '') + '</td>' +
+                                '<td>' +
+                                    '<select name="cond_' + l.product_tmpl_id + '" ' +
+                                    'class="form-select form-select-sm" required ' +
+                                    'style="pointer-events:auto;">' +
+                                    condOptions +
+                                    '</select>' +
+                                '</td>' +
+                                '<td class="text-center">' +
+                                    parseFloat(l.quantity_tonne).toFixed(2) +
+                                '</td>' +
+                                '<td>' +
+                                    '<input type="number" step="0.01" min="0.01" ' +
+                                    'max="' + l.quantity_tonne + '" ' +
+                                    'name="qty_' + l.product_tmpl_id + '" ' +
+                                    'value="' + parseFloat(l.quantity_tonne).toFixed(2) + '" ' +
+                                    'class="form-control form-control-sm" ' +
+                                    'style="pointer-events:auto;" required/>' +
+                                '</td>' +
+                                '</tr>';
+                            tbody.innerHTML += row;
+                        });
+
+                        sectionLignes.style.display = '';
+                        sectionObs.style.display    = '';
+                        btnSoumettre.disabled       = false;
+                    })
+                    .catch(function (err) {
+                        console.error('Erreur chargement lignes:', err);
+                    });
+                });
+            });
+            //]]>
+            </script>
+        </t>
+    </template>
+
+</odoo>

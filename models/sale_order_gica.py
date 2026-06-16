@@ -26,6 +26,22 @@ class GicaSaleOrder(models.Model):
         'sale_order_id',
         string='Bons de Circulation',
     )
+    
+    @api.onchange('partner_id')
+    def _onchange_partner_gica(self):
+        if self.partner_id:
+            client = self.env['gica.client'].search(
+                [('partner_id', '=', self.partner_id.id)], limit=1
+            )
+            self.gica_client_id = client or False
+
+    @api.onchange('partner_id')
+    def _onchange_partner_gica(self):
+        if self.partner_id:
+            client = self.env['gica.client'].search(
+                [('partner_id', '=', self.partner_id.id)], limit=1
+            )
+            self.gica_client_id = client or False
 
     bon_circulation_count = fields.Integer(
         compute='_compute_rotations_stats',

@@ -262,6 +262,7 @@ class GicaCommandeGlobale(models.Model):
 
     state = fields.Selection([
         ('nouveau',  'Nouveau'),
+        ('soumis',   'Soumis (en attente validation)'),
         ('en_cours', 'En cours'),
         ('cloturee', 'Cloturee'),
         ('annulee',  'Annulee'),
@@ -458,15 +459,19 @@ class GicaCommandeGlobale(models.Model):
     # ── Actions ───────────────────────────────────────────────────────────
 
     def action_demarrer(self):
+        """Validation par le commercial — depuis soumis ou nouveau."""
         for rec in self:
             if not rec.line_ids:
                 raise ValidationError('La commande globale doit avoir au moins une ligne.')
+            if rec.state not in ('nouveau', 'soumis'):
+                raise ValidationError("Seul un BCG nouveau ou soumis peut être démarré.")
             for line in rec.line_ids:
                 if not line.conditionnement_id:
                     raise ValidationError(
                         f'Le produit "{line.product_tmpl_id.name}" n\'a pas de conditionnement.'
                     )
             rec.write({'state': 'en_cours'})
+            rec.message_post(body='BCG validé et démarré par le commercial.')
 
     def action_annuler(self):
         for rec in self:
@@ -478,7 +483,18 @@ class GicaCommandeGlobale(models.Model):
         for rec in self:
             if rec.state == 'annulee':
                 rec.write({'state': 'nouveau'})
-
+    
+    def action_soumettre(self):
+     """Soumission depuis le portail client — passe en attente de validation."""
+     for rec in self:
+        if not rec.line_ids:
+            raise ValidationError('La commande globale doit avoir au moins une ligne.')
+        rec.write({'state': 'soumis'})
+        rec.message_post(
+            body='📋 BCG soumis par le client depuis le portail — en attente de validation commerciale.'
+        )
+        
+        
     def _check_cloture_automatique(self):
         """
         Appele depuis gica_bon_circulation._finaliser_terminer() apres chaque pesee.
@@ -513,6 +529,22 @@ class GicaCommandeGlobale(models.Model):
                 'default_partner_id': self.client_id.id if self.client_id else False,
             },
         }
+        
+    def action_appliquer_prix(self):
+        self.ensure_one()
+        if not self.pricelist_id:
+            raise ValidationError('Veuillez assigner une liste de prix avant.')
+        for line in self.line_ids:
+            if not line.product_id:
+                continue
+            prix = self.pricelist_id._get_product_price(
+                line.product_id,
+                line.quantity_tonne or 1.0,
+            )
+            line.write({'prix_unitaire': prix})
+        self.message_post(
+            body='Prix appliqués depuis la liste : %s' % self.pricelist_id.name
+        )
 
     def action_voir_planifications(self):
         self.ensure_one()

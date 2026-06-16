@@ -82,6 +82,13 @@
                             <field name="contrat_id" string="Contrat" readonly="1"/>
                         </group>
                     </group>
+                     <!-- Motif du refus -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state != 'refusee'">
+                        <strong>Planification refusee :</strong>
+                        <field name="motif_refus" nolabel="1" readonly="1"/>
+                    </div>
+
 
                     <!-- Champ technique pour filtrer les produits -->
                     <field name="product_tmpl_ids" invisible="1"/>

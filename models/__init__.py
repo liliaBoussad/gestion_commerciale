@@ -22,11 +22,10 @@ from . import sale_order_gica
 from . import gica_bon_circulation
 
 from . import gica_pesee
-
-
-
 from . import clinker_cadence
 from . import clinker_global_order
 from . import clinker_planning
 from . import clinker_sale_order
 from . import avenant
+from . import gica_pricelist
+

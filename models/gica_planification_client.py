@@ -58,10 +58,15 @@ class GicaPlanificationClientLine(models.Model):
         store=True,
     )
 
-    date_enlevement = fields.Date(string="Date d'enlevement", required=True)
-    nbr_paquets     = fields.Integer(string='Nombre de Paquets')
-    quantity_tonne  = fields.Float(string='Quantite (T)', required=True)
-    rotation        = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
+    date_enlevement = fields.Date(
+        string="Date d'enlèvement",
+        required=True,
+    )
+
+    nbr_paquets    = fields.Integer(string='Nombre de Paquets')
+    quantity_tonne = fields.Float(string='Quantité (T)', required=True)
+    rotation       = fields.Integer(string='Rotations (nb camions)', required=True, default=1)
+    motif_refus = fields.Text(string='Motif du refus', tracking=True)
 
     quantity_disponible = fields.Float(
         string='Qte restante BCG (T)',

@@ -49,6 +49,22 @@ class GicaProject(models.Model):
     line_ids = fields.One2many(
         'gica.project.line', 'project_id', string='Produits du projet',
     )
+    nb_produits = fields.Integer(
+        string="Nb produits",
+        compute='_compute_totaux',
+        store=True,
+    )
+    quantity_total = fields.Float(
+        string="Quantite totale (T)",
+        compute='_compute_totaux',
+        store=True,
+    )
+
+    @api.depends('line_ids.quantity')
+    def _compute_totaux(self):
+        for rec in self:
+            rec.nb_produits     = len(rec.line_ids)
+            rec.quantity_total  = sum(rec.line_ids.mapped('quantity'))
 
     # ── Totaux ────────────────────────────────────────────────────────────
     quantity_total = fields.Float(
@@ -181,8 +197,6 @@ class GicaProjectLine(models.Model):
     project_name = fields.Char(
         related='project_id.name', string='Nom du projet', store=True,
     )
-
-    # ── Aligné sur gica.client.contract.line ──
     product_tmpl_id = fields.Many2one(
         'product.template',
         string='Produit',
@@ -194,6 +208,18 @@ class GicaProjectLine(models.Model):
         string='Famille ciment',
         store=True,
         readonly=True,
+    )
+    conditionnement_id = fields.Many2one(
+        'product.attribute.value',
+        string="Conditionnement",
+        domain="[('attribute_id', '=', 4)]",
+        required=True,
+    )
+    product_id = fields.Many2one(
+        'product.product',
+        string="Variante",
+        compute='_compute_product_id',
+        store=True,
     )
     quantity = fields.Float(string='Quantité', required=True)
     uom = fields.Selection([
@@ -210,3 +236,18 @@ class GicaProjectLine(models.Model):
     def _compute_quantity_tonne(self):
         for rec in self:
             rec.quantity_tonne = rec.quantity
+
+    @api.depends('product_tmpl_id', 'conditionnement_id')
+    def _compute_product_id(self):
+        for rec in self:
+            if rec.product_tmpl_id and rec.conditionnement_id:
+                variant = rec.product_tmpl_id.product_variant_ids.filtered(
+                    lambda v: any(
+                        a.attribute_id.id == 4 and
+                        a.product_attribute_value_id == rec.conditionnement_id
+                        for a in v.product_template_attribute_value_ids
+                    )
+                )
+                rec.product_id = variant[0] if variant else False
+            else:
+                rec.product_id = False

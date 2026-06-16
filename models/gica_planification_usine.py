@@ -277,8 +277,7 @@ class GicaPlanificationUsine(models.Model):
 
         data = {}
         for line in self.planification_line_ids.filtered(lambda l: l.state == 'validee'):
-            cond = line.conditionnement_id.name if line.conditionnement_id else ''
-            key  = (line.date_enlevement, line.product_id.id, cond)
+            key = (line.date_enlevement, line.product_id.id, line.conditionnement_id.id)
             if key not in data:
                 data[key] = {
                     'nb_lignes':      0,
@@ -289,12 +288,12 @@ class GicaPlanificationUsine(models.Model):
             data[key]['nb_rotations']   += line.rotation
             data[key]['quantity_tonne'] += line.quantity_tonne
 
-        for (date_enl, product_id, conditionnement), vals in data.items():
+        for (date_enl, product_id, conditionnement_id), vals in data.items():
             self.env['gica.planification.consolidation'].create({
                 'planification_usine_id': self.id,
                 'date_enlevement':        date_enl,
                 'product_id':             product_id,
-                'conditionnement':        conditionnement,
+              
                 'nb_lignes':              vals['nb_lignes'],
                 'nb_rotations':           vals['nb_rotations'],
                 'quantity_tonne':         vals['quantity_tonne'],

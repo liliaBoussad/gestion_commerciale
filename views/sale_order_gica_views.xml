@@ -77,11 +77,15 @@
                 <!-- Onglet Informations GICA -->
                 <page string="Informations GICA" name="gica_info">
                     <group>
-                        <group string="References">
-                            <field name="commande_globale_id" options="{'no_create': True}" readonly="1"/>
-                            <field name="planification_id"    readonly="1"/>
-                            <field name="gica_client_id"      readonly="1"/>
-                            <field name="gica_contrat_id"     readonly="1"/>
+                        <group string="Références GICA">
+                            <field name="commande_globale_id"
+                                   options="{'no_create': True}"
+                                   readonly="1"/>
+                            <field name="planification_id" readonly="1"/>
+                            <field name="gica_client_id"
+                                options="{'no_create': True}"
+                                readonly="commande_globale_id != False"/>
+                            <field name="gica_contrat_id"  readonly="1"/>
                         </group>
                         <group string="Enlevement">
                             <field name="date_prevue_enlevement" readonly="1"/>
@@ -106,5 +110,6 @@
             <p>Les bons de commande sont crees depuis une planification validee.</p>
         </field>
     </record>
-
+  
+   
 </odoo>
