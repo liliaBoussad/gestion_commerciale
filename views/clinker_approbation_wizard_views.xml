@@ -8,72 +8,74 @@
             <form string="Approbation Planning Clinker">
                 <sheet>
 
-                    <!-- Sélection date -->
-                    <group string="Sélection de la Date">
-                        <field name="date_approbation"/>
-                        <button name="action_charger_planifications"
-                                string="Charger les Planifications"
-                                type="object"
-                                class="btn-primary"/>
-                    </group>
-
-                    <!-- Cadence active -->
-                    <group string="Cadence Active" invisible="not cadence_id">
+                    <group string="Date d'approbation">
                         <group>
-                            <field name="cadence_id"       readonly="1"/>
-                            <field name="cadence_quantite" readonly="1" string="Quantité (T/jour)"/>
+                            <field name="date_approbation"/>
                         </group>
                         <group>
-                            <field name="cadence_min"      readonly="1" string="Min (T)"/>
-                            <field name="cadence_max"      readonly="1" string="Max (T)"/>
+                            <button name="action_charger_planifications"
+                                    string="Charger les planifications"
+                                    type="object"
+                                    class="btn-primary"/>
                         </group>
                     </group>
 
-                    <!-- Résumé -->
-                    <group string="Résumé du jour" invisible="not line_ids">
+                    <group string="Resume du jour"
+                           invisible="not line_ids">
                         <group>
-                            <field name="total_demande"  readonly="1"/>
-                            <field name="total_approuve" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="taux_utilisation" readonly="1" string="Utilisation (%)"/>
+                            <field name="total_demande"    readonly="1"/>
+                            <field name="taux_utilisation" readonly="1"
+                                   string="Utilisation (%)"/>
                         </group>
                     </group>
 
-                    <!-- Alerte 80% -->
-                    <div class="alert alert-warning" role="alert"
+                    <div class="alert alert-danger" role="alert"
                          invisible="not alerte_80">
-                        ⚠️ Attention — La consommation dépasse 80% de la cadence !
+                        Attention — La consommation depasse 80% de la cadence !
                     </div>
 
-                    <!-- Lignes planifications -->
-                    <field name="line_ids" invisible="not line_ids">
-                        <list editable="bottom">
-                            <field name="planning_id"       readonly="1"/>
-                            <field name="client_id"         readonly="1"/>
-                            <field name="estimation"        readonly="1" string="Estimation (T)"/>
-                            <field name="quantite_approuvee" string="Qté Approuvée (T)"/>
-                            <field name="action"            string="Action"/>
-                            <field name="motif_refus"       string="Motif"
-                                   invisible="action != 'refuser'"/>
-                            <field name="dans_cadence"      readonly="1" widget="boolean"
-                                   string="Dans Cadence"/>
+                    <field name="line_ids"
+                           invisible="not line_ids"
+                           nolabel="1">
+                        <list editable="bottom"
+                            delete="false"
+                            create="false">
+                            <field name="planning_id"        readonly="1"/>
+                            <field name="client_id"          readonly="1"/>
+                            <field name="estimation"         readonly="1"
+                                string="Estimation (T)"/>
+                            <field name="quantite_approuvee" string="Qte Validee (T)"/>
+                            <field name="motif_refus"        string="Motif de refus"
+                                placeholder="Saisissez avant de refuser..."/>
+                            <button name="action_valider_ligne"
+                                    string="Valider"
+                                    type="object"
+                                    class="btn-success"
+                                    icon="fa-check"/>
+                            <button name="action_refuser_ligne"
+                                    string="Refuser"
+                                    type="object"
+                                    class="btn-danger"
+                                    icon="fa-times"/>
                         </list>
                     </field>
 
                 </sheet>
                 <footer>
-                    <button name="action_valider" string="Ok"
-                            type="object" class="btn-primary"
-                            invisible="not line_ids"/>
-                    <button string="Annuler" class="btn-secondary"
+                    <button name="action_valider"
+                            string="Valider tout"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not line_ids"
+                            confirm="Confirmer la validation de toutes les planifications ?"/>
+                    <button string="Annuler"
+                            class="btn-secondary"
                             special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- ACTION WIZARD -->
     <record id="action_clinker_approbation_wizard" model="ir.actions.act_window">
         <field name="name">Approbation Planning Clinker</field>
         <field name="res_model">clinker.approbation.wizard</field>

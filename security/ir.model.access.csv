@@ -44,6 +44,7 @@ access_clinker_sale_order,clinker.sale.order,model_sale_order,,1,1,1,1
 access_clinker_approbation_wizard,clinker.approbation.wizard,model_clinker_approbation_wizard,base.group_user,1,1,1,1
 access_clinker_approbation_wizard_line,clinker.approbation.wizard.line,model_clinker_approbation_wizard_line,base.group_user,1,1,1,1
 
+
 access_gica_commande_globale_portal,gica.commande.globale portal,model_gica_commande_globale,base.group_portal,1,1,1,0
 access_gica_planification_client_portal,gica.planification.client portal,model_gica_planification_client,base.group_portal,1,1,1,0
 access_gica_project_portal,gica.project portal,model_gica_project,base.group_portal,1,1,1,0

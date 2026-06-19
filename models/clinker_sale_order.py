@@ -6,6 +6,7 @@ class ClinkerSaleOrder(models.Model):
     _inherit = 'sale.order'
 
     # ── Champs Clinker ────────────────────────────────────────────────────
+
     is_clinker = fields.Boolean(
         string='Vente Clinker',
         default=False,
@@ -26,29 +27,22 @@ class ClinkerSaleOrder(models.Model):
         tracking=True,
     )
 
-    # ── Mise à jour quantité livrée à la livraison physique ───────────────
-    def action_marquer_clinker_livre(self):
+    # ── Stats bons de circulation (identique ciment) ──────────────────────
+
+    @api.depends('bon_circulation_ids.state')
+    def _compute_rotations_stats(self):
         for rec in self:
-            if not rec.is_clinker:
-                continue
-            qte_livree = sum(rec.order_line.mapped('product_uom_qty'))
+            bcs      = rec.bon_circulation_ids.filtered(lambda b: b.state != 'annule')
+            termines = bcs.filtered(lambda b: b.state == 'termine')
+            rec.bon_circulation_count      = len(bcs)
+            rec.rotations_terminees        = len(termines)
+            rec.toutes_rotations_terminees = len(bcs) > 0 and len(bcs) == len(termines)
 
-            # Mise à jour planification
-            if rec.clinker_planning_id:
-                rec.clinker_planning_id.write({
-                    'quantite_livree': rec.clinker_planning_id.quantite_livree + qte_livree
-                })
+    # bon_circulation_count, rotations_terminees, toutes_rotations_terminees
+    # et quantity_livree sont deja definis dans sale_order_gica.py (GicaSaleOrder)
+    # Pas besoin de les redefinir ici.
 
-            # Mise à jour BCG
-            if rec.bcg_clinker_id:
-                for line in rec.bcg_clinker_id.line_ids:
-                    line.write({
-                        'quantite_livree': line.quantite_livree + qte_livree
-                    })
-
-                # Vérifier clôture automatique BCG
-                rec.bcg_clinker_id._check_cloture_automatique()
-
-            rec.message_post(
-                body=f'📦 Clinker livré — {qte_livree:.2f} T le {fields.Date.today()}'
-            )
+    # ── La mise a jour quantite_livree clinker et la cloture BCG Clinker ──
+    # sont gerees dans gica_bon_circulation._finaliser_terminer()
+    # apres chaque pesee terminee a la bascule.
+    # action_marquer_clinker_livre supprime — devenu inutile.

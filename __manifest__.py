@@ -15,6 +15,8 @@
     },
 
     'data': [
+        'security/groups.xml',
+
         'security/ir.model.access.csv',
 
         # Data
@@ -29,12 +31,14 @@
         'data/gica_client_category_data.xml',
         'data/gica_circulation_sequences.xml',
         'data/gica_cron.xml',
+        'data/clinker_sequences.xml',
+
+
           # Rapports — AVANT les vues
         'reports/report_bon_circulation.xml',
 
 
         
-        'templates/portal_templates.xml',
 
         # Views — ordre important !
         'views/gica_client_nature_views.xml',       
@@ -56,7 +60,6 @@
         'views/avenant.xml',  
         'views/sale_order_gica_views.xml',
         'views/gica_bon_circulation_views.xml',
-        'data/clinker_sequences.xml',
         'views/gica_bascule_views.xml',
         'views/gica_refus_wizard_views.xml',
 

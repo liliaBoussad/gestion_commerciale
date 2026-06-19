@@ -44,7 +44,6 @@ class GicaBonCirculation(models.Model):
         tracking=True,
     )
 
-    # Lien vers la facture immediate (mode comptant)
     invoice_id = fields.Many2one(
         'account.move',
         string='Facture',
@@ -157,6 +156,7 @@ class GicaBonCirculation(models.Model):
     ], string='Etat', default='brouillon', tracking=True, required=True)
 
     # ── Workflow ──────────────────────────────────────────────────────────
+
     def action_ouvrir_bon_circulation(self):
         self.ensure_one()
         return {
@@ -166,7 +166,7 @@ class GicaBonCirculation(models.Model):
             'view_mode': 'form',
             'res_id':    self.id,
             'views':     [(self.env.ref('gestion_commerciale.view_gica_bon_circulation_form').id, 'form')],
-            'target':    'current',   # navigation pleine page, pas de dialog
+            'target':    'current',
         }
 
     def action_transmettre_tare(self):
@@ -234,32 +234,28 @@ class GicaBonCirculation(models.Model):
             rec.poids_net = max(0.0, rec.poids_brut_p2 - rec.tare_p1)
 
     def _creer_bon_livraison(self):
-        """
-        Cree un BL Odoo (stock.picking) automatiquement
-        1 pesee terminee = 1 BL
-        """
         self.ensure_one()
         if self.picking_id:
             return
         if not self.product_id or not self.poids_net:
             return
- 
+
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'outgoing'),
             ('warehouse_id.company_id', '=', self.env.company.id),
         ], limit=1)
- 
+
         if not picking_type:
             return
- 
+
         location_src  = picking_type.default_location_src_id
         location_dest = self.env.ref('stock.stock_location_customers', raise_if_not_found=False)
- 
+
         if not location_src or not location_dest:
             return
- 
+
         uom = self.product_id.uom_id
- 
+
         picking = self.env['stock.picking'].create({
             'partner_id':       self.partner_id.id,
             'picking_type_id':  picking_type.id,
@@ -277,16 +273,14 @@ class GicaBonCirculation(models.Model):
                 'location_dest_id': location_dest.id,
             })],
         })
- 
+
         picking.action_confirm()
         picking.action_assign()
- 
-        # Forcer la quantite meme si le stock n'est pas reserve
+
         if picking.move_line_ids:
             for move_line in picking.move_line_ids:
                 move_line.quantity = self.poids_net
         else:
-            # Creer la move_line manuellement si action_assign n'a rien reserve
             self.env['stock.move.line'].create({
                 'picking_id':       picking.id,
                 'move_id':          picking.move_ids[0].id,
@@ -296,30 +290,24 @@ class GicaBonCirculation(models.Model):
                 'location_id':      location_src.id,
                 'location_dest_id': location_dest.id,
             })
- 
+
         picking.with_context(
             skip_backorder=True,
             immediate_transfer=True,
         ).button_validate()
- 
+
         self.write({'picking_id': picking.id})
         self.message_post(
             body=f'Bon de Livraison cree : {picking.name} - Quantite : {self.poids_net:.3f} T'
         )
 
     def _creer_facture_immediate(self):
-        """
-        Cree une facture immediate apres chaque pesee terminee.
-        Utilise uniquement pour le mode de paiement COMPTANT.
-        1 rotation terminee = 1 facture basee sur le poids net reel.
-        """
         self.ensure_one()
         if self.invoice_id:
             return
         if not self.sale_order_id or not self.poids_net:
             return
 
-        # Recuperer le journal de vente
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),
             ('company_id', '=', self.env.company.id),
@@ -328,7 +316,6 @@ class GicaBonCirculation(models.Model):
         if not journal:
             return
 
-        # Recuperer le compte produit
         account = (
             self.product_id.property_account_income_id
             or self.product_id.categ_id.property_account_income_categ_id
@@ -337,7 +324,6 @@ class GicaBonCirculation(models.Model):
         if not account:
             return
 
-        # Prix unitaire depuis la ligne du BC de vente
         prix_unit = 0.0
         if self.sale_order_id.order_line:
             prix_unit = self.sale_order_id.order_line[0].price_unit
@@ -363,7 +349,6 @@ class GicaBonCirculation(models.Model):
                  f'Montant : {invoice.amount_total:.2f} DA'
         )
 
-        # Notifier dans le BC de vente
         if self.sale_order_id:
             self.sale_order_id.message_post(
                 body=f'Facture immediate creee pour rotation {self.numero_rotation} : '
@@ -371,7 +356,6 @@ class GicaBonCirculation(models.Model):
             )
 
     def _notifier_commercial(self):
-        """Notifie le commercial via le chatter du bon de commande"""
         self.ensure_one()
         if not self.sale_order_id:
             return
@@ -379,7 +363,6 @@ class GicaBonCirculation(models.Model):
         total    = len(bcs)
         termines = len(bcs.filtered(lambda b: b.state == 'termine'))
 
-        # Message selon le mode de paiement
         mode = ''
         contrat = self.sale_order_id.commande_globale_id.contrat_id
         if contrat:
@@ -403,26 +386,47 @@ class GicaBonCirculation(models.Model):
         """
         Actions communes apres terminaison :
         1. Date reelle enlevement
-        2. Cloture BCG si necessaire
+        2. Cloture BCG (ciment ou clinker) + maj quantite livree clinker
         3. BL automatique
-        4. Facture immediate si mode comptant
+        4. Facture immediate si mode comptant (ciment uniquement)
         5. Notification commercial
         """
         self.ensure_one()
 
-        # 1 + 2
+        # 1 — Date reelle enlevement
         if self.sale_order_id:
             self.sale_order_id.write({'date_reelle_enlevement': fields.Date.today()})
-            if self.sale_order_id.commande_globale_id:
-                self.sale_order_id.commande_globale_id._check_cloture_automatique()
+
+        # 2 — Cloture BCG selon le type de vente
+        if self.sale_order_id:
+            if self.sale_order_id.is_clinker:
+                # Clinker : mettre a jour quantite livree + cloture BCG Clinker
+                bcg_clinker = self.sale_order_id.bcg_clinker_id
+                if bcg_clinker:
+                    for line in bcg_clinker.line_ids:
+                        if line.product_id == self.product_id:
+                            line.write({
+                                'quantite_livree': line.quantite_livree + self.poids_net
+                            })
+                    bcg_clinker._check_cloture_automatique()
+                planning = self.sale_order_id.clinker_planning_id
+                if planning:
+                    planning.write({
+                        'quantite_livree': planning.quantite_livree + self.poids_net
+                    })
+            else:
+                # Ciment : cloture BCG ciment
+                if self.sale_order_id.commande_globale_id:
+                    self.sale_order_id.commande_globale_id._check_cloture_automatique()
 
         # 3 — BL
         self._creer_bon_livraison()
 
-        # 4 — Facture immediate si comptant
-        contrat = self.sale_order_id.commande_globale_id.contrat_id if self.sale_order_id else False
-        if contrat and contrat.mode_paiement == 'comptant':
-            self._creer_facture_immediate()
+        # 4 — Facture immediate si comptant (ciment uniquement)
+        if self.sale_order_id and not self.sale_order_id.is_clinker:
+            contrat = self.sale_order_id.commande_globale_id.contrat_id if self.sale_order_id.commande_globale_id else False
+            if contrat and contrat.mode_paiement == 'comptant':
+                self._creer_facture_immediate()
 
         # 5 — Notification
         self._notifier_commercial()
@@ -500,7 +504,6 @@ class GicaBonCirculation(models.Model):
         }
 
     def action_voir_facture(self):
-        """Ouvre la facture immediate depuis la bascule"""
         self.ensure_one()
         if not self.invoice_id:
             return
