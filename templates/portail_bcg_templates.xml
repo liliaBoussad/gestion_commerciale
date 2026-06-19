@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    
-   
-
     <!-- Liste des BCG -->
     <template id="portail_gica_bcg" name="Portail GICA BCG">
         <t t-call="portal.portal_layout">
@@ -112,8 +109,6 @@
     <template id="portail_gica_bcg_detail" name="Portail GICA BCG Detail">
         <t t-call="portal.portal_layout">
             <div class="container mt-4">
-
-                <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="mb-4">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="/my/home">Accueil</a></li>
@@ -142,8 +137,6 @@
                         </t>
                     </div>
                     <div class="card-body">
-
-                        <!-- Informations generales -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h6 class="fw-bold text-muted mb-3">INFORMATIONS</h6>
@@ -176,15 +169,10 @@
                                             </t>
                                         </td>
                                     </tr>
-                                   
-                                
-                                 
-                                  
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Lignes produits -->
                         <h6 class="fw-bold text-muted mb-3">PRODUITS</h6>
                         <div class="table-responsive mb-4">
                             <table class="table table-bordered table-sm">
@@ -203,42 +191,30 @@
                                         <tr>
                                             <td><t t-esc="ligne.product_tmpl_id.name"/></td>
                                             <td><t t-esc="ligne.conditionnement_id.name or '-'"/></td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_tonne"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_planifiee"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_enlevee"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_restante"/>
-                                            </td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_tonne"/></td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_planifiee"/></td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_enlevee"/></td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_restante"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Bouton retour -->
                         <a href="/my/gica/bcg" class="btn btn-secondary">
                             <i class="fa fa-arrow-left"/> Retour
                         </a>
-
                     </div>
                 </div>
             </div>
         </t>
     </template>
 
-
     <!-- Formulaire nouveau BCG -->
     <template id="portail_gica_bcg_form" name="Portail GICA Nouveau BCG">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Nouveau Bon de Commande Global</t>
-            </t>
+
+            <!-- CORRECTION 1 : portal_searchbar supprime — causait textContent null crash -->
 
             <div class="container mt-4">
 
@@ -266,7 +242,6 @@
                             <input type="hidden" name="csrf_token"
                                    t-att-value="request.csrf_token()"/>
 
-                            <!-- Contrat -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
                                     Contrat <span class="text-danger">*</span>
@@ -288,7 +263,6 @@
                                 </div>
                             </div>
 
-                            <!-- Info contrat -->
                             <div id="info_contrat" class="alert alert-light border mb-4"
                                  t-att-style="'' if contrat_selectionne else 'display:none;'">
                                 <div class="row">
@@ -311,7 +285,6 @@
                                 </div>
                             </div>
 
-                            <!-- Tableau lignes -->
                             <div id="section_lignes"
                                  t-att-style="'' if contrat_selectionne else 'display:none;'">
                                 <h6 class="fw-bold mb-3">
@@ -323,7 +296,6 @@
                                     et saisissez la quantite souhaitee.
                                     Les prix seront appliques par votre commercial apres validation.
                                 </div>
-
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="table_lignes">
                                         <thead class="table-light">
@@ -335,7 +307,6 @@
                                             </tr>
                                         </thead>
                                         <tbody id="tbody_lignes">
-                                            <!-- Rendu statique si contrat pre-selectionne -->
                                             <t t-if="contrat_selectionne and lignes_avec_conds">
                                                 <t t-foreach="lignes_avec_conds" t-as="ligne">
                                                     <tr>
@@ -374,7 +345,6 @@
                                 </div>
                             </div>
 
-                            <!-- Observations -->
                             <div class="mb-4" id="section_observations"
                                  t-att-style="'' if contrat_selectionne else 'display:none;'">
                                 <label class="form-label fw-bold">Observations</label>
@@ -383,7 +353,6 @@
                                           style="pointer-events:auto;"/>
                             </div>
 
-                            <!-- Boutons -->
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary"
                                         id="btn_soumettre"
@@ -408,7 +377,8 @@
                 var tbody         = document.getElementById('tbody_lignes');
                 var lblDate       = document.getElementById('lbl_date_expiration');
                 var lblMode       = document.getElementById('lbl_mode_paiement');
-                var csrfToken     = document.querySelector('[name=csrf_token]').value;
+                var csrfToken     = document.querySelector('[name=csrf_token]') ?
+                                    document.querySelector('[name=csrf_token]').value : '';
 
                 if (!selectContrat) return;
 
@@ -416,7 +386,7 @@
                     var contratId = this.value;
 
                     if (!contratId) {
-                        infoContrat.style.display  = 'none';
+                        infoContrat.style.display   = 'none';
                         sectionLignes.style.display = 'none';
                         sectionObs.style.display    = 'none';
                         btnSoumettre.disabled       = true;
@@ -442,8 +412,9 @@
                         var result = data.result || {};
                         var lignes = result.lignes || [];
 
-                        lblDate.textContent = result.date_expiration || '';
-                        lblMode.textContent = result.mode_paiement   || '';
+                        /* CORRECTION 2 : null checks avant textContent */
+                        if (lblDate) lblDate.textContent = result.date_expiration || '';
+                        if (lblMode) lblMode.textContent = result.mode_paiement   || '';
                         infoContrat.style.display = '';
 
                         tbody.innerHTML = '';
@@ -457,7 +428,6 @@
                         }
 
                         lignes.forEach(function (l) {
-                            // Construire options conditionnement filtrees par produit
                             var condOptions = '<option value="">-- Choisir --</option>';
                             (l.conditionnements || []).forEach(function (c) {
                                 condOptions += '<option value="' + c.id + '">' + c.name + '</option>';

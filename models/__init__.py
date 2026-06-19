@@ -27,5 +27,4 @@ from . import clinker_global_order
 from . import clinker_planning
 from . import clinker_sale_order
 from . import avenant
-from . import gica_pricelist
 

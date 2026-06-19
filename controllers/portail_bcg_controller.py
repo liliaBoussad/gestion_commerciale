@@ -6,13 +6,15 @@ from odoo.exceptions import ValidationError
 
 class GicaBcgPortal(http.Controller):
 
+    def _get_gica_client(self):
+        """Helper : retourne le partner si client GICA, sinon False."""
+        partner = request.env.user.partner_id
+        return partner if partner.is_gica_client else False
+
     # ── Liste des BCG ─────────────────────────────────────────────────────
     @http.route(['/my/gica/bcg'], type='http', auth='user', website=True)
     def portail_gica_bcg(self, **kwargs):
-        partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = self._get_gica_client()
         if not gica_client:
             return request.render('gestion_commerciale.portail_pas_client_gica')
 
@@ -20,21 +22,16 @@ class GicaBcgPortal(http.Controller):
             [('client_id', '=', gica_client.id)],
             order='date_commande desc',
         )
+        contrats_avec_bcg_actif = request.env['gica.commande.globale'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', 'not in', ['annulee', 'cloturee']),
+        ]).mapped('contrat_id').ids
 
-        contrats_avec_bcg_actif = request.env['gica.commande.globale'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', 'not in', ['annulee', 'cloturee']),
-            ]
-        ).mapped('contrat_id').ids
-
-        contrats_disponibles = request.env['gica.client.contract'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', 'in', ['actif', 'en_cours']),
-                ('id', 'not in', contrats_avec_bcg_actif),
-            ]
-        )
+        contrats_disponibles = request.env['gica.client.contract'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', 'in', ['actif', 'en_cours']),
+            ('id', 'not in', contrats_avec_bcg_actif),
+        ])
 
         return request.render('gestion_commerciale.portail_gica_bcg', {
             'gica_client':          gica_client,
@@ -46,58 +43,48 @@ class GicaBcgPortal(http.Controller):
     # ── Formulaire creation BCG ───────────────────────────────────────────
     @http.route(['/my/gica/bcg/nouveau'], type='http', auth='user', website=True)
     def portail_gica_bcg_nouveau(self, **kwargs):
-        partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = self._get_gica_client()
         if not gica_client:
             return request.redirect('/my/gica/bcg')
 
-        contrats_avec_bcg_actif = request.env['gica.commande.globale'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', 'not in', ['annulee', 'cloturee']),
-            ]
-        ).mapped('contrat_id').ids
+        contrats_avec_bcg_actif = request.env['gica.commande.globale'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', 'not in', ['annulee', 'cloturee']),
+        ]).mapped('contrat_id').ids
 
-        contrats_disponibles = request.env['gica.client.contract'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', 'in', ['actif', 'en_cours']),
-                ('id', 'not in', contrats_avec_bcg_actif),
-            ]
-        )
+        contrats_disponibles = request.env['gica.client.contract'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', 'in', ['actif', 'en_cours']),
+            ('id', 'not in', contrats_avec_bcg_actif),
+        ])
 
         if not contrats_disponibles:
             return request.redirect('/my/gica/bcg?erreur=aucun_contrat')
 
-        contrat_selectionne = None
+        bcg_selectionne = None
         lignes_avec_conds = []
         contrat_id = kwargs.get('contrat_id')
         if contrat_id:
-            contrat_selectionne = request.env['gica.client.contract'].sudo().browse(
-                int(contrat_id)
-            )
+            contrat_selectionne = request.env['gica.client.contract'].sudo().browse(int(contrat_id))
             if (not contrat_selectionne.exists()
                     or contrat_selectionne.client_id.id != gica_client.id
                     or contrat_selectionne.state not in ('actif', 'en_cours')):
                 contrat_selectionne = None
             else:
                 lignes_avec_conds = self._get_lignes_avec_conds(contrat_selectionne)
+                bcg_selectionne = contrat_selectionne
 
         return request.render('gestion_commerciale.portail_gica_bcg_form', {
             'gica_client':          gica_client,
             'contrats_disponibles': contrats_disponibles,
-            'contrat_selectionne':  contrat_selectionne,
+            'contrat_selectionne':  bcg_selectionne,
             'lignes_avec_conds':    lignes_avec_conds,
         })
 
     def _get_lignes_avec_conds(self, contrat):
-        """Retourne les lignes du contrat avec les conditionnements disponibles par produit."""
         result = []
         for line in contrat.line_ids:
             tmpl = line.product_tmpl_id
-            # Conditionnements disponibles = ceux des variantes existantes de ce produit
             conds = []
             seen_ids = set()
             for variant in tmpl.product_variant_ids:
@@ -123,10 +110,7 @@ class GicaBcgPortal(http.Controller):
         if not contrat_id:
             return {'lignes': []}
 
-        partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = self._get_gica_client()
         if not gica_client:
             return {'lignes': []}
 
@@ -136,30 +120,25 @@ class GicaBcgPortal(http.Controller):
                 or contrat.state not in ('actif', 'en_cours')):
             return {'lignes': []}
 
-        lignes = self._get_lignes_avec_conds(contrat)
-
         mode_label = dict(
             contrat._fields['mode_paiement'].selection
         ).get(contrat.mode_paiement, '') if contrat.mode_paiement else ''
 
         return {
-            'lignes':          lignes,
+            'lignes':          self._get_lignes_avec_conds(contrat),
             'date_expiration': contrat.date_end and contrat.date_end.strftime('%d/%m/%Y') or '',
             'mode_paiement':   mode_label,
         }
-# ── Detail d'un BCG ───────────────────────────────────────────────────
+
+    # ── Detail d'un BCG ───────────────────────────────────────────────────
     @http.route(['/my/gica/bcg/<int:bcg_id>'], type='http', auth='user', website=True)
     def portail_gica_bcg_detail(self, bcg_id, **kwargs):
-        partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = self._get_gica_client()
         if not gica_client:
             return request.render('gestion_commerciale.portail_pas_client_gica')
 
         bcg = request.env['gica.commande.globale'].sudo().browse(bcg_id)
-        if (not bcg.exists()
-                or bcg.client_id.id != gica_client.id):
+        if not bcg.exists() or bcg.client_id.id != gica_client.id:
             return request.redirect('/my/gica/bcg')
 
         return request.render('gestion_commerciale.portail_gica_bcg_detail', {
@@ -167,15 +146,11 @@ class GicaBcgPortal(http.Controller):
             'bcg':         bcg,
         })
 
-
     # ── Soumission POST ───────────────────────────────────────────────────
     @http.route(['/my/gica/bcg/soumettre'], type='http', auth='user',
                 website=True, methods=['POST'])
     def portail_gica_bcg_soumettre(self, **kwargs):
-        partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = self._get_gica_client()
         if not gica_client:
             return request.redirect('/my/gica/bcg')
 
@@ -201,18 +176,14 @@ class GicaBcgPortal(http.Controller):
             pid = line.product_tmpl_id.id
             qty_str = kwargs.get('qty_{}'.format(pid), '0').replace(',', '.')
             cond_id = kwargs.get('cond_{}'.format(pid), '')
-
             try:
                 qty = float(qty_str)
             except (ValueError, TypeError):
                 qty = 0.0
-
             if qty <= 0 or not cond_id:
                 continue
-
             if qty > line.quantity_tonne:
                 qty = line.quantity_tonne
-
             lines.append((0, 0, {
                 'product_tmpl_id':    pid,
                 'conditionnement_id': int(cond_id),

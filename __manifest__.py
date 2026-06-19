@@ -70,7 +70,6 @@
         'views/clinker_planning_views.xml',
         'views/clinker_approbation_wizard_views.xml',
 
-        'views/gica_pricelist_config_views.xml',
        
        
 

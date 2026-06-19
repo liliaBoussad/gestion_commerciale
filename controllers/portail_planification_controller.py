@@ -12,9 +12,8 @@ class GicaPlanificationPortal(http.Controller):
     @http.route(['/my/gica/planifications'], type='http', auth='user', website=True)
     def portail_planifications(self, **kwargs):
         partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = partner if partner.is_gica_client else False
+
         if not gica_client:
             return request.render('gestion_commerciale.portail_pas_client_gica')
 
@@ -22,40 +21,32 @@ class GicaPlanificationPortal(http.Controller):
             [('client_id', '=', gica_client.id)],
             order='name desc',
         )
-
-        bcgs_disponibles = request.env['gica.commande.globale'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', '=', 'en_cours'),
-                ('quantity_restante', '>', 0),
-            ]
-        )
-
+        bcgs_disponibles = request.env['gica.commande.globale'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', '=', 'en_cours'),
+            ('quantity_restante', '>', 0),
+        ])
         return request.render('gestion_commerciale.portail_gica_planifications', {
-            'gica_client':       gica_client,
-            'planifications':    planifications,
-            'bcgs_disponibles':  bcgs_disponibles,
-            'peut_planifier':    bool(bcgs_disponibles),
+            'gica_client':      gica_client,
+            'planifications':   planifications,
+            'bcgs_disponibles': bcgs_disponibles,
+            'peut_planifier':   bool(bcgs_disponibles),
         })
 
     # ── Formulaire nouvelle planification ─────────────────────────────────
     @http.route(['/my/gica/planifications/nouveau'], type='http', auth='user', website=True)
     def portail_planification_nouveau(self, **kwargs):
         partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = partner if partner.is_gica_client else False
+
         if not gica_client:
             return request.redirect('/my/gica/planifications')
 
-        bcgs_disponibles = request.env['gica.commande.globale'].sudo().search(
-            [
-                ('client_id', '=', gica_client.id),
-                ('state', '=', 'en_cours'),
-                ('quantity_restante', '>', 0),
-            ]
-        )
-
+        bcgs_disponibles = request.env['gica.commande.globale'].sudo().search([
+            ('client_id', '=', gica_client.id),
+            ('state', '=', 'en_cours'),
+            ('quantity_restante', '>', 0),
+        ])
         if not bcgs_disponibles:
             return request.redirect('/my/gica/planifications?erreur=aucun_bcg')
 
@@ -79,7 +70,6 @@ class GicaPlanificationPortal(http.Controller):
         })
 
     def _get_lignes_bcg(self, bcg):
-        """Lignes du BCG avec conditionnements et quantites restantes."""
         result = []
         for line in bcg.line_ids:
             if line.quantity_restante <= 0:
@@ -89,12 +79,12 @@ class GicaPlanificationPortal(http.Controller):
                 'name': line.conditionnement_id.name,
             }] if line.conditionnement_id else []
             result.append({
-                'product_tmpl_id':    line.product_tmpl_id.id,
-                'product_name':       line.product_tmpl_id.name,
-                'conditionnement_id': line.conditionnement_id.id,
-                'conditionnement':    line.conditionnement_id.name,
-                'quantity_restante':  line.quantity_restante,
-                'conditionnements':    conds, 
+                'product_tmpl_id':       line.product_tmpl_id.id,
+                'product_name':          line.product_tmpl_id.name,
+                'conditionnement_id':    line.conditionnement_id.id,
+                'conditionnement':       line.conditionnement_id.name,
+                'quantity_restante':     line.quantity_restante,
+                'conditionnements':      conds,
                 'conditionnements_json': json.dumps(conds),
             })
         return result
@@ -106,9 +96,8 @@ class GicaPlanificationPortal(http.Controller):
             return {'lignes': []}
 
         partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = partner if partner.is_gica_client else False
+
         if not gica_client:
             return {'lignes': []}
 
@@ -128,9 +117,8 @@ class GicaPlanificationPortal(http.Controller):
                 website=True, methods=['POST'])
     def portail_planification_soumettre(self, **kwargs):
         partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = partner if partner.is_gica_client else False
+
         if not gica_client:
             return request.redirect('/my/gica/planifications')
 
@@ -143,7 +131,6 @@ class GicaPlanificationPortal(http.Controller):
                 or bcg.client_id.id != gica_client.id
                 or bcg.state != 'en_cours'):
             return request.redirect('/my/gica/planifications?erreur=bcg_invalide')
-        
 
         lines = []
         i = 0
@@ -151,12 +138,10 @@ class GicaPlanificationPortal(http.Controller):
             product_id = kwargs.get('product_{}'.format(i))
             if product_id is None:
                 break
-
             cond_id  = kwargs.get('cond_{}'.format(i), '')
             date_str = kwargs.get('date_{}'.format(i), '')
             qty_str  = kwargs.get('qty_{}'.format(i), '0').replace(',', '.')
             rot_str  = kwargs.get('rotation_{}'.format(i), '1')
-
             try:
                 qty = float(qty_str)
             except (ValueError, TypeError):
@@ -165,7 +150,6 @@ class GicaPlanificationPortal(http.Controller):
                 rotation = int(rot_str)
             except (ValueError, TypeError):
                 rotation = 1
-
             if qty > 0 and cond_id and date_str and product_id:
                 lines.append((0, 0, {
                     'product_tmpl_id':    int(product_id),
@@ -175,20 +159,16 @@ class GicaPlanificationPortal(http.Controller):
                     'rotation':           rotation,
                 }))
             i += 1
-            
-       
 
         # Vérifier chaque date
         for line_vals in [l[2] for l in lines]:
             date_enl = line_vals.get('date_enlevement')
             if date_enl:
                 date_obj = datetime.strptime(date_enl, '%Y-%m-%d').date()
-                # Vérifier weekend
                 if date_obj.weekday() in (4, 5):
                     return request.redirect(
                         '/my/gica/planifications/nouveau?bcg_id={}&erreur=date_weekend'.format(bcg_id)
                     )
-                # Vérifier période verrouillée
                 periode = request.env['gica.planification.usine'].sudo().search([
                     ('state',      '=',  'confirmee'),
                     ('date_debut', '<=', date_obj),
@@ -225,19 +205,18 @@ class GicaPlanificationPortal(http.Controller):
         return request.redirect(
             '/my/gica/planifications?succes=planif_soumise&ref={}'.format(planif.name)
         )
+
     # ── Detail d'une planification ────────────────────────────────────────
     @http.route(['/my/gica/planifications/<int:planif_id>'], type='http', auth='user', website=True)
     def portail_planification_detail(self, planif_id, **kwargs):
         partner = request.env.user.partner_id
-        gica_client = request.env['gica.client'].sudo().search(
-            [('partner_id', '=', partner.id)], limit=1
-        )
+        gica_client = partner if partner.is_gica_client else False
+
         if not gica_client:
             return request.render('gestion_commerciale.portail_pas_client_gica')
 
         planif = request.env['gica.planification.client'].sudo().browse(planif_id)
-        if (not planif.exists()
-                or planif.client_id.id != gica_client.id):
+        if not planif.exists() or planif.client_id.id != gica_client.id:
             return request.redirect('/my/gica/planifications')
 
         return request.render('gestion_commerciale.portail_gica_planification_detail', {

@@ -26,22 +26,6 @@ class GicaSaleOrder(models.Model):
         'sale_order_id',
         string='Bons de Circulation',
     )
-    
-    @api.onchange('partner_id')
-    def _onchange_partner_gica(self):
-        if self.partner_id:
-            client = self.env['gica.client'].search(
-                [('partner_id', '=', self.partner_id.id)], limit=1
-            )
-            self.gica_client_id = client or False
-
-    @api.onchange('partner_id')
-    def _onchange_partner_gica(self):
-        if self.partner_id:
-            client = self.env['gica.client'].search(
-                [('partner_id', '=', self.partner_id.id)], limit=1
-            )
-            self.gica_client_id = client or False
 
     bon_circulation_count = fields.Integer(
         compute='_compute_rotations_stats',
@@ -67,23 +51,28 @@ class GicaSaleOrder(models.Model):
     gica_client_id = fields.Many2one(
         'res.partner',
         related='commande_globale_id.client_id',
-        store=True, readonly=True,
+        store=True,
+        readonly=True,
         string='Client GICA',
     )
     gica_contrat_id = fields.Many2one(
         'gica.client.contract',
         related='commande_globale_id.contrat_id',
-        store=True, readonly=True,
+        store=True,
+        readonly=True,
         string='Contrat GICA',
     )
     date_prevue_enlevement = fields.Date(
         related='planification_id.date_enlevement',
-        store=True, readonly=True, tracking=True,
+        store=True,
+        readonly=True,
+        tracking=True,
         string="Date prevue d'enlevement",
     )
     date_reelle_enlevement = fields.Date(
         string="Date reelle d'enlevement",
-        readonly=True, tracking=True,
+        readonly=True,
+        tracking=True,
     )
     quantity_livree = fields.Float(
         string='Quantite livree (T)',

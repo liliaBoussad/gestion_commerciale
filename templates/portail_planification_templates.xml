@@ -4,17 +4,22 @@
     <!-- Liste des planifications -->
     <template id="portail_gica_planifications" name="Portail GICA Planifications">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Mes Planifications</t>
-            </t>
+            <!-- portal_searchbar supprime : causait textContent null crash en Odoo 18 -->
             <div class="container mt-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><i class="fa fa-calendar me-2"/>Mes Planifications</h4>
+                    <a href="/my/home" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-arrow-left"/> Retour
+                    </a>
+                </div>
 
                 <t t-set="erreur" t-value="request.params.get('erreur')"/>
                 <t t-set="succes" t-value="request.params.get('succes')"/>
                 <t t-set="ref"    t-value="request.params.get('ref')"/>
 
                 <t t-if="succes == 'planif_soumise' and ref">
-                   <t t-set="planif_ref" t-value="planifications.filtered(lambda p: p.name == ref)"/>
+                    <t t-set="planif_ref" t-value="planifications.filtered(lambda p: p.name == ref)"/>
                     <t t-if="planif_ref and planif_ref[0].state == 'soumise'">
                         <div class="alert alert-success">
                             Votre planification <strong><t t-esc="ref"/></strong> a ete soumise.
@@ -23,16 +28,15 @@
                     </t>
                     <t t-elif="planif_ref and planif_ref[0].state == 'validee'">
                         <div class="alert alert-info">
-                            Votre planification <strong><t t-esc="ref"/></strong> a ete validee .
+                            Votre planification <strong><t t-esc="ref"/></strong> a ete validee.
                         </div>
                     </t>
                     <t t-elif="planif_ref and planif_ref[0].state == 'refusee'">
                         <div class="alert alert-danger">
-                            Votre planification <strong><t t-esc="ref"/></strong> a ete refusee .
+                            Votre planification <strong><t t-esc="ref"/></strong> a ete refusee.
                         </div>
                     </t>
                 </t>
-
 
                 <t t-if="erreur == 'aucun_bcg'">
                     <div class="alert alert-warning">
@@ -68,7 +72,6 @@
                                     <th>Qte totale (T)</th>
                                     <th>Statut</th>
                                     <th>Action</th>
-                                   
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,11 +95,9 @@
                                                 <span class="badge bg-danger">Refusee</span>
                                             </t>
                                         </td>
-                                     
-                                      
                                         <td>
                                             <a t-att-href="'/my/gica/planifications/%d' % planif.id"
-                                            class="btn btn-sm btn-outline-primary">
+                                               class="btn btn-sm btn-outline-primary">
                                                 <i class="fa fa-eye"/> Voir
                                             </a>
                                         </td>
@@ -113,9 +114,7 @@
     <!-- Formulaire nouvelle planification -->
     <template id="portail_gica_planification_form" name="Portail GICA Nouvelle Planification">
         <t t-call="portal.portal_layout">
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Nouvelle Planification</t>
-            </t>
+            <!-- portal_searchbar supprime : causait textContent null crash en Odoo 18 -->
 
             <div class="container mt-4">
 
@@ -127,6 +126,16 @@
                 </t>
                 <t t-if="erreur == 'bcg_manquant'">
                     <div class="alert alert-danger">Veuillez selectionner un BCG.</div>
+                </t>
+                <t t-if="erreur == 'date_weekend'">
+                    <div class="alert alert-danger">
+                        La date choisie est un vendredi ou samedi. Veuillez choisir un jour ouvrable.
+                    </div>
+                </t>
+                <t t-if="erreur == 'date_verrouillee'">
+                    <div class="alert alert-danger">
+                        La date choisie est dans une periode verrouillee. Veuillez choisir une autre date.
+                    </div>
                 </t>
                 <t t-if="erreur == 'validation'">
                     <div class="alert alert-danger">
@@ -145,7 +154,6 @@
                             <input type="hidden" name="csrf_token"
                                    t-att-value="request.csrf_token()"/>
 
-                            <!-- Choix BCG -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
                                     BCG <span class="text-danger">*</span>
@@ -164,7 +172,6 @@
                                 </select>
                             </div>
 
-                            <!-- Info BCG -->
                             <div id="info_bcg" class="alert alert-light border mb-4"
                                  t-att-style="'' if bcg_selectionne else 'display:none;'">
                                 <strong>Expiration BCG :</strong>
@@ -175,7 +182,6 @@
                                 </span>
                             </div>
 
-                            <!-- Lignes planification -->
                             <div id="section_lignes"
                                  t-att-style="'' if bcg_selectionne else 'display:none;'">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -249,31 +255,21 @@
                                                                style="pointer-events:auto;"
                                                                required="1"/>
                                                     </td>
-                                                    <t t-if="erreur == 'date_weekend'">
-                                                            <div class="alert alert-danger">
-                                                                La date choisie est un vendredi ou samedi. Veuillez choisir un jour ouvrable.
-                                                            </div>
-                                                    </t>
-                                                        <t t-if="erreur == 'date_verrouillee'">
-                                                            <div class="alert alert-danger">
-                                                                La date choisie est dans une periode verrouillee. Veuillez choisir une autre date.
-                                                            </div>
-                                                        </t>
-                                                        <td>
-                                                             <input type="number" name="qty_0"
+                                                    <td>
+                                                        <input type="number" name="qty_0"
                                                                step="0.01" min="0.01"
                                                                class="form-control form-control-sm input-qty"
                                                                style="pointer-events:auto;"
                                                                data-index="0"
                                                                required="1"/>
-                                                        </td>
-                                                        <td>
-                                                           <input type="number" name="rotation_0"
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" name="rotation_0"
                                                                min="1" value="1"
                                                                class="form-control form-control-sm"
                                                                style="pointer-events:auto;"
                                                                required="1"/>
-                                                        </td>
+                                                    </td>
                                                     <td>
                                                         <button type="button"
                                                                 class="btn btn-sm btn-danger btn-suppr"
@@ -288,7 +284,6 @@
                                 </div>
                             </div>
 
-                            <!-- Observations -->
                             <div class="mb-4" id="section_observations"
                                  t-att-style="'' if bcg_selectionne else 'display:none;'">
                                 <label class="form-label fw-bold">Observations</label>
@@ -296,7 +291,6 @@
                                           style="pointer-events:auto;"/>
                             </div>
 
-                            <!-- Boutons -->
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary" id="btn_soumettre"
                                         t-att-disabled="None if bcg_selectionne else 'disabled'">
@@ -320,7 +314,8 @@
                 var btnAjouter    = document.getElementById('btn_ajouter_ligne');
                 var tbody         = document.getElementById('tbody_lignes');
                 var lblDate       = document.getElementById('lbl_date_expiration');
-                var csrfToken     = document.querySelector('[name=csrf_token]').value;
+                var csrfToken     = document.querySelector('[name=csrf_token]') ?
+                                    document.querySelector('[name=csrf_token]').value : '';
                 var lignesBcg     = [];
                 var lineIndex     = 1;
 
@@ -347,7 +342,8 @@
                 function ajouterLigne() {
                     var idx = lineIndex++;
                     var productOpts = buildProductOptions();
-                    var row = '<tr class="ligne-planif" data-index="' + idx + '">' +
+                    var row =
+                        '<tr class="ligne-planif" data-index="' + idx + '">' +
                         '<td><select name="product_' + idx + '" class="form-select form-select-sm select-product" required style="pointer-events:auto;" data-index="' + idx + '">' + productOpts + '</select></td>' +
                         '<td><select name="cond_' + idx + '" class="form-select form-select-sm select-cond" required style="pointer-events:auto;" data-index="' + idx + '"><option value="">-- Choisir produit --</option></select></td>' +
                         '<td><input type="date" name="date_' + idx + '" class="form-control form-control-sm" style="pointer-events:auto;" required/></td>' +
@@ -371,36 +367,24 @@
                             var condList = [];
                             try { condList = JSON.parse(opt.getAttribute('data-conds') || '[]'); } catch(e) {}
                             var maxQty = parseFloat(opt.getAttribute('data-max') || 0);
-                            selCond.innerHTML = buildCondOptions(condList);
-
-                              // Auto-selection si un seul conditionnement disponible
-                            if (condList.length === 1) {
-                                    selCond.value = condList[0].id;
-                            } 
-
-                            if (inputQty) {
-                                inputQty.max   = maxQty;
-                                inputQty.value = '';
-                            }
+                            if (selCond) selCond.innerHTML = buildCondOptions(condList);
+                            if (condList.length === 1 && selCond) selCond.value = condList[0].id;
+                            if (inputQty) { inputQty.max = maxQty; inputQty.value = ''; }
                         });
                     }
 
                     if (btnSuppr) {
                         btnSuppr.addEventListener('click', function () {
-                            var rows = tbody.querySelectorAll('.ligne-planif');
-                            if (rows.length > 1) row.remove();
+                            if (tbody.querySelectorAll('.ligne-planif').length > 1) row.remove();
                         });
                     }
                 }
 
                 tbody.querySelectorAll('.ligne-planif').forEach(attachListeners);
-                // Declencher le chargement des conditionnements pour les lignes pre-existantes
-                    tbody.querySelectorAll('.ligne-planif').forEach(function(row) {
-                        var selProd = row.querySelector('.select-product');
-                        if (selProd && selProd.value) {
-                            selProd.dispatchEvent(new Event('change'));
-                        }
-                    });
+                tbody.querySelectorAll('.ligne-planif').forEach(function (row) {
+                    var selProd = row.querySelector('.select-product');
+                    if (selProd && selProd.value) selProd.dispatchEvent(new Event('change'));
+                });
 
                 if (btnAjouter) {
                     btnAjouter.addEventListener('click', function () {
@@ -413,63 +397,62 @@
                     selectBcg.addEventListener('change', function () {
                         var bcgId = this.value;
                         if (!bcgId) {
-                            infoBcg.style.display       = 'none';
-                            sectionLignes.style.display = 'none';
-                            sectionObs.style.display    = 'none';
-                            btnSoumettre.disabled       = true;
-                            tbody.innerHTML             = '';
-                            lignesBcg                   = [];
+                            if (infoBcg) infoBcg.style.display       = 'none';
+                            if (sectionLignes) sectionLignes.style.display = 'none';
+                            if (sectionObs) sectionObs.style.display    = 'none';
+                            if (btnSoumettre) btnSoumettre.disabled       = true;
+                            if (tbody) tbody.innerHTML                    = '';
+                            lignesBcg = [];
                             return;
                         }
 
                         fetch('/my/gica/planifications/lignes_bcg', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken,
-                            },
-                            body: JSON.stringify({
-                                jsonrpc: '2.0', method: 'call', id: 1,
-                                params: { bcg_id: parseInt(bcgId) },
-                            }),
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                            body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: { bcg_id: parseInt(bcgId) } }),
                         })
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
                             var result = data.result || {};
                             lignesBcg = result.lignes || [];
-                            lblDate.textContent   = result.date_expiration || '';
-                            infoBcg.style.display = '';
+
+                            /* CORRECTION : null check avant textContent */
+                            if (lblDate) lblDate.textContent = result.date_expiration || '';
+                            if (infoBcg) infoBcg.style.display = '';
                             lineIndex = 1;
-                            tbody.innerHTML = '';
+                            if (tbody) tbody.innerHTML = '';
+
                             if (lignesBcg.length > 0) {
                                 ajouterLigne();
                                 lineIndex = 1;
-                                sectionLignes.style.display = '';
-                                sectionObs.style.display    = '';
-                                btnSoumettre.disabled       = false;
+                                if (sectionLignes) sectionLignes.style.display = '';
+                                if (sectionObs) sectionObs.style.display    = '';
+                                if (btnSoumettre) btnSoumettre.disabled       = false;
                             } else {
-                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucun produit disponible dans ce BCG.</td></tr>';
-                                btnSoumettre.disabled = true;
+                                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucun produit disponible dans ce BCG.</td></tr>';
+                                if (btnSoumettre) btnSoumettre.disabled = true;
                             }
                         })
                         .catch(function (err) { console.error(err); });
                     });
+
+                    /* CORRECTION : selectBcg.value verifie ICI dans DOMContentLoaded
+                       (avant : code en dehors du callback → selectBcg undefined) */
+                    if (selectBcg.value) {
+                        selectBcg.dispatchEvent(new Event('change'));
+                    }
                 }
             });
-            // Si BCG déjà sélectionné au chargement (retour après erreur)
-                if (selectBcg && selectBcg.value) {
-                    selectBcg.dispatchEvent(new Event('change'));
-                }
             //]]>
             </script>
         </t>
     </template>
+
     <!-- Detail planification -->
     <template id="portail_gica_planification_detail" name="Portail GICA Planification Detail">
         <t t-call="portal.portal_layout">
             <div class="container mt-4">
 
-                <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="mb-4">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="/my/home">Accueil</a></li>
@@ -497,13 +480,9 @@
                         </t>
                         <t t-elif="planif.state == 'refusee'">
                             <span class="badge bg-danger align-self-center">Refusee</span>
-                        
                         </t>
-
                     </div>
                     <div class="card-body">
-
-                        <!-- Informations generales -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h6 class="fw-bold text-muted mb-3">SELECTION</h6>
@@ -523,16 +502,13 @@
                                     <t t-if="planif.state == 'refusee' and planif.motif_refus">
                                         <tr>
                                             <td class="fw-bold text-danger">Motif refus</td>
-                                            <td class="text-danger">
-                                                <t t-esc="planif.motif_refus"/>
-                                            </td>
+                                            <td class="text-danger"><t t-esc="planif.motif_refus"/></td>
                                         </tr>
                                     </t>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Lignes produits -->
                         <h6 class="fw-bold text-muted mb-3">PRODUITS DEMANDES</h6>
                         <div class="table-responsive mb-4">
                             <table class="table table-bordered table-sm">
@@ -553,15 +529,9 @@
                                             <td><t t-esc="ligne.product_tmpl_id.name"/></td>
                                             <td><t t-esc="ligne.conditionnement_id.name or '-'"/></td>
                                             <td><t t-esc="ligne.date_enlevement"/></td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_tonne"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <t t-esc="ligne.rotation"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <t t-esc="'%.2f' % ligne.quantity_disponible"/>
-                                            </td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_tonne"/></td>
+                                            <td class="text-end"><t t-esc="ligne.rotation"/></td>
+                                            <td class="text-end"><t t-esc="'%.2f' % ligne.quantity_disponible"/></td>
                                             <td>
                                                 <t t-if="ligne.state == 'en_attente'">
                                                     <span class="badge bg-warning text-dark">En attente</span>
@@ -585,14 +555,13 @@
                             </table>
                         </div>
 
-                        <!-- Bouton retour -->
                         <a href="/my/gica/planifications" class="btn btn-secondary">
                             <i class="fa fa-arrow-left"/> Retour
                         </a>
-
                     </div>
                 </div>
             </div>
         </t>
     </template>
+
 </odoo>

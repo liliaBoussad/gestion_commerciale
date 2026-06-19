@@ -31,11 +31,7 @@
                             string="Remettre en Nouveau"
                             type="object"
                             invisible="state != 'annulee'"/>
-                    <button name="action_appliquer_prix"
-                            string="Appliquer les prix"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="state in ('cloturee', 'annulee') or not pricelist_id"/>
+                    
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="nouveau,soumis,en_cours,cloturee,expire"/>
