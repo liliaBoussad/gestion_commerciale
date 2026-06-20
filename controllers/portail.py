@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import http
 from odoo.http import request
-from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+from odoo.addons.portal.controllers.portal import pager as portal_pager
+from odoo.addons.sale.controllers.portal import CustomerPortal
 import logging
 _logger = logging.getLogger(__name__)
 class GicaCustomerPortal(CustomerPortal):
@@ -333,6 +334,50 @@ class GicaCustomerPortal(CustomerPortal):
             'gica_client': gica_client,
             'contrat':     contrat,
         })
+        
+    # ... (méthode portail_gica_contrat_detail au-dessus)
+
+    # ── NOUVELLE MÉTHODE À AJOUTER ICI ──
+    @http.route(['/my/quotes', '/my/quotes/page/<int:page>'],
+                type='http', auth='user', website=True)
+    def portal_my_quotes(self, page=1, date_begin=None, date_end=None,
+                         sortby=None, **kw):
+        partner = request.env.user.partner_id
+        gica_client = request.env['gica.client'].sudo().search(
+            [('partner_id', '=', partner.id)], limit=1
+        )
+
+        values = self._prepare_portal_layout_values()
+
+        SaleOrder = request.env['sale.order']
+
+        if gica_client:
+            domain = [
+                '|',
+                ('partner_id', '=', partner.id),
+                ('gica_client_id', '=', gica_client.id),
+                ('state', 'in', ['draft', 'sent', 'cancel']),
+                ('commande_globale_id', '=', False),
+            ]
+        else:
+            domain = [
+                ('partner_id', '=', partner.id),
+                ('state', 'in', ['draft', 'sent', 'cancel']),
+                ('commande_globale_id', '=', False),
+            ]
+
+        orders = SaleOrder.sudo().search(domain, order='id desc')
+
+        values.update({
+            'quotations':       orders,
+            'page_name':    'quote',
+            'default_url':  '/my/quotes',
+        })
+
+        return request.render('sale.portal_my_quotations', values)
+
+    # ── Demande de devis ──────────────────────────────────────────────────
+
     @http.route(['/my/gica/devis/demande'], type='http', auth='user', website=True)
     def portail_devis_demande(self, **kwargs):
         partner = request.env.user.partner_id
@@ -410,6 +455,7 @@ class GicaCustomerPortal(CustomerPortal):
             i += 1
         if not lines:
             return request.redirect('/my/gica/devis/demande?erreur=lignes_vides')
+
         observations = kwargs.get('observations', '')
         order = request.env['sale.order'].sudo().create({
             'partner_id':     partner.id,
@@ -417,4 +463,5 @@ class GicaCustomerPortal(CustomerPortal):
             'note':           observations,
             'order_line':     lines,
         })
+        order.message_subscribe(partner_ids=[partner.id])
         return request.redirect('/my/quotes?succes=devis_soumis&ref={}'.format(order.name))

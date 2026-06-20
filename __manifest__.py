@@ -53,7 +53,7 @@
         'templates/portail_bcg_templates.xml',
         'templates/portail_planification_templates.xml',
         'templates/portail_devis_demande_template.xml',
-        
+        'templates/portal_order_detail_draft.xml',
         'wizard/gica_refus_wizard_views.xml',
     ],
     'installable': True,

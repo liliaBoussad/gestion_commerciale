@@ -22,7 +22,8 @@
                             <tr>
                                 <th>Reference</th>
                                 <th>Date</th>
-                                <th>Produits</th>
+                                <th>Produits demandes</th>
+                                <th>Statut</th>
                                 <th>Montant</th>
                                 <th>Action</th>
                             </tr>
@@ -38,10 +39,34 @@
                                     <td><t t-esc="quotation.date_order"/></td>
                                     <td>
                                         <t t-foreach="quotation.order_line" t-as="line">
-                                            <small><t t-esc="line.product_id.name"/></small><br/>
+                                            <small>
+                                                <t t-esc="line.product_id.name"/> :
+                                                <t t-esc="'%.2f' % line.product_uom_qty"/> T
+                                            </small><br/>
                                         </t>
                                     </td>
-                                    <td><t t-esc="quotation.amount_total"/></td>
+                                    <td>
+                                        <t t-if="quotation.state == 'draft'">
+                                            <span class="badge bg-secondary">En attente de traitement</span>
+                                        </t>
+                                        <t t-elif="quotation.state == 'sent'">
+                                            <span class="badge bg-warning text-dark">devis disponible </span>
+                                        </t>
+                                        <t t-elif="quotation.state == 'sale'">
+                                            <span class="badge bg-success">Accepte</span>
+                                        </t>
+                                        <t t-elif="quotation.state == 'cancel'">
+                                            <span class="badge bg-danger">Annule</span>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="quotation.state in ('sent', 'sale')">
+                                            <t t-esc="'{:,.2f}'.format(quotation.amount_total)"/> DA
+                                        </t>
+                                        <t t-else="">
+                                            <span class="text-muted">En attente</span>
+                                        </t>
+                                    </td>
                                     <td>
                                         <a t-att-href="quotation.get_portal_url()"
                                            class="btn btn-sm btn-outline-primary">
