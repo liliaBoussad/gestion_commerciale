@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════
-         Héritage product.template — ajout champs GICA
-         ══════════════════════════════════════════════════════ -->
+    <!-- Héritage product.template — ajout champs GICA -->
     <record id="view_product_template_gica_form" model="ir.ui.view">
         <field name="name">product.template.gica.form</field>
         <field name="model">product.template</field>
@@ -13,8 +11,18 @@
                 <field name="is_gica_product" widget="boolean_toggle"/>
                 <field name="type_ciment"
                        invisible="not is_gica_product"/>
-                <field name="conditionnement_gica"
-                       invisible="not is_gica_product"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Héritage product.pricelist.item — ajout champ a_la_charge_de -->
+    <record id="view_pricelist_item_gica_inherit_form" model="ir.ui.view">
+        <field name="name">product.pricelist.item.form.gica</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_tmpl_id']" position="after">
+                <field name="a_la_charge_de"/>
             </xpath>
         </field>
     </record>

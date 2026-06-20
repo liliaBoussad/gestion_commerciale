@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Liste -->
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE LISTE — Contrats Clients
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_client_contract_list" model="ir.ui.view">
         <field name="name">gica.client.contract.list</field>
         <field name="model">gica.client.contract</field>
@@ -9,124 +11,225 @@
             <list string="Contrats"
                   decoration-success="state == 'en_cours'"
                   decoration-info="state == 'actif'"
-                  decoration-warning="state == 'suspendu'"
-                  decoration-muted="state in ('expire','resilie')"
+                  decoration-muted="state in ('expire', 'resilie')"
                   decoration-primary="state == 'draft'">
-                <field name="name"/>
-                <field name="client_id"/>
-                <field name="date_start"/>
-                <field name="date_end"/>
-                <field name="state" widget="badge"
+
+                <field name="name"                 string="N° Contrat"/>
+                <field name="client_id"            string="Client"/>
+                <field name="date_start"           string="Date début"/>
+                <field name="date_end"             string="Date fin"/>
+                <field name="quantity_total_tonne" string="Qté totale (T)"/>
+
+                <!-- Champ technique — masqué de l'affichage -->
+                <field name="client_type" column_invisible="1"/>
+
+                <field name="state"
+                       widget="badge"
                        decoration-success="state == 'en_cours'"
                        decoration-info="state == 'actif'"
-                       decoration-warning="state == 'suspendu'"
                        decoration-danger="state == 'resilie'"
                        decoration-muted="state == 'expire'"/>
             </list>
         </field>
     </record>
 
-    <!-- Formulaire -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE FORMULAIRE — Contrat Client
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_client_contract_form" model="ir.ui.view">
         <field name="name">gica.client.contract.form</field>
         <field name="model">gica.client.contract</field>
         <field name="arch" type="xml">
             <form string="Contrat Client GICA">
+
+                <!-- ── Barre d'état et actions ── -->
                 <header>
-                    <button name="action_activer"   string="Activer"   type="object" class="btn-primary"
+                    <button name="action_activer"
+                            string="Activer"
+                            type="object"
+                            class="btn-primary"
                             invisible="state != 'draft'"/>
-                    <button name="action_demarrer"  string="Démarrer"  type="object" class="btn-primary"
+
+                    <button name="action_demarrer"
+                            string="Démarrer"
+                            type="object"
+                            class="btn-primary"
                             invisible="state != 'actif'"/>
-                    <button name="action_suspendre" string="Suspendre" type="object" class="btn-warning"
-                            invisible="state not in ('actif','en_cours')"/>
-                    <button name="action_resilier"  string="Résilier"  type="object" class="btn-danger"
-                            invisible="state in ('resilie','expire','draft')"/>
-                    <field name="state" widget="statusbar"
+
+                    <button name="action_creer_bcg"
+                            string="Créer BCG"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state not in ('actif', 'en_cours') or commande_globale_id"/>
+
+                    <button name="action_resilier"
+                            string="Résilier"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('resilie', 'expire', 'draft')"/>
+
+                    <field name="state"
+                           widget="statusbar"
                            statusbar_visible="draft,actif,en_cours,expire"/>
                 </header>
+
                 <sheet>
-                    <div class="oe_title">
-                        <label for="name"/>
-                        <h1><field name="name"/></h1>
+
+                    <!-- ── Boutons statistiques (smart buttons) ── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_bcg"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                invisible="commande_globale_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="commande_globale_count"/>
+                                </span>
+                                <span class="o_stat_text">BCG</span>
+                            </div>
+                        </button>
                     </div>
 
-                    <group string="Client">
-                        <field name="client_id"/>
+                    <!-- Champs techniques cachés -->
+                    <field name="client_type"         invisible="1"/>
+                    <field name="commande_globale_id" invisible="1"/>
+
+                    <!-- ── Titre du contrat ── -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="N° Contrat"/>
+                        </h1>
+                    </div>
+
+                    <!-- ── Informations principales ── -->
+                    <group>
+
+                        <!-- Bloc Client / Projet -->
+                        <group string="Client">
+                            <!--
+                                En mode lecture (state != draft) : lien bleu natif Odoo cliquable.
+                                En brouillon : champ éditable normalement.
+                            -->
+                            <field name="client_id"
+                                   string="Client"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+
+                            <field name="project_id"
+                                   string="Projet"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True}"
+                                   domain="[('client_id', '=', client_id)]"
+                                   invisible="client_type != 'realisation'"
+                                   required="client_type == 'realisation'"/>
+                        </group>
+
+                        <!-- Bloc Période -->
+                        <group string="Période">
+                            <field name="date_start" string="Date de début"/>
+                            <field name="date_end"   string="Date de fin"/>
+                        </group>
+
                     </group>
 
-                    <group string="Période du contrat">
+                    <!-- ── Conditions de paiement ── -->
+                    <group string="Conditions de paiement">
                         <group>
-                            <field name="date_start"/>
-                            <field name="date_end"/>
+                            <field name="mode_paiement"     string="Mode de paiement"/>
+                            <field name="modalite_paiement" string="Modalité"/>
+                            <field name="delai_paiement"    string="Délai (jours)"/>
                         </group>
                     </group>
 
-                    <group string="Motif" invisible="state not in ('suspendu','resilie')">
-                        <field name="motif_suspension" nolabel="1"/>
+                    <!-- ── Motif de résiliation (visible uniquement si résilié) ── -->
+                    <group string="Motif de résiliation"
+                           invisible="state not in ('resilie',)">
+                        <field name="motif_suspension" nolabel="1" readonly="1"/>
                     </group>
 
+                    <!-- ── Onglets ── -->
                     <notebook>
-                        <page string="Produits commandés">
-                            <field name="line_ids" readonly="state in ('expire','resilie')">
+
+                        <!-- Onglet 1 : Produits commandés -->
+                        <page string="Produits commandés" name="produits">
+                            <field name="line_ids" readonly="state in ('expire', 'resilie')">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="product_id"
-                                           domain="[('product_tmpl_id.is_gica_product','=',True)]"/>
-                                    <field name="quantity" string="Quantité (T)"/>
+                                    <field name="sequence"        widget="handle"/>
+                                    <field name="product_tmpl_id"
+                                           string="Produit"
+                                           domain="[('is_gica_product', '=', True)]"/>
+                                    <field name="quantity"        string="Quantité"/>
+                                    <field name="uom"             string="Unité"/>
+                                    <field name="quantity_tonne"  string="Qté (T)" readonly="1"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Observations">
-                            <field name="observations" placeholder="Notes, clauses particulières..."/>
+
+                        <!-- Onglet 2 : Observations -->
+                        <page string="Observations" name="observations">
+                            <field name="observations"
+                                   placeholder="Notes, clauses particulières, conditions spéciales..."/>
                         </page>
+
                     </notebook>
+
                 </sheet>
+
+                <!-- ── Fil de discussion ── -->
                 <chatter/>
+
             </form>
         </field>
     </record>
 
-    <!-- Recherche -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE RECHERCHE — Filtres et regroupements
+    ═══════════════════════════════════════════════════════════ -->
     <record id="view_gica_client_contract_search" model="ir.ui.view">
         <field name="name">gica.client.contract.search</field>
         <field name="model">gica.client.contract</field>
         <field name="arch" type="xml">
             <search string="Rechercher un contrat">
+
+                <!-- Champs de recherche rapide -->
                 <field name="name"      string="N° Contrat"/>
                 <field name="client_id" string="Client"/>
-                <field name="line_ids"  string="Produit"/>
+
                 <separator/>
-                <filter name="actif"    string="Actifs"    domain="[('state','=','actif')]"/>
-                <filter name="en_cours" string="En cours"  domain="[('state','=','en_cours')]"/>
-                <filter name="suspendu" string="Suspendus" domain="[('state','=','suspendu')]"/>
-                <filter name="expire"   string="Expirés"   domain="[('state','=','expire')]"/>
-                <filter name="resilie"  string="Résiliés"  domain="[('state','=','resilie')]"/>
-                <separator/>
-                <filter name="beton"   string="GICA BÉTON"
-                        domain="[('line_ids.type_ciment','in',['cem_ii_325','cem_ii_425_n','cem_ii_425_r'])]"/>
-                <filter name="moudhad" string="GICA MOUDHAD"
-                        domain="[('line_ids.type_ciment','in',['cem_i_425_crs','cem_i_525'])]"/>
-                <filter name="petrole" string="GICA PÉTROLE"
-                        domain="[('line_ids.type_ciment','=','well_cement_g')]"/>
-                <filter name="clinker" string="Clinker"
-                        domain="[('line_ids.type_ciment','=','clinker')]"/>
+
+                <!-- Filtres par statut -->
+                <filter name="draft"    string="Brouillon" domain="[('state', '=', 'draft')]"/>
+                <filter name="actif"    string="Actifs"    domain="[('state', '=', 'actif')]"/>
+                <filter name="en_cours" string="En cours"  domain="[('state', '=', 'en_cours')]"/>
+                <filter name="expire"   string="Expirés"   domain="[('state', '=', 'expire')]"/>
+                <filter name="resilie"  string="Résiliés"  domain="[('state', '=', 'resilie')]"/>
+
+                <!-- Regroupements -->
                 <group expand="0" string="Regrouper par">
-                    <filter name="group_client" string="Client" context="{'group_by':'client_id'}"/>
-                    <filter name="group_state"  string="Statut" context="{'group_by':'state'}"/>
+                    <filter name="group_client" string="Client" context="{'group_by': 'client_id'}"/>
+                    <filter name="group_state"  string="Statut" context="{'group_by': 'state'}"/>
                 </group>
+
             </search>
         </field>
     </record>
 
-    <!-- Action -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTION — Fenêtre principale Contrats
+    ═══════════════════════════════════════════════════════════ -->
     <record id="action_gica_client_contract" model="ir.actions.act_window">
         <field name="name">Contrats</field>
         <field name="res_model">gica.client.contract</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_gica_client_contract_search"/>
+        <field name="context">{'search_default_en_cours': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Créer un nouveau contrat</p>
-            <p>Gérez ici les contrats commerciaux avec vos clients GICA.</p>
+            <p class="o_view_nocontent_smiling_face">Aucun contrat enregistré</p>
+            <p>Créez un contrat commercial pour un client GICA.</p>
         </field>
     </record>
 

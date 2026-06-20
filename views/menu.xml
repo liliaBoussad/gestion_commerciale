@@ -2,7 +2,9 @@
 <odoo>
     <data>
 
-        <!-- ── Clients GICA ── -->
+        <!-- ══════════════════════════════════════════════════
+             Clients GICA
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_clients_root"
                   name="Clients GICA"
                   parent="sale.sale_menu_root"
@@ -11,7 +13,7 @@
         <menuitem id="menu_ventes_gica_client"
                   name="Liste des clients"
                   parent="menu_ventes_gica_clients_root"
-                  action="action_gica_client"
+                  action="action_gica_clients"
                   sequence="10"/>
 
         <menuitem id="menu_ventes_gica_contrat"
@@ -38,50 +40,114 @@
                   action="action_gica_client_classification"
                   sequence="50"/>
 
+        <menuitem id="menu_ventes_gica_documents"
+                  name="Dossiers clients"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_client_document"
+                  sequence="60"/>
+
+        <menuitem id="menu_ventes_gica_document_type"
+                  name="Documents à fournir"
+                  parent="menu_ventes_gica_clients_root"
+                  action="action_gica_document_type"
+                  sequence="70"/>
+
         <menuitem id="menu_ventes_gica_client_nature"
                   name="Natures des clients"
                   parent="menu_ventes_gica_clients_root"
                   action="action_gica_client_nature"
-                  sequence="60"/>
+                  sequence="80"/>
 
-        <!-- ── Commandes (intégrées dans menu natif Odoo) ── -->
+        <!-- ══════════════════════════════════════════════════
+             Commandes — menu natif Odoo
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_commande_globale"
                   name="Commandes Globales"
                   parent="sale.sale_order_menu"
                   action="action_gica_commande_globale"
                   sequence="15"/>
 
+        <menuitem id="menu_ventes_gica_bon_circulation_commandes"
+                  name="Bons de Circulation"
+                  parent="sale.sale_order_menu"
+                  action="action_gica_bon_circulation"
+                  sequence="20"/>
+
+        <!-- ══════════════════════════════════════════════════
+             Planification Ciment
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_ventes_gica_planification_root"
+                  name="Planification Ciment"
+                  parent="sale.sale_menu_root"
+                  sequence="6"/>
+
         <menuitem id="menu_ventes_gica_planification_client"
                   name="Planifications Clients"
-                  parent="sale.sale_order_menu"
+                  parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_client"
-                  sequence="20"/>
+                  sequence="10"/>
 
         <menuitem id="menu_ventes_gica_planification_usine"
                   name="Planifications Usine"
-                  parent="sale.sale_order_menu"
+                  parent="menu_ventes_gica_planification_root"
                   action="action_gica_planification_usine"
-                  sequence="25"/>
+                  sequence="20"/>
 
-        <!-- ── Documents GICA ── -->
-        <menuitem id="menu_ventes_gica_documents_root"
-                  name="Documents GICA"
+        <menuitem id="menu_ventes_gica_planification_calendar"
+                  name="Calendrier"
+                  parent="menu_ventes_gica_planification_root"
+                  action="action_gica_planification_calendar"
+                  sequence="30"/>
+
+        <menuitem id="menu_ventes_gica_planification_config"
+                  name="Configuration Planification"
+                  parent="menu_ventes_gica_planification_root"
+                  action="action_gica_planification_config"
+                  sequence="40"/>
+
+       
+
+        <!-- ══════════════════════════════════════════════════
+             Ventes Clinker
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_clinker_ventes_root"
+                  name="Ventes Clinker"
                   parent="sale.sale_menu_root"
                   sequence="7"/>
 
-        <menuitem id="menu_ventes_gica_documents"
-                  name="Dossiers clients"
-                  parent="menu_ventes_gica_documents_root"
-                  action="action_gica_client_document"
+        <menuitem id="menu_clinker_ventes_bcg"
+                  name="BCG Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_global_order"
                   sequence="10"/>
 
-        <menuitem id="menu_ventes_gica_document_type"
-                  name="Documents à fournir"
-                  parent="menu_ventes_gica_documents_root"
-                  action="action_gica_document_type"
+        <menuitem id="menu_clinker_ventes_planning"
+                  name="Planification Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_planning"
                   sequence="20"/>
 
-        <!-- ── Classifications GICA ── -->
+        <menuitem id="menu_clinker_ventes_approbation"
+                  name="Approbation Planning"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_approbation_wizard"
+                  sequence="30"/>
+
+        <menuitem id="menu_clinker_ventes_commandes"
+                  name="Commandes Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_commandes"
+                  sequence="40"/>
+
+        <menuitem id="menu_clinker_ventes_cadence"
+                  name="Cadence Usine Clinker"
+                  parent="menu_clinker_ventes_root"
+                  action="action_clinker_cadence_readonly"
+                  sequence="50"/>
+
+        <!-- ══════════════════════════════════════════════════
+             Classifications GICA
+        ══════════════════════════════════════════════════ -->
         <menuitem id="menu_ventes_gica_config_root"
                   name="Classifications GICA"
                   parent="sale.sale_menu_root"
@@ -104,6 +170,31 @@
                   parent="menu_ventes_gica_config_root"
                   action="action_gica_scoring_category"
                   sequence="40"/>
+
+        <!-- ══════════════════════════════════════════════════
+             MODULE PRODUCTION CLINKER — menu racine indépendant
+        ══════════════════════════════════════════════════ -->
+        <menuitem id="menu_production_root"
+                  name="Production"
+                  web_icon="stock,static/description/icon.png"
+                  sequence="50"/>
+
+        <menuitem id="menu_production_clinker_root"
+                  name="Clinker"
+                  parent="menu_production_root"
+                  sequence="10"/>
+
+        <menuitem id="menu_production_clinker_bcg"
+                  name="BCG Clinker"
+                  parent="menu_production_clinker_root"
+                  action="action_clinker_global_order_production"
+                  sequence="10"/>
+
+        <menuitem id="menu_production_clinker_cadence"
+                  name="Cadence Usine Clinker"
+                  parent="menu_production_clinker_root"
+                  action="action_clinker_cadence"
+                  sequence="20"/>
 
     </data>
 </odoo>

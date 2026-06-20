@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Formulaire demande de devis -->
+    <template id="portail_gica_devis_demande" name="Portail GICA Demande Devis">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+
+                <t t-set="erreur" t-value="request.params.get('erreur')"/>
+                <t t-if="erreur == 'lignes_vides'">
+                    <div class="alert alert-danger">
+                        Veuillez ajouter au moins un produit avec conditionnement et quantite.
+                    </div>
+                </t>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fa fa-file-text"/> Demande de Devis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="alert alert-info small mb-4">
+                            <i class="fa fa-info-circle"/>
+                            Indiquez les produits et quantites souhaites.
+                            Votre commercial etablira le devis et vous le communiquera.
+                        </div>
+
+                        <form method="POST" action="/my/gica/devis/soumettre" id="form_devis">
+                            <input type="hidden" name="csrf_token"
+                                   t-att-value="request.csrf_token()"/>
+
+                            <!-- Tableau lignes -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0">Produits souhaites</h6>
+                                <button type="button" class="btn btn-sm btn-success"
+                                        id="btn_ajouter_ligne"
+                                        style="pointer-events:auto;">
+                                    <i class="fa fa-plus"/> Ajouter un produit
+                                </button>
+                            </div>
+
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered" id="table_lignes">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Produit <span class="text-danger">*</span></th>
+                                            <th>Conditionnement <span class="text-danger">*</span></th>
+                                            <th>Quantite (T) <span class="text-danger">*</span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_lignes">
+                                        <tr class="ligne-devis" data-index="0">
+                                            <td>
+                                                <select name="product_0"
+                                                        class="form-select form-select-sm select-product"
+                                                        required="1"
+                                                        style="pointer-events:auto;">
+                                                    <option value="">-- Choisir --</option>
+                                                    <t t-foreach="produits" t-as="prod">
+                                                        <option t-att-value="prod.id">
+                                                            <t t-esc="prod.name"/>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select name="cond_0"
+                                                        class="form-select form-select-sm select-cond"
+                                                        required="1"
+                                                        style="pointer-events:auto;">
+                                                    <option value="">-- Choisir produit --</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="number" name="qty_0"
+                                                       step="0.01" min="0.01"
+                                                       class="form-control form-control-sm"
+                                                       style="pointer-events:auto;"
+                                                       required="1"/>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger btn-suppr"
+                                                        style="pointer-events:auto;">
+                                                    <i class="fa fa-trash"/>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Observations -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Observations</label>
+                                <textarea name="observations" class="form-control" rows="3"
+                                          placeholder="Precisions sur votre besoin..."
+                                          style="pointer-events:auto;"/>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"/> Soumettre la demande
+                                </button>
+                                <a href="/my/quotes" class="btn btn-secondary">Annuler</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script type="text/javascript">
+            //<![CDATA[
+            document.addEventListener('DOMContentLoaded', function () {
+                var tbody      = document.getElementById('tbody_lignes');
+                var btnAjouter = document.getElementById('btn_ajouter_ligne');
+                var csrfToken  = document.querySelector('[name=csrf_token]').value;
+                var lineIndex  = 1;
+
+                var selectProd0     = tbody.querySelector('.select-product');
+                var produitOptions  = selectProd0 ? selectProd0.innerHTML : '';
+
+                function buildCondOptions(conds) {
+                    var opts = '<option value="">-- Choisir --</option>';
+                    conds.forEach(function (c) {
+                        opts += '<option value="' + c.id + '">' + c.name + '</option>';
+                    });
+                    return opts;
+                }
+
+                function attachListeners(row) {
+                    var selProd  = row.querySelector('.select-product');
+                    var selCond  = row.querySelector('.select-cond');
+                    var btnSuppr = row.querySelector('.btn-suppr');
+
+                    if (selProd) {
+                        selProd.addEventListener('change', function () {
+                            var productId = this.value;
+                            selCond.innerHTML = '<option value="">Chargement...</option>';
+                            if (!productId) {
+                                selCond.innerHTML = '<option value="">-- Choisir produit --</option>';
+                                return;
+                            }
+                            fetch('/my/gica/devis/conditionnements', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0', method: 'call', id: 1,
+                                    params: { product_tmpl_id: parseInt(productId) },
+                                }),
+                            })
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                var conds = (data.result || {}).conditionnements || [];
+                                selCond.innerHTML = buildCondOptions(conds);
+                            })
+                            .catch(function () {
+                                selCond.innerHTML = '<option value="">Erreur</option>';
+                            });
+                        });
+                    }
+
+                    if (btnSuppr) {
+                        btnSuppr.addEventListener('click', function () {
+                            var rows = tbody.querySelectorAll('.ligne-devis');
+                            if (rows.length > 1) row.remove();
+                        });
+                    }
+                }
+
+                tbody.querySelectorAll('.ligne-devis').forEach(attachListeners);
+
+                if (btnAjouter) {
+                    btnAjouter.addEventListener('click', function () {
+                        var idx = lineIndex++;
+                        var row =
+                            '<tr class="ligne-devis" data-index="' + idx + '">' +
+                            '<td><select name="product_' + idx + '" class="form-select form-select-sm select-product" required style="pointer-events:auto;">' +
+                            produitOptions + '</select></td>' +
+                            '<td><select name="cond_' + idx + '" class="form-select form-select-sm select-cond" required style="pointer-events:auto;"><option value="">-- Choisir produit --</option></select></td>' +
+                            '<td><input type="number" name="qty_' + idx + '" step="0.01" min="0.01" class="form-control form-control-sm" style="pointer-events:auto;" required/></td>' +
+                            '<td><button type="button" class="btn btn-sm btn-danger btn-suppr" style="pointer-events:auto;"><i class="fa fa-trash"/></button></td>' +
+                            '</tr>';
+                        tbody.insertAdjacentHTML('beforeend', row);
+                        attachListeners(tbody.lastElementChild);
+                    });
+                }
+            });
+            //]]>
+            </script>
+        </t>
+    </template>
+
+</odoo>

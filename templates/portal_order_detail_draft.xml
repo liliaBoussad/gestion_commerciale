@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Masquer le montant total dans le sidebar quand brouillon -->
+    <template id="sale_order_portal_template_draft_hide_amount"
+              inherit_id="sale.sale_order_portal_template">
+
+        <xpath expr="//h2[@t-field='sale_order.amount_total']" position="attributes">
+            <attribute name="t-if">sale_order.state != 'draft'</attribute>
+        </xpath>
+
+        <!-- Message explicatif si brouillon -->
+        <xpath expr="//t[@t-set='title']" position="after">
+            <t t-if="sale_order.state == 'draft'">
+                <div class="alert alert-info mt-2 mb-0 d-print-none">
+                    <i class="fa fa-info-circle"/>
+                    Votre demande est en attente de traitement par votre commercial.
+                </div>
+            </t>
+        </xpath>
+
+    </template>
+
+    <!-- Masquer Prix unitaire / TVA / Montant / Total dans le contenu -->
+    <template id="sale_order_portal_content_draft_hide_prices"
+              inherit_id="sale.sale_order_portal_content">
+
+        <!-- Masquer le bloc total -->
+        <xpath expr="//div[@id='total']" position="attributes">
+            <attribute name="t-if">sale_order.state != 'draft'</attribute>
+        </xpath>
+
+    </template>
+
+</odoo>

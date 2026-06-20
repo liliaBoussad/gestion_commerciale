@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue Production — avec Valider et Bloquer -->
+    <record id="view_clinker_global_order_form" model="ir.ui.view">
+        <field name="name">clinker.global.order.form</field>
+        <field name="model">clinker.global.order</field>
+        <field name="arch" type="xml">
+            <form string="Bon de Commande Global Clinker">
+                <header>
+                    <button name="action_soumettre"
+                            string="Soumettre"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_activer"
+                            string="Valider"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'soumis'"/>
+                    <button name="action_bloquer"
+                            string="Bloquer"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state != 'soumis'"/>
+                    <button name="action_resoumettre"
+                            string="Re-soumettre"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'bloque'"/>
+                    <button name="action_terminer"
+                            string="Terminer"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'actif'"
+                            confirm="Confirmer la cloture manuelle du BCG Clinker ?"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="brouillon,soumis,actif,termine"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-calendar"
+                                type="object"
+                                name="action_voir_planifications"
+                                invisible="planning_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planning_count"/>
+                                </span>
+                                <span class="o_stat_text">Planifications</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bc_quotidiens"
+                                invisible="bc_quotidien_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="bc_quotidien_count"/>
+                                </span>
+                                <span class="o_stat_text">BC Quotidiens</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <field name="expiration_proche" invisible="1"/>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'bloque'">
+                        BCG bloque —
+                        <field name="motif_refus" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not expiration_proche">
+                        Ce BCG Clinker expire le
+                        <field name="date_expiration" readonly="1" nolabel="1"/>.
+                        Pensez a renouveler avant expiration.
+                    </div>
+
+                    <group>
+                        <group string="Client">
+                            <field name="client_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True, 'no_open': False}"/>
+                        </group>
+                        <group string="Validite">
+                            <field name="date_commande"
+                                   readonly="state != 'brouillon'"/>
+                            <field name="date_expiration"
+                                   readonly="state != 'brouillon'"/>
+                        </group>
+                    </group>
+
+                    <group string="Tarification">
+                        <group>
+                            <field name="pricelist_id"
+                                   options="{'no_create': True}"
+                                   readonly="state != 'brouillon'"/>
+                        </group>
+                    </group>
+
+                    <group string="Motif de blocage"
+                           invisible="state not in ('bloque', 'soumis')">
+                        <field name="motif_refus"
+                               nolabel="1"
+                               placeholder="Saisissez le motif avant de bloquer..."/>
+                    </group>
+
+                    <notebook>
+                        <page string="Lignes de commande">
+                            <field name="line_ids"
+                                   readonly="state != 'brouillon'">
+                                <list editable="bottom">
+                                    <field name="sequence"        widget="handle"/>
+                                    <field name="product_tmpl_id" string="Produit"
+                                           domain="[('type_ciment', '=', 'clinker')]"/>
+                                    <field name="product_id"      string="Variante"
+                                           readonly="1" optional="hide"/>
+                                    <field name="conditionnement_label" string="Conditionnement"
+                                           readonly="1"/>
+                                    <field name="quantite_autorisee" string="Qte autorisee (T)"/>
+                                    <field name="prix_unitaire"      string="Prix unit. (DA)"/>
+                                    <field name="montant_total"      string="Montant (DA)"
+                                           readonly="1"/>
+                                    <field name="quantite_livree"    string="Qte livree (T)"
+                                           readonly="1"/>
+                                    <field name="quantite_restante"  string="Qte restante (T)"
+                                           readonly="1"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="montant_total"
+                                       string="Montant total (DA)"
+                                       widget="monetary"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Commercial — sans Valider ni Bloquer -->
+    <record id="view_clinker_global_order_form_commercial" model="ir.ui.view">
+        <field name="name">clinker.global.order.form.commercial</field>
+        <field name="model">clinker.global.order</field>
+        <field name="arch" type="xml">
+            <form string="Bon de Commande Global Clinker">
+                <header>
+                    <button name="action_soumettre"
+                            string="Soumettre"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_resoumettre"
+                            string="Re-soumettre"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'bloque'"/>
+                    <button name="action_terminer"
+                            string="Terminer"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'actif'"
+                            confirm="Confirmer la cloture manuelle du BCG Clinker ?"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="brouillon,soumis,actif,termine"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-calendar"
+                                type="object"
+                                name="action_voir_planifications"
+                                invisible="planning_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="planning_count"/>
+                                </span>
+                                <span class="o_stat_text">Planifications</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bc_quotidiens"
+                                invisible="bc_quotidien_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="bc_quotidien_count"/>
+                                </span>
+                                <span class="o_stat_text">BC Quotidiens</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <field name="expiration_proche" invisible="1"/>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'bloque'">
+                        BCG bloque —
+                        <field name="motif_refus" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not expiration_proche">
+                        Ce BCG Clinker expire le
+                        <field name="date_expiration" readonly="1" nolabel="1"/>.
+                        Pensez a renouveler avant expiration.
+                    </div>
+
+                    <group>
+                        <group string="Client">
+                            <field name="client_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True, 'no_open': False}"/>
+                        </group>
+                        <group string="Validite">
+                            <field name="date_commande"
+                                   readonly="state != 'brouillon'"/>
+                            <field name="date_expiration"
+                                   readonly="state != 'brouillon'"/>
+                        </group>
+                    </group>
+
+                    <group string="Tarification">
+                        <group>
+                            <field name="pricelist_id"
+                                   options="{'no_create': True}"
+                                   readonly="state != 'brouillon'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Lignes de commande">
+                            <field name="line_ids"
+                                   readonly="state != 'brouillon'">
+                                <list editable="bottom">
+                                    <field name="sequence"        widget="handle"/>
+                                    <field name="product_tmpl_id" string="Produit"
+                                           domain="[('type_ciment', '=', 'clinker')]"/>
+                                    <field name="conditionnement_label" string="Conditionnement"
+                                           readonly="1"/>
+                                    <field name="quantite_autorisee" string="Qte autorisee (T)"/>
+                                    <field name="prix_unitaire"      string="Prix unit. (DA)"/>
+                                    <field name="montant_total"      string="Montant (DA)"
+                                           readonly="1"/>
+                                    <field name="quantite_livree"    string="Qte livree (T)"
+                                           readonly="1"/>
+                                    <field name="quantite_restante"  string="Qte restante (T)"
+                                           readonly="1"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="montant_total"
+                                       string="Montant total (DA)"
+                                       widget="monetary"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_clinker_global_order_list" model="ir.ui.view">
+        <field name="name">clinker.global.order.list</field>
+        <field name="model">clinker.global.order</field>
+        <field name="arch" type="xml">
+            <list string="BCG Clinker"
+                  decoration-success="state == 'actif'"
+                  decoration-info="state == 'soumis'"
+                  decoration-warning="expiration_proche == True"
+                  decoration-danger="state == 'bloque'"
+                  decoration-muted="state == 'termine'">
+                <field name="name"              string="Reference"/>
+                <field name="client_id"         string="Client"/>
+                <field name="date_commande"     string="Date commande"/>
+                <field name="date_expiration"   string="Expiration"/>
+                <field name="pricelist_id"      string="Liste de prix"/>
+                <field name="total_autorise"    string="Total (T)"/>
+                <field name="total_livre"       string="Livre (T)"/>
+                <field name="total_restant"     string="Reste (T)"/>
+                <field name="montant_total"     string="Montant (DA)"/>
+                <field name="planning_count"    string="Planifs"/>
+                <field name="expiration_proche" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'actif'"
+                       decoration-info="state == 'soumis'"
+                       decoration-danger="state == 'bloque'"
+                       decoration-muted="state == 'termine'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_clinker_global_order_search" model="ir.ui.view">
+        <field name="name">clinker.global.order.search</field>
+        <field name="model">clinker.global.order</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un BCG Clinker">
+                <field name="name"         string="Reference"/>
+                <field name="client_id"    string="Client"/>
+                <field name="pricelist_id" string="Liste de prix"/>
+                <separator/>
+                <filter name="brouillon" string="Brouillon"
+                        domain="[('state','=','brouillon')]"/>
+                <filter name="soumis"    string="Soumis"
+                        domain="[('state','=','soumis')]"/>
+                <filter name="actif"     string="Actifs"
+                        domain="[('state','=','actif')]"/>
+                <filter name="bloque"    string="Bloques"
+                        domain="[('state','=','bloque')]"/>
+                <filter name="termine"   string="Termines"
+                        domain="[('state','=','termine')]"/>
+                <filter name="expiration_proche" string="Expiration proche"
+                        domain="[('expiration_proche','=',True)]"/>
+                <separator/>
+                <filter name="en_cours"  string="En cours"
+                        domain="[('state', 'in', ['soumis', 'actif'])]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_client"    string="Client"
+                            context="{'group_by': 'client_id'}"/>
+                    <filter name="group_pricelist" string="Liste de prix"
+                            context="{'group_by': 'pricelist_id'}"/>
+                    <filter name="group_state"     string="Statut"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_date"      string="Mois"
+                            context="{'group_by': 'date_commande:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Commercial — vue sans Valider/Bloquer -->
+    <record id="action_clinker_global_order" model="ir.actions.act_window">
+        <field name="name">BCG Clinker</field>
+        <field name="res_model">clinker.global.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_clinker_global_order_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_clinker_global_order_form_commercial')})]"/>
+        <field name="search_view_id" ref="view_clinker_global_order_search"/>
+        <field name="context">{'search_default_actif': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun BCG Clinker enregistre</p>
+            <p>Creez un BCG Clinker pour un client GICA.</p>
+        </field>
+    </record>
+
+    <!-- Action Production — vue avec Valider/Bloquer -->
+    <record id="action_clinker_global_order_production" model="ir.actions.act_window">
+        <field name="name">BCG Clinker — Production</field>
+        <field name="res_model">clinker.global.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_clinker_global_order_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_clinker_global_order_form')})]"/>
+        <field name="domain">[('state', '=', 'soumis')]</field>
+        <field name="search_view_id" ref="view_clinker_global_order_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun BCG en attente de traitement.</p>
+        </field>
+    </record>
+
+    <record id="action_clinker_commandes" model="ir.actions.act_window">
+        <field name="name">Commandes Clinker</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_clinker', '=', True)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune commande clinker.</p>
+        </field>
+    </record>
+
+</odoo>

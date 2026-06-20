@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- FORMULAIRE -->
+    <record id="view_clinker_cadence_form" model="ir.ui.view">
+        <field name="name">clinker.cadence.form</field>
+        <field name="model">clinker.cadence</field>
+        <field name="arch" type="xml">
+            <form string="Cadence Usine Clinker">
+                <header>
+                    <button name="action_valider" string="✅ Valider"
+                            type="object" class="btn-success"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_brouillon" string="↩️ Remettre en Brouillon"
+                            type="object" class="btn-secondary"
+                            invisible="state != 'valide'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,valide,expire"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Cadence">
+                            <field name="date_application"/>
+                            <field name="quantite"/>
+                            <field name="marge_erreur"/>
+                        </group>
+                        <group string="Limites calculées">
+                            <field name="quantite_min" readonly="1"/>
+                            <field name="quantite_max" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Observations">
+                        <field name="observations" nolabel="1"
+                               placeholder="Notes sur cette cadence..."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- LISTE -->
+    <record id="view_clinker_cadence_list" model="ir.ui.view">
+        <field name="name">clinker.cadence.list</field>
+        <field name="model">clinker.cadence</field>
+        <field name="arch" type="xml">
+            <list string="Cadences Usine Clinker"
+                  decoration-success="state == 'valide'"
+                  decoration-muted="state == 'expire'"
+                  decoration-info="state == 'brouillon'">
+                <field name="date_application" string="Date d'application"/>
+                <field name="quantite"         string="Quantité (T)/jour"/>
+                <field name="marge_erreur"     string="Marge (%)"/>
+                <field name="quantite_min"     string="Min (T)"/>
+                <field name="quantite_max"     string="Max (T)"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'valide'"
+                       decoration-muted="state == 'expire'"
+                       decoration-info="state == 'brouillon'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- RECHERCHE -->
+    <record id="view_clinker_cadence_search" model="ir.ui.view">
+        <field name="name">clinker.cadence.search</field>
+        <field name="model">clinker.cadence</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une cadence">
+                <filter name="valide"    string="Validées"  domain="[('state','=','valide')]"/>
+                <filter name="brouillon" string="Brouillon" domain="[('state','=','brouillon')]"/>
+                <filter name="expire"    string="Expirées"  domain="[('state','=','expire')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION PRODUCTION — création/modification -->
+    <record id="action_clinker_cadence" model="ir.actions.act_window">
+        <field name="name">Cadence Usine Clinker</field>
+        <field name="res_model">clinker.cadence</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_clinker_cadence_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune cadence — créez-en une.</p>
+        </field>
+    </record>
+
+    <!-- ACTION COMMERCIAL — lecture seule, uniquement validées -->
+    <record id="action_clinker_cadence_readonly" model="ir.actions.act_window">
+        <field name="name">Cadence Usine Clinker</field>
+        <field name="res_model">clinker.cadence</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','valide')]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune cadence active.</p>
+        </field>
+    </record>
+
+</odoo>

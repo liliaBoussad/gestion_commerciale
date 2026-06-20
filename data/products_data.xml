@@ -1,204 +1,192 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
 
-    <!-- ══════════════════════════════════════════════════════
-         Produits GICA — product.template
-         conditionnement_gica maintenant sur product.template
-         ══════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════
+         ATTRIBUT CONDITIONNEMENT
+         ══════════════════════════════════════════════ -->
+    <record id="product_attribute_conditionnement" model="product.attribute">
+        <field name="name">Conditionnement</field>
+        <field name="display_type">radio</field>
+        <field name="create_variant">always</field>
+        <field name="sequence">20</field>
+    </record>
 
-    <!-- CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé -->
-    <record id="product_cem_i_425_sac_50kg_fardelise" model="product.template">
-        <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg Fardelisé</field>
+    <!-- Valeurs conditionnement -->
+    <record id="attr_val_sac_25kg" model="product.attribute.value">
+        <field name="name">Sac 25kg</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_sac_50kg" model="product.attribute.value">
+        <field name="name">Sac 50kg</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_sac_25kg_fardelise" model="product.attribute.value">
+        <field name="name">Sac 25kg Fardelise</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_sac_50kg_fardelise" model="product.attribute.value">
+        <field name="name">Sac 50kg Fardelise</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_vrac" model="product.attribute.value">
+        <field name="name">Vrac</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_big_bag_client" model="product.attribute.value">
+        <field name="name">Big Bag Client</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+    <record id="attr_val_big_bag_scaek" model="product.attribute.value">
+        <field name="name">Big Bag Scaek</field>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+    </record>
+
+    <!-- ══════════════════════════════════════════════
+         PRODUITS GICA
+         ══════════════════════════════════════════════ -->
+
+    <!-- CEM I 42.5 N-LH/SR5 -->
+    <record id="product_tmpl_cem_i_425" model="product.template">
+        <field name="name">CEM I 42.5 N-LH/SR5</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_425_crs</field>
-        <field name="conditionnement_gica">sac_50kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">9460.00</field>
-        <field name="default_code">CEM_I_425_SAC_50_F</field>
+        <field name="default_code">CEM_I_425</field>
+    </record>
+    <record id="product_tmpl_cem_i_425_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_i_425"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_50kg'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+        ])]"/>
     </record>
 
-    <!-- CEM I 42.5 N-LH/SR5 — Sac 50 kg -->
-    <record id="product_cem_i_425_sac_50kg" model="product.template">
-        <field name="name">CEM I 42.5 N-LH/SR5 — Sac 50 kg</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_i_425_crs</field>
-        <field name="conditionnement_gica">sac_50kg</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">9300.00</field>
-        <field name="default_code">CEM_I_425_SAC_50</field>
-    </record>
-
-    <!-- CEM I 42.5 N-LH/SR5 — Vrac -->
-    <record id="product_cem_i_425_vrac" model="product.template">
-        <field name="name">CEM I 42.5 N-LH/SR5 — Vrac</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_i_425_crs</field>
-        <field name="conditionnement_gica">vrac</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">8600.00</field>
-        <field name="default_code">CEM_I_425_VRAC</field>
-    </record>
-
-    <!-- CEM I 52.5 N-SR5 — Sac 50 kg Fardelisé -->
-    <record id="product_cem_i_525_sac_50kg_fardelise" model="product.template">
-        <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg Fardelisé</field>
+    <!-- CEM I 52.5 N-SR5 -->
+    <record id="product_tmpl_cem_i_525" model="product.template">
+        <field name="name">CEM I 52.5 N-SR5</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_i_525</field>
-        <field name="conditionnement_gica">sac_50kg_fardelise</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">7250.00</field>
-        <field name="default_code">CEM_I_525_SAC_50_F</field>
+        <field name="default_code">CEM_I_525</field>
+    </record>
+    <record id="product_tmpl_cem_i_525_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_i_525"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_50kg'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
+        ])]"/>
     </record>
 
-    <!-- CEM I 52.5 N-SR5 — Sac 50 kg -->
-    <record id="product_cem_i_525_sac_50kg" model="product.template">
-        <field name="name">CEM I 52.5 N-SR5 — Sac 50 kg</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_i_525</field>
-        <field name="conditionnement_gica">sac_50kg</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">7100.00</field>
-        <field name="default_code">CEM_I_525_SAC_50</field>
-    </record>
-
-    <!-- CEM I 52.5 N-SR5 — Vrac -->
-    <record id="product_cem_i_525_vrac" model="product.template">
-        <field name="name">CEM I 52.5 N-SR5 — Vrac</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_i_525</field>
-        <field name="conditionnement_gica">vrac</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">6300.00</field>
-        <field name="default_code">CEM_I_525_VRAC</field>
-    </record>
-
-    <!-- CEM II/A-L 32.5 N — Sac 25 kg -->
-    <record id="product_cem_ii_325_sac_25kg" model="product.template">
-        <field name="name">CEM II/A-L 32.5 N — Sac 25 kg</field>
+    <!-- CEM II/A-L 32.5 N -->
+    <record id="product_tmpl_cem_ii_325" model="product.template">
+        <field name="name">CEM II/A-L 32.5 N</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_325</field>
-        <field name="conditionnement_gica">sac_25kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">5750.00</field>
-        <field name="default_code">CEM_II_325_SAC_25</field>
+        <field name="default_code">CEM_II_325</field>
+    </record>
+    <record id="product_tmpl_cem_ii_325_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_ii_325"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_25kg'),
+            ref('attr_val_sac_25kg_fardelise'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+        ])]"/>
     </record>
 
-    <!-- CEM II/A-L 32.5 N — Sac 25 kg Fardelisé -->
-    <record id="product_cem_ii_325_sac_25kg_fardelise" model="product.template">
-        <field name="name">CEM II/A-L 32.5 N — Sac 25 kg Fardelisé</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_ii_325</field>
-        <field name="conditionnement_gica">sac_25kg_fardelise</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">6000.00</field>
-        <field name="default_code">CEM_II_325_SAC_25_F</field>
-    </record>
-
-    <!-- CEM II/A-L 42.5 N — Sac 25 kg -->
-    <record id="product_cem_ii_425n_sac_25kg" model="product.template">
-        <field name="name">CEM II/A-L 42.5 N — Sac 25 kg</field>
+    <!-- CEM II/A-L 42.5 N -->
+    <record id="product_tmpl_cem_ii_425n" model="product.template">
+        <field name="name">CEM II/A-L 42.5 N</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">cem_ii_425_n</field>
-        <field name="conditionnement_gica">sac_25kg</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">6600.00</field>
-        <field name="default_code">CEM_II_425N_SAC_25</field>
+        <field name="default_code">CEM_II_425N</field>
+    </record>
+    <record id="product_tmpl_cem_ii_425n_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_ii_425n"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_25kg'),
+            ref('attr_val_sac_25kg_fardelise'),
+            ref('attr_val_sac_50kg'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
+        ])]"/>
     </record>
 
-    <!-- CEM II/A-L 42.5 N — Sac 50 kg Fardelisé -->
-    <record id="product_cem_ii_425n_sac_50kg_fardelise" model="product.template">
-        <field name="name">CEM II/A-L 42.5 N — Sac 50 kg Fardelisé</field>
+    <!-- CEM II/A-L 42.5 R -->
+    <record id="product_tmpl_cem_ii_425r" model="product.template">
+        <field name="name">CEM II/A-L 42.5 R</field>
         <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_ii_425_n</field>
-        <field name="conditionnement_gica">sac_50kg_fardelise</field>
+        <field name="type_ciment">cem_ii_425_r</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">6495.00</field>
-        <field name="default_code">CEM_II_425N_SAC_50_F</field>
+        <field name="default_code">CEM_II_425R</field>
+    </record>
+    <record id="product_tmpl_cem_ii_425r_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_cem_ii_425r"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_sac_25kg'),
+            ref('attr_val_sac_25kg_fardelise'),
+            ref('attr_val_sac_50kg'),
+            ref('attr_val_sac_50kg_fardelise'),
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
+        ])]"/>
     </record>
 
-    <!-- CEM II/A-L 42.5 N — Vrac -->
-    <record id="product_cem_ii_425n_vrac" model="product.template">
-        <field name="name">CEM II/A-L 42.5 N — Vrac</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">cem_ii_425_n</field>
-        <field name="conditionnement_gica">vrac</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">5648.72</field>
-        <field name="default_code">CEM_II_425N_VRAC</field>
-    </record>
-
-    <!-- Well Cement Class G HSR — Big-Bag Sortie Usine -->
-    <record id="product_well_cement_big_bag_usine" model="product.template">
-        <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Sortie Usine</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">well_cement_g</field>
-        <field name="conditionnement_gica">big_bag_scaek</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">9500.00</field>
-        <field name="default_code">WELL_G_BB_USINE</field>
-    </record>
-
-    <!-- Well Cement Class G HSR — Big-Bag Rendu Site -->
-    <record id="product_well_cement_big_bag_site" model="product.template">
-        <field name="name">Well Cement Class G HSR — Big-Bag 1.5T Rendu Site</field>
+    <!-- Well Cement Class G HSR -->
+    <record id="product_tmpl_well_cement" model="product.template">
+        <field name="name">Well Cement Class G HSR</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">well_cement_g</field>
-        <field name="conditionnement_gica">big_bag_client</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">12500.00</field>
-        <field name="default_code">WELL_G_BB_SITE</field>
+        <field name="default_code">WELL_G</field>
+    </record>
+    <record id="product_tmpl_well_cement_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_well_cement"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [
+            ref('attr_val_vrac'),
+            ref('attr_val_big_bag_client'),
+            ref('attr_val_big_bag_scaek'),
+        ])]"/>
     </record>
 
-    <!-- Well Cement Class G HSR — Vrac -->
-    <record id="product_well_cement_vrac" model="product.template">
-        <field name="name">Well Cement Class G HSR — Vrac</field>
-        <field name="is_gica_product">True</field>
-        <field name="type_ciment">well_cement_g</field>
-        <field name="conditionnement_gica">vrac</field>
-        <field name="type">consu</field>
-        <field name="uom_id" ref="uom.product_uom_ton"/>
-        <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">8600.00</field>
-        <field name="default_code">WELL_G_VRAC</field>
-    </record>
-
-    <!-- Clinker — Vrac -->
-    <record id="product_clinker_vrac" model="product.template">
-        <field name="name">Clinker — Vrac</field>
+    <!-- Clinker -->
+    <record id="product_tmpl_clinker" model="product.template">
+        <field name="name">Clinker</field>
         <field name="is_gica_product">True</field>
         <field name="type_ciment">clinker</field>
-        <field name="conditionnement_gica">vrac</field>
         <field name="type">consu</field>
         <field name="uom_id" ref="uom.product_uom_ton"/>
         <field name="uom_po_id" ref="uom.product_uom_ton"/>
-        <field name="list_price">0.00</field>
-        <field name="default_code">CLINKER_VRAC</field>
+        <field name="default_code">CLINKER</field>
+    </record>
+    <record id="product_tmpl_clinker_attr_line" model="product.template.attribute.line">
+        <field name="product_tmpl_id" ref="product_tmpl_clinker"/>
+        <field name="attribute_id" ref="product_attribute_conditionnement"/>
+        <field name="value_ids" eval="[(6, 0, [ref('attr_val_vrac')])]"/>
     </record>
 
 </odoo>

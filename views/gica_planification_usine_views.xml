@@ -25,11 +25,16 @@
                             type="object"
                             class="btn-success"
                             invisible="state != 'en_cours'"/>
+                    <button name="action_remettre_en_cours"
+                            string="↩️ Remettre en cours"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'confirmee'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="brouillon,en_cours,confirmee"/>
                 </header>
+
                 <sheet>
-                    <!-- ── Compteurs stat buttons ── -->
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button"
                                 icon="fa-list"
@@ -86,13 +91,13 @@
                             <field name="date_debut"/>
                             <field name="date_fin" readonly="1"/>
                         </group>
-                        
                     </group>
 
                     <notebook>
-                        <page string="Détail par ligne">
-                            <field name="planification_line_ids"
-                                   readonly="1">
+
+                        <!-- Onglet 1 : Détail par ligne -->
+                        <page string="Détail par ligne" name="detail">
+                            <field name="planification_line_ids" readonly="1">
                                 <list decoration-success="state == 'validee'"
                                       decoration-danger="state == 'refusee'"
                                       decoration-warning="state == 'en_attente'">
@@ -101,18 +106,20 @@
                                            decoration-success="state == 'validee'"
                                            decoration-danger="state == 'refusee'"
                                            decoration-warning="state == 'en_attente'"/>
-                                    <field name="date_enlevement" string="Date enlèvement"/>
-                                    <field name="client_id" string="Client"/>
+                                    <field name="date_enlevement"    string="Date enlèvement"/>
+                                    <field name="client_id"          string="Client"/>
                                     <field name="commande_globale_id" string="BCG"/>
-                                    <field name="product_id" string="Produit"/>
-                                    <field name="conditionnement" string="Conditionnement"/>
-                                    <field name="nbr_paquets" string="Qté paquets"/>
-                                    <field name="rotation" string="Rotations"/>
-                                    <field name="quantity_tonne"
-                                           string="Quantité (T)"
-                                           sum="Total (T)"/>
-                                    <field name="quantity_disponible"
-                                           string="Qté restante BCG"/>
+                                    <field name="product_id"         string="Produit"/>
+                                    <!-- conditionnement_id : Many2one (refactoring Selection → Many2one) -->
+                                    <field name="conditionnement_id"
+                                            string="Conditionnement"
+                                            options="{'no_create': True, 'display_name_field': 'name'}"
+                                            domain="[('pav_attribute_line_ids.product_tmpl_id', '=', product_tmpl_id),
+                                                        ('attribute_id.name', '=', 'Conditionnement')]"/>
+                                    <field name="nbr_paquets"        string="Qté paquets"/>
+                                    <field name="rotation"           string="Rotations"/>
+                                    <field name="quantity_tonne"     string="Quantité (T)" sum="Total (T)"/>
+                                    <field name="quantity_disponible" string="Qté restante BCG"/>
                                     <button name="action_valider_ligne"
                                             string="✅ Valider"
                                             type="object"
@@ -128,36 +135,40 @@
                                             type="object"
                                             class="btn-secondary btn-sm"
                                             invisible="not sale_order_id"/>
+                                    <field name="motif_refus"
+                                            string="Motif refus"
+                                            optional="show"
+                                            readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
+                        <!-- Onglet 2 : Consolidation -->
+                        <!--
+                            consolidation_ids appartient à gica.planification.usine.
+                            Le champ 'conditionnement' ici est un Char calculé sur ce modèle
+                            → pas à modifier.
+                        -->
                         <page string="📊 Consolidation"
+                              name="consolidation"
                               invisible="state == 'brouillon'">
                             <field name="consolidation_ids" readonly="1">
                                 <list default_group_by="date_enlevement">
-                                    <field name="date_enlevement"
-                                           string="Date enlèvement"/>
-                                    <field name="product_id"
-                                           string="Produit"/>
-                                    <field name="conditionnement"
-                                           string="Conditionnement"/>
-                                    <field name="nb_lignes"
-                                           string="Nb planification"
-                                           sum="Total clients"/>
-                                    <field name="nb_rotations"
-                                           string="Rotations"
-                                           sum="Total rotations"/>
-                                    <field name="quantity_tonne"
-                                           string="Qté totale (T)"
-                                           sum="Total (T)"/>
+                                    <field name="date_enlevement" string="Date enlèvement"/>
+                                    <field name="product_id"      string="Produit"/>
+                                    <field name="conditionnement" string="Conditionnement"/>
+                                    <field name="nb_lignes"       string="Nb planification" sum="Total clients"/>
+                                    <field name="nb_rotations"    string="Rotations"        sum="Total rotations"/>
+                                    <field name="quantity_tonne"  string="Qté totale (T)"   sum="Total (T)"/>
                                 </list>
                             </field>
                         </page>
 
-                        <page string="Observations">
+                        <!-- Onglet 3 : Observations -->
+                        <page string="Observations" name="observations">
                             <field name="observations"/>
                         </page>
+
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -165,8 +176,9 @@
         </field>
     </record>
 
+
     <!-- ══════════════════════════════════════════════════
-         Liste
+         Vue Liste
     ══════════════════════════════════════════════════ -->
     <record id="view_gica_planification_usine_list" model="ir.ui.view">
         <field name="name">gica.planification.usine.list</field>
@@ -176,14 +188,13 @@
                   decoration-success="state == 'confirmee'"
                   decoration-info="state == 'en_cours'"
                   decoration-muted="state == 'brouillon'">
-                <field name="name" string="Référence"/>
-                <field name="date_debut" string="Début"/>
-                <field name="date_fin" string="Fin"/>
-                <field name="planification_count" string="Total"/>
+                <field name="name"                          string="Référence"/>
+                <field name="date_debut"                    string="Début"/>
+                <field name="date_fin"                      string="Fin"/>
+                <field name="planification_count"           string="Total"/>
                 <field name="planification_en_attente_count" string="En attente"/>
-                <field name="planification_validee_count" string="Validées"/>
-                <field name="planification_refusee_count" string="Refusées"/>
-                
+                <field name="planification_validee_count"   string="Validées"/>
+                <field name="planification_refusee_count"   string="Refusées"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'confirmee'"
                        decoration-info="state == 'en_cours'"/>
@@ -191,8 +202,9 @@
         </field>
     </record>
 
+
     <!-- ══════════════════════════════════════════════════
-         Recherche
+         Vue Recherche
     ══════════════════════════════════════════════════ -->
     <record id="view_gica_planification_usine_search" model="ir.ui.view">
         <field name="name">gica.planification.usine.search</field>
@@ -200,18 +212,16 @@
         <field name="arch" type="xml">
             <search string="Rechercher">
                 <field name="name"/>
-                <filter string="Brouillon" name="brouillon"
-                        domain="[('state','=','brouillon')]"/>
-                <filter string="En cours"  name="en_cours"
-                        domain="[('state','=','en_cours')]"/>
-                <filter string="Confirmée" name="confirmee"
-                        domain="[('state','=','confirmee')]"/>
+                <filter string="Brouillon" name="brouillon" domain="[('state', '=', 'brouillon')]"/>
+                <filter string="En cours"  name="en_cours"  domain="[('state', '=', 'en_cours')]"/>
+                <filter string="Confirmée" name="confirmee" domain="[('state', '=', 'confirmee')]"/>
                 <separator/>
                 <filter string="Aujourd'hui" name="today"
-                        domain="[('date_debut','=', context_today().strftime('%Y-%m-%d'))]"/>
+                        domain="[('date_debut', '=', context_today().strftime('%Y-%m-%d'))]"/>
             </search>
         </field>
     </record>
+
 
     <!-- ══════════════════════════════════════════════════
          Action

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Vue heritee sale.order — Onglets Clinker
+         Workflow identique au ciment :
+         Bons de circulation → Bascule → BL → Facture
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="view_sale_order_clinker_form" model="ir.ui.view">
+        <field name="name">sale.order.clinker.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//notebook" position="inside">
+
+                <!-- Onglet Bons de Circulation Clinker -->
+                <page string="Bons de Circulation"
+                      name="clinker_bons_circulation"
+                      invisible="not is_clinker or bon_circulation_count == 0">
+
+                    <!-- Stats identiques ciment -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Total rotations</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="bon_circulation_count" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border border-success rounded-3 text-center bg-success bg-opacity-10">
+                                <div class="card-body p-2">
+                                    <p class="text-success small mb-1">Terminees</p>
+                                    <p class="fw-bold mb-0 fs-5 text-success">
+                                        <field name="rotations_terminees" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Livre reellement</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="quantity_livree" readonly="1"/> T
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte toutes rotations terminees -->
+                    <div class="alert alert-success" role="alert"
+                         invisible="not toutes_rotations_terminees">
+                        <field name="toutes_rotations_terminees" invisible="1"/>
+                        Toutes les rotations sont terminees.
+                        Utilisez le bouton "Creer une facture" pour facturer.
+                    </div>
+
+                    <!--
+                        Clic sur une ligne → vue bascule directement
+                        (meme comportement que le ciment)
+                    -->
+                    <field name="bon_circulation_ids" nolabel="1"
+                           context="{'form_view_ref': 'gestion_commerciale.view_gica_bascule_form'}">
+                        <list decoration-info="state == 'transmis_tare'"
+                              decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                              decoration-success="state == 'termine'"
+                              decoration-muted="state == 'annule'">
+                            <field name="name"            string="N Bon"/>
+                            <field name="numero_rotation" string="Rotation"/>
+                            <field name="quantite_prevue" string="Qte prevue (T)"/>
+                            <field name="poids_net"       string="Poids net (T)"/>
+                            <field name="chauffeur"       string="Chauffeur"/>
+                            <field name="matricule"       string="Matricule"/>
+                            <field name="picking_id"      string="Bon de Livraison"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'transmis_tare'"
+                                   decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                                   decoration-success="state == 'termine'"
+                                   decoration-danger="state == 'annule'"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- Onglet Informations Clinker -->
+                <page string="Informations Clinker"
+                      name="clinker_info"
+                      invisible="not is_clinker">
+                    <group>
+                        <group string="References Clinker">
+                            <field name="bcg_clinker_id"
+                                   readonly="1"
+                                   options="{'no_open': False}"/>
+                            <field name="clinker_planning_id"
+                                   readonly="1"
+                                   options="{'no_open': False}"/>
+                        </group>
+                        <group string="Enlevement">
+                            <field name="date_prevue_enlevement" readonly="1"/>
+                            <field name="date_reelle_enlevement" readonly="1"/>
+                            <field name="quantity_livree"        readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Vue Liste — Commandes Clinker
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="view_sale_order_clinker_list" model="ir.ui.view">
+        <field name="name">sale.order.clinker.list</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Commandes Clinker"
+                  decoration-success="toutes_rotations_terminees"
+                  decoration-warning="not toutes_rotations_terminees and state == 'sale'">
+                <field name="name"                 string="Reference"/>
+                <field name="partner_id"           string="Client"/>
+                <field name="bcg_clinker_id"       string="BCG"/>
+                <field name="clinker_planning_id"  string="Planification"/>
+                <field name="amount_total"         string="Montant (DA)"/>
+                <field name="bon_circulation_count" string="Rotations"/>
+                <field name="rotations_terminees"  string="Terminees"/>
+                <field name="quantity_livree"      string="Livre (T)"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Action Commandes Clinker
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="action_clinker_commandes" model="ir.actions.act_window">
+        <field name="name">Commandes Clinker</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_clinker', '=', True)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_sale_order_clinker_list')}),
+        ]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune commande clinker.</p>
+            <p>Les commandes clinker sont generees automatiquement apres approbation d'une planification.</p>
+        </field>
+    </record>
+
+</odoo>

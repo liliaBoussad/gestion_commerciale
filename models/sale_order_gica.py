@@ -1,47 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
-
-
-class GicaSaleOrderLine(models.Model):
-    _inherit = 'sale.order.line'
-
-    quantity_tonne = fields.Float(
-        string='Quantité (T)',
-        compute='_compute_quantity_tonne',
-        store=True,
-    )
-
-    quantity_disponible = fields.Float(
-        string='Disponible BCG (T)',
-        compute='_compute_quantity_disponible',
-    )
-
-    @api.depends('product_uom_qty')
-    def _compute_quantity_tonne(self):
-        for rec in self:
-            rec.quantity_tonne = rec.product_uom_qty
-
-    @api.depends('order_id.commande_globale_id',
-                 'order_id.commande_globale_id.bon_commande_ids',
-                 'product_id')
-    def _compute_quantity_disponible(self):
-        for rec in self:
-            disponible = 0.0
-            bcg = rec.order_id.commande_globale_id
-            if bcg and rec.product_id:
-                bcg_line = bcg.line_ids.filtered(
-                    lambda l: l.product_id == rec.product_id
-                )
-                if bcg_line:
-                    disponible = bcg_line[0].quantity_restante
-            rec.quantity_disponible = disponible
 
 
 class GicaSaleOrder(models.Model):
     _inherit = 'sale.order'
 
-    # ── Lien vers BCG ─────────────────────────────────────────────────────
     commande_globale_id = fields.Many2one(
         'gica.commande.globale',
         string='Commande Globale (BCG)',
@@ -50,7 +13,6 @@ class GicaSaleOrder(models.Model):
         readonly=True,
     )
 
-    # ── Lien vers Planification Client ────────────────────────────────────
     planification_id = fields.Many2one(
         'gica.planification.client',
         string='Planification Client',
@@ -59,67 +21,69 @@ class GicaSaleOrder(models.Model):
         readonly=True,
     )
 
-    # ── Client GICA ───────────────────────────────────────────────────────
+    bon_circulation_ids = fields.One2many(
+        'gica.bon.circulation',
+        'sale_order_id',
+        string='Bons de Circulation',
+    )
+
+    bon_circulation_count = fields.Integer(
+        compute='_compute_rotations_stats',
+        string='Total rotations',
+    )
+    rotations_terminees = fields.Integer(
+        compute='_compute_rotations_stats',
+        string='Rotations terminees',
+    )
+    toutes_rotations_terminees = fields.Boolean(
+        compute='_compute_rotations_stats',
+    )
+
+    @api.depends('bon_circulation_ids.state')
+    def _compute_rotations_stats(self):
+        for rec in self:
+            bcs      = rec.bon_circulation_ids.filtered(lambda b: b.state != 'annule')
+            termines = bcs.filtered(lambda b: b.state == 'termine')
+            rec.bon_circulation_count      = len(bcs)
+            rec.rotations_terminees        = len(termines)
+            rec.toutes_rotations_terminees = len(bcs) > 0 and len(bcs) == len(termines)
+
     gica_client_id = fields.Many2one(
-        'gica.client',
-        string='Client GICA',
+        'res.partner',
         related='commande_globale_id.client_id',
         store=True,
         readonly=True,
+        string='Client GICA',
     )
-
-    # ── Contrat GICA ──────────────────────────────────────────────────────
     gica_contrat_id = fields.Many2one(
         'gica.client.contract',
-        string='Contrat GICA',
         related='commande_globale_id.contrat_id',
         store=True,
         readonly=True,
+        string='Contrat GICA',
     )
-
-    # ── Date enlèvement (depuis planification) ────────────────────────────
     date_prevue_enlevement = fields.Date(
-        string="Date prévue d'enlèvement",
         related='planification_id.date_enlevement',
         store=True,
         readonly=True,
         tracking=True,
+        string="Date prevue d'enlevement",
     )
-
     date_reelle_enlevement = fields.Date(
-        string="Date réelle d'enlèvement",
+        string="Date reelle d'enlevement",
         readonly=True,
         tracking=True,
     )
-
-    # ── Scan BC papier (traçabilité) ──────────────────────────────────────
-    scan_bc_client = fields.Binary(
-        string='Scan BC client',
-        attachment=True,
-    )
-    scan_bc_client_filename = fields.Char(string='Nom du fichier')
-
-    # ── Quantité totale en tonnes ─────────────────────────────────────────
-    quantity_total_tonne = fields.Float(
-        string='Quantité totale (T)',
-        compute='_compute_quantity_total_tonne',
+    quantity_livree = fields.Float(
+        string='Quantite livree (T)',
+        compute='_compute_quantity_livree',
         store=True,
     )
 
-    @api.depends('order_line.product_uom_qty')
-    def _compute_quantity_total_tonne(self):
+    @api.depends('bon_circulation_ids.poids_net', 'bon_circulation_ids.state')
+    def _compute_quantity_livree(self):
         for rec in self:
-            rec.quantity_total_tonne = sum(
-                rec.order_line.mapped('product_uom_qty')
-            )
-
-    def action_marquer_enleve(self):
-        for rec in self:
-            rec.write({
-                'date_reelle_enlevement': fields.Date.today(),
-            })
-            if rec.commande_globale_id:
-                rec.commande_globale_id._check_cloture_automatique()
-            rec.message_post(
-                body=f'📦 Marchandise enlevée le {fields.Date.today()}.'
+            rec.quantity_livree = sum(
+                b.poids_net for b in rec.bon_circulation_ids
+                if b.state == 'termine'
             )

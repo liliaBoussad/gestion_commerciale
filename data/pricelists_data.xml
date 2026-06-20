@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ══════════════════════════════════════════════
+         LISTES DE PRIX GICA
+         Remplir les prix avec setup_pricelists.py
+         ══════════════════════════════════════════════ -->
+
+    <record id="pricelist_tarif_public" model="product.pricelist">
+        <field name="name">GICA - Tarif Public (Usine) (DZD)</field>
+        <field name="currency_id" ref="base.DZD"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="pricelist_sodismac" model="product.pricelist">
+        <field name="name">GICA - Tarif SODISMAC (DZD)</field>
+        <field name="currency_id" ref="base.DZD"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="pricelist_autre_client" model="product.pricelist">
+        <field name="name">GICA - Tarif Autre Client (DZD)</field>
+        <field name="currency_id" ref="base.DZD"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="pricelist_exportation" model="product.pricelist">
+        <field name="name">GICA - Tarif Exportation (DZD)</field>
+        <field name="currency_id" ref="base.DZD"/>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue formulaire Commercial — Soumettre/Re-soumettre seulement -->
+    <record id="view_clinker_planning_form_commercial" model="ir.ui.view">
+        <field name="name">clinker.planning.form.commercial</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <form string="Planification Clinker">
+                <header>
+                    <button name="action_soumettre"
+                            string="Soumettre"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_brouillon"
+                            string="Remettre en Brouillon"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'soumis'"/>
+                    <button name="action_resoumettre"
+                            string="Re-soumettre"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'refuse'"
+                            confirm="Re-soumettre cette planification ?"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="brouillon,soumis,approuve,refuse"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bc_quotidien"
+                                invisible="not bc_quotidien_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">BC Quotidien</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'refuse'">
+                        Planification refusee :
+                        <field name="motif_refus" readonly="1" nolabel="1"/>
+                        Corrigez l'estimation et cliquez Re-soumettre.
+                    </div>
+
+                    <group>
+                        <group string="Informations">
+                            <field name="client_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True, 'no_open': False}"/>
+                            <field name="bcg_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True}"
+                                   domain="[('client_id', '=', client_id), ('state', '=', 'actif')]"/>
+                            <field name="code_client"     readonly="1"/>
+                            <field name="date_chargement" readonly="state != 'brouillon'"/>
+                        </group>
+                        <group string="Quantites et rotations">
+                            <field name="estimation"
+                                   readonly="state not in ('brouillon', 'refuse')"/>
+                            <field name="rotation"
+                                   readonly="state not in ('brouillon', 'refuse')"
+                                   help="Nombre de camions — 1 bon de circulation par rotation"/>
+                        </group>
+                    </group>
+
+                    <group string="Traitement"
+                           invisible="state == 'brouillon'">
+                        <group>
+                            <field name="approuve_par"       readonly="1"/>
+                            <field name="date_traitement"    readonly="1"/>
+                            <field name="quantite_approuvee" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="bc_quotidien_id" readonly="1"/>
+                            <field name="quantite_livree" readonly="1"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue formulaire Responsable Commercial — avec Approuver/Refuser -->
+    <record id="view_clinker_planning_form" model="ir.ui.view">
+        <field name="name">clinker.planning.form</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <form string="Planification Clinker">
+                <header>
+                    <button name="action_soumettre"
+                            string="Soumettre"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_brouillon"
+                            string="Remettre en Brouillon"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'soumis'"/>
+                    <button name="action_resoumettre"
+                            string="Re-soumettre"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'refuse'"
+                            confirm="Re-soumettre cette planification ?"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="brouillon,soumis,approuve,refuse"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                type="object"
+                                name="action_voir_bc_quotidien"
+                                invisible="not bc_quotidien_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">BC Quotidien</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'refuse'">
+                        Planification refusee :
+                        <field name="motif_refus" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <group>
+                        <group string="Informations">
+                            <field name="client_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True, 'no_open': False}"/>
+                            <field name="bcg_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True}"
+                                   domain="[('client_id', '=', client_id), ('state', '=', 'actif')]"/>
+                            <field name="code_client"     readonly="1"/>
+                            <field name="date_chargement" readonly="state != 'brouillon'"/>
+                        </group>
+                        <group string="Quantites et rotations">
+                            <field name="estimation"
+                                   readonly="state not in ('brouillon', 'refuse')"/>
+                            <field name="rotation"
+                                   readonly="state not in ('brouillon', 'refuse')"
+                                   help="Nombre de camions — 1 bon de circulation par rotation"/>
+                            <field name="quantite_approuvee" readonly="1"/>
+                            <field name="quantite_livree"    readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Motif refus — saisie par le responsable -->
+                    <group string="Motif de refus"
+                           invisible="state not in ('soumis', 'refuse')">
+                        <field name="motif_refus"
+                               nolabel="1"
+                               placeholder="Saisissez le motif avant de refuser..."
+                               readonly="state == 'refuse'"/>
+                    </group>
+
+                    <group string="Traitement"
+                           invisible="state == 'brouillon'">
+                        <group>
+                            <field name="approuve_par"    readonly="1"/>
+                            <field name="date_traitement" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="bc_quotidien_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste -->
+    <record id="view_clinker_planning_list" model="ir.ui.view">
+        <field name="name">clinker.planning.list</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <list string="Planification Clinker"
+                  decoration-success="state == 'approuve'"
+                  decoration-warning="state == 'soumis'"
+                  decoration-danger="state == 'refuse'"
+                  decoration-muted="state == 'brouillon'">
+                <field name="date_chargement"    string="Date chargement"/>
+                <field name="code_client"        string="Code Client"/>
+                <field name="client_id"          string="Client"/>
+                <field name="bcg_id"             string="BCG"/>
+                <field name="estimation"         string="Estimation (T)"/>
+                <field name="rotation"           string="Rotations"/>
+                <field name="quantite_approuvee" string="Approuve (T)"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'approuve'"
+                       decoration-warning="state == 'soumis'"
+                       decoration-danger="state == 'refuse'"/>
+                <field name="bc_quotidien_id" string="BC-Quotidien"/>
+                <field name="motif_refus"     string="Motif de Refus" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue calendrier -->
+    <record id="view_clinker_planning_calendar" model="ir.ui.view">
+        <field name="name">clinker.planning.calendar</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <calendar string="Planification Clinker"
+                      date_start="date_chargement"
+                      color="client_id"
+                      mode="month">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="estimation"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue recherche -->
+    <record id="view_clinker_planning_search" model="ir.ui.view">
+        <field name="name">clinker.planning.search</field>
+        <field name="model">clinker.planning</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une planification">
+                <field name="client_id"       string="Client"/>
+                <field name="bcg_id"          string="BCG"/>
+                <field name="date_chargement" string="Date"/>
+                <separator/>
+                <filter name="jour"
+                        string="Aujourd'hui"
+                        domain="[('date_chargement','=',context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="soumis"   string="Soumises"
+                        domain="[('state','=','soumis')]"/>
+                <filter name="approuve" string="Approuvees"
+                        domain="[('state','=','approuve')]"/>
+                <filter name="refuse"   string="Refusees"
+                        domain="[('state','=','refuse')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_date"   string="Date"
+                            context="{'group_by': 'date_chargement'}"/>
+                    <filter name="group_client" string="Client"
+                            context="{'group_by': 'client_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Commercial -->
+    <record id="action_clinker_planning" model="ir.actions.act_window">
+        <field name="name">Planification Clinker</field>
+        <field name="res_model">clinker.planning</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list',     'view_id': ref('view_clinker_planning_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_clinker_planning_calendar')}),
+            (0, 0, {'view_mode': 'form',     'view_id': ref('view_clinker_planning_form_commercial')})]"/>
+        <field name="search_view_id" ref="view_clinker_planning_search"/>
+        <field name="context">{'search_default_jour': 1, 'search_default_group_date': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune planification clinker.</p>
+        </field>
+    </record>
+
+    <!-- Action Responsable Commercial — Approbation -->
+    <record id="action_clinker_planning_approbation" model="ir.actions.act_window">
+        <field name="name">Planifications a approuver</field>
+        <field name="res_model">clinker.planning</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'soumis')]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_clinker_planning_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_clinker_planning_form')})]"/>
+        <field name="search_view_id" ref="view_clinker_planning_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune planification en attente.</p>
+        </field>
+    </record>
+
+</odoo>

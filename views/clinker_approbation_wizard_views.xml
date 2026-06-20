@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_clinker_approbation_wizard_form" model="ir.ui.view">
+        <field name="name">clinker.approbation.wizard.form</field>
+        <field name="model">clinker.approbation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Approbation Planning Clinker">
+                <sheet>
+
+                    <group string="Date d'approbation">
+                        <group>
+                            <field name="date_approbation"/>
+                        </group>
+                        <group>
+                            <button name="action_charger_planifications"
+                                    string="Charger les planifications"
+                                    type="object"
+                                    class="btn-primary"/>
+                        </group>
+                    </group>
+
+                    <group string="Resume du jour"
+                           invisible="not line_ids">
+                        <group>
+                            <field name="total_demande"    readonly="1"/>
+                            <field name="taux_utilisation" readonly="1"
+                                   string="Utilisation (%)"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-danger" role="alert"
+                         invisible="not alerte_80">
+                        Attention — La consommation depasse 80% de la cadence !
+                    </div>
+
+                    <field name="line_ids"
+                           invisible="not line_ids"
+                           nolabel="1">
+                        <list editable="bottom"
+                            delete="false"
+                            create="false">
+                            <field name="planning_id"        readonly="1"/>
+                            <field name="client_id"          readonly="1"/>
+                            <field name="estimation"         readonly="1"
+                                string="Estimation (T)"/>
+                            <field name="quantite_approuvee" string="Qte Validee (T)"/>
+                            <field name="motif_refus"        string="Motif de refus"
+                                placeholder="Saisissez avant de refuser..."/>
+                            <button name="action_valider_ligne"
+                                    string="Valider"
+                                    type="object"
+                                    class="btn-success"
+                                    icon="fa-check"/>
+                            <button name="action_refuser_ligne"
+                                    string="Refuser"
+                                    type="object"
+                                    class="btn-danger"
+                                    icon="fa-times"/>
+                        </list>
+                    </field>
+
+                </sheet>
+                <footer>
+                    <button name="action_valider"
+                            string="Valider tout"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not line_ids"
+                            confirm="Confirmer la validation de toutes les planifications ?"/>
+                    <button string="Annuler"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_clinker_approbation_wizard" model="ir.actions.act_window">
+        <field name="name">Approbation Planning Clinker</field>
+        <field name="res_model">clinker.approbation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

@@ -7,19 +7,15 @@ class GicaClientClassification(models.Model):
     _name = 'gica.client.classification'
     _description = 'Classification Client GICA'
     _order = 'date_classification desc'
-    _rec_name = 'client_id'
+    _rec_name = 'partner_id'
 
     # ── Identité ───────────────────────────────────────────────────────────
-    # On lie directement à gica.client (pas res.partner)
-    client_id = fields.Many2one(
-        'gica.client', string='Client', required=True, ondelete='cascade',
-    )
-    # partner_id en related pour affichage et compatibilité res.partner
     partner_id = fields.Many2one(
         'res.partner',
-        string='Contact',
-        related='client_id.partner_id',
-        store=True,
+        string='Client',
+        required=True,
+        ondelete='cascade',
+        domain=[('is_gica_client', '=', True)],
     )
     date_classification = fields.Date(
         string='Date classification', required=True, default=fields.Date.today,
@@ -133,9 +129,9 @@ class GicaClientClassification(models.Model):
         return max(delta.years * 12 + delta.months, 1)
 
     @api.model
-    def calculate_client_classification(self, client_id, period_start, period_end):
+    def calculate_client_classification(self, partner_id, period_start, period_end):
         """
-        Calcule et enregistre la classification d'un client gica.client.
+        Calcule et enregistre la classification d'un client (res.partner).
         Formules :
           Score CA       = min(CA mensuel moyen ÷ X, 40)
           Score Paiement = min(Paiement mensuel moyen ÷ Y, 30)   [placeholder 90%]
@@ -143,16 +139,14 @@ class GicaClientClassification(models.Model):
           Score Exclus.  = 10 si exclusivité GICA, sinon 0
         """
         config  = self.env['gica.classification.config'].get_active_config()
-        client  = self.env['gica.client'].browse(client_id)
-        partner = client.partner_id
+        partner = self.env['res.partner'].browse(partner_id)
         X       = config.seuil_ca_par_point
         Y       = config.seuil_paiement_par_point
         nb_mois = self._get_nb_mois(period_start, period_end)
 
         # ── 1. Score CA — 40 pts max ───────────────────────────────────────
-        # gica.client.contract utilise client_id et montant_total
         contracts = self.env['gica.client.contract'].search([
-            ('client_id', '=', client_id),
+            ('partner_id', '=', partner_id),
             ('date_start', '<=', period_end),
             ('date_end',   '>=', period_start),
             ('state', 'in', ['actif', 'en_cours', 'expire']),
@@ -162,14 +156,12 @@ class GicaClientClassification(models.Model):
         score_ca         = min(ca_mensuel_moyen / X, 40.0) if X else 0.0
 
         # ── 2. Score Paiement — 30 pts max ────────────────────────────────
-        # TODO: brancher sur les vraies factures account.move
         montant_facture        = ca_total
         montant_paye_a_temps   = ca_total * 0.9       # placeholder 90%
         paiement_mensuel_moyen = montant_paye_a_temps / nb_mois
         score_paiement         = min(paiement_mensuel_moyen / Y, 30.0) if Y else 0.0
 
         # ── 3. Score Enlèvement — 20 pts max ──────────────────────────────
-        # TODO: brancher sur gica.bon.commande quand disponible
         total_bc           = 0
         bc_enleves_a_temps = 0
         score_enlevement   = 0.0
@@ -178,7 +170,7 @@ class GicaClientClassification(models.Model):
         score_exclusivite = 10.0 if partner.exclusivite_gica else 0.0
 
         vals = {
-            'client_id':              client_id,
+            'partner_id':             partner_id,
             'date_classification':    fields.Date.today(),
             'period_start':           period_start,
             'period_end':             period_end,
@@ -200,9 +192,9 @@ class GicaClientClassification(models.Model):
 
         # Anti-doublon
         existing = self.search([
-            ('client_id',   '=', client_id),
-            ('period_start','=', period_start),
-            ('period_end',  '=', period_end),
+            ('partner_id',   '=', partner_id),
+            ('period_start', '=', period_start),
+            ('period_end',   '=', period_end),
         ], limit=1)
 
         if existing:
@@ -231,23 +223,24 @@ class GicaClientClassification(models.Model):
         period_start   = today - relativedelta(months=6)
         six_months_ago = today - relativedelta(months=6)
 
-        # On cherche dans gica.client, via le partner_id pour la date
-        clients = self.env['gica.client'].search([
+        # On cherche directement dans res.partner
+        clients = self.env['res.partner'].search([
+            ('is_gica_client', '=', True),
             '|',
-            ('partner_id.date_derniere_classification', '=',   False),
-            ('partner_id.date_derniere_classification', '<=', six_months_ago),
+            ('date_derniere_classification', '=',  False),
+            ('date_derniere_classification', '<=', six_months_ago),
         ])
 
-        for client in clients:
+        for partner in clients:
             has_contracts = self.env['gica.client.contract'].search_count([
-                ('client_id', '=',  client.id),
+                ('partner_id', '=',  partner.id),
                 ('date_start', '<=', period_end),
                 ('date_end',   '>=', period_start),
                 ('state', 'in', ['actif', 'en_cours', 'expire']),
             ])
             if has_contracts:
                 self.calculate_client_classification(
-                    client.id, period_start, period_end
+                    partner.id, period_start, period_end
                 )
 
         return True
@@ -262,5 +255,5 @@ class GicaClientClassification(models.Model):
         period_end   = today
         period_start = today - relativedelta(months=6)
         self.calculate_client_classification(
-            self.client_id.id, period_start, period_end
+            self.partner_id.id, period_start, period_end
         )

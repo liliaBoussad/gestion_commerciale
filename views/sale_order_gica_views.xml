@@ -1,17 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Héritage du formulaire sale.order
-    ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_sale_order_gica_form" model="ir.ui.view">
         <field name="name">sale.order.gica.form</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
-            <!-- Ajouter un onglet GICA dans le notebook -->
             <xpath expr="//notebook" position="inside">
+
+                <!-- Onglet Bons de Circulation -->
+                <page string="Bons de Circulation" name="bons_circulation"
+                      invisible="bon_circulation_count == 0">
+
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Total rotations</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="bon_circulation_count" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border border-success rounded-3 text-center bg-success bg-opacity-10">
+                                <div class="card-body p-2">
+                                    <p class="text-success small mb-1">Terminees</p>
+                                    <p class="fw-bold mb-0 fs-5 text-success">
+                                        <field name="rotations_terminees" readonly="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border rounded-3 text-center">
+                                <div class="card-body p-2">
+                                    <p class="text-muted small mb-1">Livre reellement</p>
+                                    <p class="fw-bold mb-0 fs-5">
+                                        <field name="quantity_livree" readonly="1"/> T
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success" role="alert"
+                         invisible="not toutes_rotations_terminees">
+                        <field name="toutes_rotations_terminees" invisible="1"/>
+                        Toutes les rotations sont terminees.
+                        Utilisez le bouton "Creer une facture" pour facturer.
+                    </div>
+
+                    <field name="bon_circulation_ids" nolabel="1">
+                        <list decoration-info="state == 'transmis_tare'"
+                              decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                              decoration-success="state == 'termine'"
+                              decoration-muted="state == 'annule'">
+                            <field name="name"            string="N Bon"/>
+                            <field name="numero_rotation" string="Rotation"/>
+                            <field name="quantite_prevue" string="Qte prevue (T)"/>
+                            <field name="poids_net"       string="Poids net (T)"/>
+                            <field name="chauffeur"       string="Chauffeur"/>
+                            <field name="matricule"       string="Matricule"/>
+                            <field name="picking_id"      string="Bon de Livraison"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'transmis_tare'"
+                                   decoration-warning="state in ('pesee_entree','chargement','pesee_sortie')"
+                                   decoration-success="state == 'termine'"
+                                   decoration-danger="state == 'annule'"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- Onglet Informations GICA -->
                 <page string="Informations GICA" name="gica_info">
                     <group>
                         <group string="Références GICA">
@@ -19,45 +82,34 @@
                                    options="{'no_create': True}"
                                    readonly="1"/>
                             <field name="planification_id" readonly="1"/>
-                            <field name="gica_client_id"   readonly="1"/>
+                            <field name="gica_client_id"
+                                options="{'no_create': True}"
+                                readonly="commande_globale_id != False"/>
                             <field name="gica_contrat_id"  readonly="1"/>
                         </group>
-                        <group string="Enlèvement">
+                        <group string="Enlevement">
                             <field name="date_prevue_enlevement" readonly="1"/>
                             <field name="date_reelle_enlevement" readonly="1"/>
-                            <button name="action_marquer_enleve"
-                                    string="Marquer Enlevé"
-                                    type="object"
-                                    class="btn-primary btn-sm"
-                                    invisible="date_reelle_enlevement or state != 'sale'"/>
+                            <field name="quantity_livree"        readonly="1"/>
                         </group>
                     </group>
-                    <group string="Scan BC Client (Traçabilité)">
-                        <field name="scan_bc_client"
-                               widget="binary"
-                               filename="scan_bc_client_filename"/>
-                        <field name="scan_bc_client_filename" invisible="1"/>
-                    </group>
                 </page>
-            </xpath>
 
+            </xpath>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Action — Bons de Commande GICA
-         Filtre : uniquement les sale.order liés à un BCG
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Action Bons de Commande GICA -->
     <record id="action_gica_bon_commande" model="ir.actions.act_window">
         <field name="name">Commandes</field>
         <field name="res_model">sale.order</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('commande_globale_id', '!=', False)]</field>
-        <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucun bon de commande GICA</p>
-            <p>Les bons de commande sont créés depuis une planification validée.</p>
+            <p>Les bons de commande sont crees depuis une planification validee.</p>
         </field>
     </record>
-
+  
+   
 </odoo>

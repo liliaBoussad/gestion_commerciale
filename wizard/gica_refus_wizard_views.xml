@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_gica_refus_ligne_wizard_form" model="ir.ui.view">
+        <field name="name">gica.refus.ligne.wizard.form</field>
+        <field name="model">gica.refus.ligne.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Refuser la ligne">
+                <group>
+                    <field name="ligne_id" invisible="1"/>
+                    <field name="motif"
+                           string="Motif du refus"
+                           placeholder="Expliquez la raison du refus..."
+                           rows="4"/>
+                </group>
+                <footer>
+                    <button name="action_confirmer_refus"
+                            string="✅ Confirmer le refus"
+                            type="object"
+                            class="btn-danger"/>
+                    <button string="Annuler"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_gica_refus_ligne_wizard" model="ir.actions.act_window">
+        <field name="name">Refuser la ligne</field>
+        <field name="res_model">gica.refus.ligne.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
