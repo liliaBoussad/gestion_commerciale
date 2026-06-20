@@ -455,6 +455,160 @@
                     }
                 }
             });
+
+                // ── Flatpickr : grisage visuel dates verrouillees ──────────────────
+                (function() {
+                    // Charger Flatpickr CSS
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css';
+                    document.head.appendChild(link);
+
+                    // CSS personnalise pour les jours bloques (meme style que cote commercial)
+                    var style = document.createElement('style');
+                    style.textContent = [
+                        '.flatpickr-day.gica-verrouille,',
+                        '.flatpickr-day.gica-verrouille:hover {',
+                        '    background: repeating-linear-gradient(',
+                        '        45deg, #f8d7da, #f8d7da 4px, #fff5f5 4px, #fff5f5 9px',
+                        '    ) !important;',
+                        '    color: #c0392b !important;',
+                        '    cursor: not-allowed !important;',
+                        '    pointer-events: none !important;',
+                        '}',
+                        '.flatpickr-day.flatpickr-disabled {',
+                        '    background: repeating-linear-gradient(',
+                        '        45deg, #f8d7da, #f8d7da 4px, #fff5f5 4px, #fff5f5 9px',
+                        '    ) !important;',
+                        '    color: #c0392b !important;',
+                        '    cursor: not-allowed !important;',
+                        '    opacity: 1 !important;',
+                        '}'
+                    ].join('\n');
+                    document.head.appendChild(style);
+
+                    var periodes = [];
+                    var flatpickrInstances = [];
+
+                    // Charger Flatpickr JS puis les periodes
+                    var script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js';
+                    script.onload = function() {
+                        fetch('/gica/periodes_verrouillees', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: {} }),
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            periodes = data.result || [];
+                            appliquerFlatpickr();
+                        })
+                        .catch(function(e) {
+                            console.warn('Erreur periodes:', e);
+                            appliquerFlatpickr();
+                        });
+                    };
+                    document.head.appendChild(script);
+
+                    function estDateInterdite(dateStr) {
+                        // dateStr format YYYY-MM-DD
+                        var d = new Date(dateStr + 'T00:00:00');
+                        var jour = d.getDay(); // 0=dim,1=lun,...,5=ven,6=sam
+                        if (jour === 5 || jour === 6) return true;
+                        for (var i = 0; i < periodes.length; i++) {
+                            if (dateStr >= periodes[i].from && dateStr <= periodes[i].to) return true;
+                        }
+                        return false;
+                    }
+
+                    function getTooltip(dateStr) {
+                        var d = new Date(dateStr + 'T00:00:00');
+                        var jour = d.getDay();
+                        if (jour === 5) return 'Vendredi non ouvrable';
+                        if (jour === 6) return 'Samedi non ouvrable';
+                        for (var i = 0; i < periodes.length; i++) {
+                            if (dateStr >= periodes[i].from && dateStr <= periodes[i].to) {
+                                return 'Periode verrouillee : ' + periodes[i].name;
+                            }
+                        }
+                        return '';
+                    }
+
+                    function toYMD(date) {
+                        var y = date.getFullYear();
+                        var m = String(date.getMonth() + 1).padStart(2, '0');
+                        var d = String(date.getDate()).padStart(2, '0');
+                        return y + '-' + m + '-' + d;
+                    }
+
+                    function initFlatpickr(input) {
+                        if (input._flatpickr) return; // deja initialise
+                        // Cacher l'input natif, creer un input texte visible
+                        input.type = 'hidden';
+                        var wrapper = document.createElement('div');
+                        wrapper.style.position = 'relative';
+                        input.parentNode.insertBefore(wrapper, input);
+                        wrapper.appendChild(input);
+
+                        var display = document.createElement('input');
+                        display.type = 'text';
+                        display.placeholder = 'jj/mm/aaaa';
+                        display.className = input.className || 'form-control form-control-sm';
+                        display.style.pointerEvents = 'auto';
+                        display.readOnly = true;
+                        wrapper.appendChild(display);
+
+                        var fp = flatpickr(display, {
+                            locale: {
+                                firstDayOfWeek: 0,
+                                weekdays: {
+                                    shorthand: ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],
+                                    longhand:  ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']
+                                },
+                                months: {
+                                    shorthand: ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'],
+                                    longhand:  ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+                                }
+                            },
+                            dateFormat: 'd/m/Y',
+                            minDate: 'today',
+                            disableMobile: true,
+                            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                                var dateStr = toYMD(dayElem.dateObj);
+                                if (estDateInterdite(dateStr)) {
+                                    dayElem.classList.add('flatpickr-disabled');
+                                    dayElem.title = getTooltip(dateStr);
+                                }
+                            },
+                            onChange: function(selectedDates, dateStr) {
+                                if (selectedDates.length > 0) {
+                                    var ymd = toYMD(selectedDates[0]);
+                                    input.value = ymd; // mettre la valeur YYYY-MM-DD dans l'input hidden
+                                } else {
+                                    input.value = '';
+                                }
+                            }
+                        });
+                        flatpickrInstances.push(fp);
+                    }
+
+                    function appliquerFlatpickr() {
+                        document.querySelectorAll('input[name^="date_"]').forEach(function(input) {
+                            if (!input._flatpickr && input.type !== 'hidden') {
+                                initFlatpickr(input);
+                            }
+                        });
+                    }
+
+                    // Observer pour les nouvelles lignes
+                    new MutationObserver(function() {
+                        if (typeof flatpickr !== 'undefined') {
+                            appliquerFlatpickr();
+                        }
+                    }).observe(document.body, { childList: true, subtree: true });
+                })();
+
             //]]>
             </script>
         </t>
