@@ -218,7 +218,7 @@ class GicaCustomerPortal(CustomerPortal):
             seen = set()
             for variant in tmpl.product_variant_ids:
                 for ptav in variant.product_template_attribute_value_ids:
-                    if (ptav.attribute_id.id == 4
+                    if (ptav.attribute_id.id == 11
                             and ptav.product_attribute_value_id.id not in seen):
                         seen.add(ptav.product_attribute_value_id.id)
                         conds.append({
@@ -326,7 +326,7 @@ class GicaCustomerPortal(CustomerPortal):
         seen = set()
         for variant in tmpl.product_variant_ids:
             for ptav in variant.product_template_attribute_value_ids:
-                if (ptav.attribute_id.id == 4
+                if (ptav.attribute_id.id == 11
                         and ptav.product_attribute_value_id.id not in seen):
                     seen.add(ptav.product_attribute_value_id.id)
                     conds.append({
@@ -361,7 +361,7 @@ class GicaCustomerPortal(CustomerPortal):
                 cond = request.env['product.attribute.value'].sudo().browse(int(cond_id))
                 variant = tmpl.product_variant_ids.filtered(
                     lambda v: any(
-                        a.attribute_id.id == 4
+                        a.attribute_id.id == 11
                         and a.product_attribute_value_id.id == cond.id
                         for a in v.product_template_attribute_value_ids
                     )
