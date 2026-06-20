@@ -89,7 +89,7 @@ class GicaBcgPortal(http.Controller):
             seen_ids = set()
             for variant in tmpl.product_variant_ids:
                 for ptav in variant.product_template_attribute_value_ids:
-                    if (ptav.attribute_id.id == 4
+                    if (ptav.attribute_id.id == 11
                             and ptav.product_attribute_value_id.id not in seen_ids):
                         seen_ids.add(ptav.product_attribute_value_id.id)
                         conds.append({

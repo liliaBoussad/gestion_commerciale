@@ -114,7 +114,6 @@
     <!-- Formulaire nouvelle planification -->
     <template id="portail_gica_planification_form" name="Portail GICA Nouvelle Planification">
         <t t-call="portal.portal_layout">
-            <!-- portal_searchbar supprime : causait textContent null crash en Odoo 18 -->
 
             <div class="container mt-4">
 
@@ -225,6 +224,7 @@
                                                             <option value="">-- Choisir --</option>
                                                             <t t-foreach="lignes_bcg" t-as="ligne">
                                                                 <option t-att-value="ligne['product_tmpl_id']"
+                                                                        t-att-selected="'selected' if ligne_index == 0 else None"
                                                                         t-att-data-max="ligne['quantity_restante']"
                                                                         t-att-data-conds="ligne['conditionnements_json']">
                                                                     <t t-esc="ligne['product_name']"/>
@@ -242,7 +242,8 @@
                                                             <option value="">-- Choisir --</option>
                                                             <t t-if="lignes_bcg">
                                                                 <t t-foreach="lignes_bcg[0]['conditionnements']" t-as="cond">
-                                                                    <option t-att-value="cond['id']">
+                                                                    <option t-att-value="cond['id']"
+                                                                            t-att-selected="'selected'">
                                                                         <t t-esc="cond['name']"/>
                                                                     </option>
                                                                 </t>
@@ -381,10 +382,6 @@
                 }
 
                 tbody.querySelectorAll('.ligne-planif').forEach(attachListeners);
-                tbody.querySelectorAll('.ligne-planif').forEach(function (row) {
-                    var selProd = row.querySelector('.select-product');
-                    if (selProd && selProd.value) selProd.dispatchEvent(new Event('change'));
-                });
 
                 if (btnAjouter) {
                     btnAjouter.addEventListener('click', function () {
@@ -416,7 +413,6 @@
                             var result = data.result || {};
                             lignesBcg = result.lignes || [];
 
-                            /* CORRECTION : null check avant textContent */
                             if (lblDate) lblDate.textContent = result.date_expiration || '';
                             if (infoBcg) infoBcg.style.display = '';
                             lineIndex = 1;
@@ -436,10 +432,26 @@
                         .catch(function (err) { console.error(err); });
                     });
 
-                    /* CORRECTION : selectBcg.value verifie ICI dans DOMContentLoaded
-                       (avant : code en dehors du callback → selectBcg undefined) */
-                    if (selectBcg.value) {
+                    /* CORRECTION PRINCIPALE :
+                       Si les lignes sont deja rendues par le serveur (bcg_selectionne),
+                       ne pas declencher le AJAX qui efface tout.
+                       Charger seulement lignesBcg en arriere-plan pour permettre ajout de lignes. */
+                    var lignesExistantes = tbody.querySelectorAll('.ligne-planif');
+                    if (selectBcg.value && lignesExistantes.length === 0) {
                         selectBcg.dispatchEvent(new Event('change'));
+                    } else if (selectBcg.value && lignesExistantes.length > 0) {
+                        lineIndex = lignesExistantes.length;
+                        fetch('/my/gica/planifications/lignes_bcg', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                            body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: { bcg_id: parseInt(selectBcg.value) } }),
+                        })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var result = data.result || {};
+                            lignesBcg = result.lignes || [];
+                        })
+                        .catch(function (err) { console.error(err); });
                     }
                 }
             });

@@ -213,7 +213,6 @@ class GicaProjectLine(models.Model):
         'product.attribute.value',
         string="Conditionnement",
         domain="[('attribute_id', '=', 4)]",
-        required=True,
     )
     product_id = fields.Many2one(
         'product.product',

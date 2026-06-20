@@ -160,6 +160,39 @@ class GicaPlanificationPortal(http.Controller):
                 }))
             i += 1
 
+
+
+        # Si product_0 est vide, essayer avec les clés product_TMPL_ID
+        if not lines:
+            for bcg_line in bcg.line_ids:
+                tmpl_id = bcg_line.product_tmpl_id.id
+                cond_id  = kwargs.get('cond_{}'.format(tmpl_id), '')
+                date_str = kwargs.get('date_{}'.format(tmpl_id), '')
+                qty_str  = kwargs.get('qty_{}'.format(tmpl_id), '0').replace(',', '.')
+                rot_str  = kwargs.get('rotation_{}'.format(tmpl_id), '1')
+                try:
+                    qty = float(qty_str)
+                except (ValueError, TypeError):
+                    qty = 0.0
+                try:
+                    rotation = int(rot_str)
+                except (ValueError, TypeError):
+                    rotation = 1
+                if qty > 0 and cond_id and date_str:
+                    lines.append((0, 0, {
+                        'product_tmpl_id':    tmpl_id,
+                        'conditionnement_id': int(cond_id),
+                        'date_enlevement':    date_str,
+                        'quantity_tonne':     qty,
+                        'rotation':           rotation,
+                    }))
+
+
+
+
+
+
+
         # Vérifier chaque date
         for line_vals in [l[2] for l in lines]:
             date_enl = line_vals.get('date_enlevement')
