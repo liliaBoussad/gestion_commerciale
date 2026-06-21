@@ -31,16 +31,25 @@
                     </div>
                 </t>
 
-                <t t-if="peut_creer_bcg">
-                    <a href="/my/gica/bcg/nouveau" class="btn btn-primary mb-3">
-                        <i class="fa fa-plus"/> Nouveau BCG
-                    </a>
-                </t>
-                <t t-else="">
-                    <div class="alert alert-info mb-3">
-                        Aucun contrat disponible pour creer un BCG.
-                    </div>
-                </t>
+              <div class="d-flex gap-2 mb-3">
+                    <t t-if="peut_creer_bcg">
+                        <a href="/my/gica/bcg/nouveau" class="btn btn-primary">
+                            <i class="fa fa-plus"/> Nouveau BCG
+                        </a>
+                    </t>
+                    <t t-else="">
+                        <div class="alert alert-info mb-0">
+                            Aucun contrat disponible pour creer un BCG.
+                        </div>
+                    </t>
+
+                    <!-- Bouton BCG Clinker visible uniquement pour les types eligibles -->
+                    <t t-if="gica_client.client_type in ('transformateur', 'broyage', 'exportateur')">
+                        <a href="/my/gica/bcg-clinker/nouveau" class="btn btn-primary">
+                            <i class="fa fa-plus"/> Nouveau BCG Clinker
+                        </a>
+                    </t>
+                </div>
 
                 <t t-if="not bcgs">
                     <div class="alert alert-info">Aucun bon de commande global pour le moment.</div>
