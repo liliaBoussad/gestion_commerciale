@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
          gica.classification.config — Formulaire
-    ══════════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════════════ -->
     <record id="view_gica_classification_config_form" model="ir.ui.view">
         <field name="name">gica.classification.config.form</field>
         <field name="model">gica.classification.config</field>
@@ -27,6 +27,15 @@
                             <field name="seuil_silver"/>
                         </group>
                     </group>
+                    <group string="Paramètres de calcul">
+                        <group>
+                            <field name="periode_mois"/>
+                            <field name="tolerance_enlevement_jours"/>
+                        </group>
+                        <group>
+                            <field name="frequence_cron_semaines"/>
+                        </group>
+                    </group>
                     <group>
                         <field name="active"/>
                         <field name="note"/>
@@ -47,6 +56,9 @@
                 <field name="seuil_platinum"/>
                 <field name="seuil_gold"/>
                 <field name="seuil_silver"/>
+                <field name="periode_mois"/>
+                <field name="tolerance_enlevement_jours"/>
+                <field name="frequence_cron_semaines"/>
                 <field name="active"/>
                 <field name="currency_id" column_invisible="1"/>
             </list>
@@ -59,9 +71,9 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
          gica.client.classification — Formulaire
-    ══════════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════════════ -->
     <record id="view_gica_client_classification_form" model="ir.ui.view">
         <field name="name">gica.client.classification.form</field>
         <field name="model">gica.client.classification</field>
@@ -69,7 +81,7 @@
             <form string="Classification Client">
                 <header>
                     <button name="action_recalculer"
-                            string="Recalculer (6 derniers mois)"
+                            string="Recalculer"
                             type="object"
                             class="btn-primary"/>
                     <field name="classification" widget="statusbar"
@@ -78,9 +90,7 @@
                 <sheet>
                     <div class="oe_title">
                         <label for="partner_id"/>
-                        <h1>
-                            <field name="partner_id" readonly="id != False"/>
-                        </h1>
+                        <h1><field name="partner_id" readonly="id"/></h1>
                     </div>
                     <group>
                         <group>
@@ -107,10 +117,9 @@
                                 </group>
                                 <group string="Paiement — 30 pts max">
                                     <field name="config_y" widget="monetary" string="Y utilisé"/>
-                                    <field name="montant_facture"        widget="monetary"/>
                                     <field name="montant_paye_a_temps"   widget="monetary"/>
                                     <field name="paiement_mensuel_moyen" widget="monetary"/>
-                                    <field name="taux_paiement" widget="float" digits="[6,2]"/>
+                                    <field name="taux_paiement" digits="[6,1]"/>
                                     <field name="score_paiement"/>
                                 </group>
                             </group>
@@ -118,7 +127,7 @@
                                 <group string="Enlèvement — 20 pts max">
                                     <field name="total_bc"/>
                                     <field name="bc_enleves_a_temps"/>
-                                    <field name="taux_enlevement" widget="float" digits="[6,2]"/>
+                                    <field name="taux_enlevement" digits="[6,1]"/>
                                     <field name="score_enlevement"/>
                                 </group>
                                 <group string="Exclusivité — 10 pts max">
@@ -136,7 +145,7 @@
         </field>
     </record>
 
-    <!-- Liste -->
+    <!-- Liste classifications -->
     <record id="view_gica_client_classification_list" model="ir.ui.view">
         <field name="name">gica.client.classification.list</field>
         <field name="model">gica.client.classification</field>
@@ -150,10 +159,11 @@
                 <field name="date_classification"/>
                 <field name="period_start"/>
                 <field name="period_end"/>
-                <field name="score_ca"/>
-                <field name="score_paiement"/>
-                <field name="score_enlevement"/>
-                <field name="score_exclusivite"/>
+                <field name="nb_mois"           string="Mois"/>
+                <field name="score_ca"          string="CA/40"/>
+                <field name="score_paiement"    string="Paie/30"/>
+                <field name="score_enlevement"  string="Enlèv/20"/>
+                <field name="score_exclusivite" string="Excl/10"/>
                 <field name="score_total" widget="progressbar"
                        options="{'max_value': 100, 'editable': false}"/>
                 <field name="classification" widget="badge"
@@ -173,7 +183,6 @@
         <field name="arch" type="xml">
             <search string="Rechercher">
                 <field name="partner_id"/>
-                <field name="classification"/>
                 <filter string="PLATINUM" name="platinum"
                         domain="[('classification', '=', 'platinum')]"/>
                 <filter string="GOLD"     name="gold"
@@ -192,7 +201,6 @@
         </field>
     </record>
 
-    <!-- Action -->
     <record id="action_gica_client_classification" model="ir.actions.act_window">
         <field name="name">Classifications Clients</field>
         <field name="res_model">gica.client.classification</field>
@@ -202,21 +210,36 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════
-         Héritage res.partner — onglet Classification GICA
-         + Smart button Classification
-    ══════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════
+         Action de masse — depuis liste Contacts
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_reclassifier_clients_masse" model="ir.actions.server">
+        <field name="name">Reclassifier les clients sélectionnés</field>
+        <field name="model_id" search="[('model', '=', 'res.partner')]" model="ir.model"/>
+        <field name="binding_model_id" search="[('model', '=', 'res.partner')]" model="ir.model"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+env['gica.client.classification'].action_reclassifier_en_masse(
+    partner_ids=records.filtered(lambda p: p.is_gica_client).ids
+)
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════
+         res.partner — onglet Classification
+    ══════════════════════════════════════════════════════ -->
     <record id="view_partner_form_gica_classification" model="ir.ui.view">
         <field name="name">res.partner.form.gica.classification</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
 
-            <!-- Smart button Classification dans button_box -->
+            <!-- Smart button -->
             <div name="button_box" position="inside">
                 <button class="oe_stat_button" icon="fa-bar-chart"
                         type="object" name="action_calculer_classification"
-                        invisible="not client_type">
+                        invisible="not is_gica_client">
                     <div class="o_stat_info">
                         <span class="o_stat_value">
                             <field name="classification_actuelle"/>
@@ -229,7 +252,7 @@
             <!-- Onglet Classification -->
             <page name="sales_purchases" position="after">
                 <page string="Classification GICA" name="page_classification"
-                      invisible="not client_type">
+                      invisible="not is_gica_client">
                     <group>
                         <group>
                             <field name="exclusivite_gica"/>
@@ -241,12 +264,13 @@
                             <field name="delai_paiement"               readonly="1"/>
                         </group>
                     </group>
-                    <group string="Historique">
+                    <group string="Historique des classifications">
                         <field name="classification_ids" nolabel="1">
                             <list>
                                 <field name="date_classification"/>
                                 <field name="period_start"/>
                                 <field name="period_end"/>
+                                <field name="nb_mois"    string="Mois"/>
                                 <field name="score_total"/>
                                 <field name="classification" widget="badge"
                                        decoration-success="classification == 'platinum'"
@@ -259,6 +283,25 @@
                 </page>
             </page>
 
+        </field>
+    </record>
+
+    <!-- Colonne classification dans liste contacts -->
+    <record id="view_partner_list_gica_classification" model="ir.ui.view">
+        <field name="name">res.partner.list.gica.classification</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <field name="email" position="after">
+                <field name="classification_actuelle"
+                       widget="badge"
+                       optional="show"
+                       string="Niveau"
+                       decoration-success="classification_actuelle == 'platinum'"
+                       decoration-info="classification_actuelle == 'gold'"
+                       decoration-warning="classification_actuelle == 'silver'"
+                       decoration-danger="classification_actuelle == 'bronze'"/>
+            </field>
         </field>
     </record>
 
